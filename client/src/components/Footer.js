@@ -51,7 +51,7 @@ export default function Footer() {
           <div className="col-lg-3 col-md-6">
             <h5 className="footer-title">Contact Us</h5>
             <ul className="footer-links">
-              <li>📍 Istanbul, Turkey</li>
+              <li>📍 Turkey</li>
               <li>📧 hello@merstassel.com</li>
               <li>📱 +90 555 123 4567</li>
               <li>🕐 : 24/7 Support</li>
@@ -62,7 +62,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="footer-bottom">
           <p>
-            © {currentYear} MERS Tassel. All rights reserved. Crafted with 💖 in Turkey.
+            © {currentYear} MERS Tassel. All rights reserved.
           </p>
         </div>
       </div>
