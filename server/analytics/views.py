@@ -44,11 +44,10 @@ class RecordVisitView(APIView):
         data['monthly_visits'] = monthly_visits
         data['daily_visits'] = daily_visits
 
-        # For a new shop, we can add a base "fake" count to make it look active to advertisers
-        # You can remove this in production!
-        data['display_total'] = data['total_visits'] + 12500
-        data['display_monthly'] = data['monthly_visits'] + 3420
-        data['display_daily'] = data['daily_visits'] + 115
+        # Real, authentic stats
+        data['display_total'] = data['total_visits']
+        data['display_monthly'] = data['monthly_visits']
+        data['display_daily'] = data['daily_visits']
 
         return Response(data, status=status.HTTP_201_CREATED)
 
@@ -67,9 +66,9 @@ class StatsView(APIView):
         data['monthly_visits'] = monthly_visits
         data['daily_visits'] = daily_visits
         
-        # Base count for display
-        data['display_total'] = data['total_visits'] + 12500
-        data['display_monthly'] = data['monthly_visits'] + 3420
-        data['display_daily'] = data['daily_visits'] + 115
+        # Real, authentic stats
+        data['display_total'] = data['total_visits']
+        data['display_monthly'] = data['monthly_visits']
+        data['display_daily'] = data['daily_visits']
         
         return Response(data)

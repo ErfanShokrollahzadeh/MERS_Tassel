@@ -5,7 +5,8 @@ import Link from 'next/link';
 import AnimatedSection from '@/components/AnimatedSection';
 import ProductCard from '@/components/ProductCard';
 import VisitorStats from '@/components/VisitorStats';
-import { getFeaturedProducts, getCategories } from '@/lib/api';
+import { getFeaturedProducts, getCategories, recordVisit } from '@/lib/api';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // Fallback data when API is not available
 const fallbackProducts = [
@@ -49,6 +50,8 @@ const testimonials = [
 export default function HomePage() {
   const [products, setProducts] = useState(fallbackProducts);
   const [loading, setLoading] = useState(true);
+  const [siteViews, setSiteViews] = useState(0); // Real counter starts at 0
+  const { t } = useLanguage();
 
   useEffect(() => {
     async function loadData() {
@@ -61,6 +64,16 @@ export default function HomePage() {
         console.log('Using fallback product data:', err.message);
       } finally {
         setLoading(false);
+      }
+      
+      try {
+        const statsData = await recordVisit('/');
+        if (statsData && statsData.display_total) {
+          // Add a small delay for a counting effect later if desired, or just set it
+          setSiteViews(statsData.display_total);
+        }
+      } catch (err) {
+        console.error('Analytics error:', err);
       }
     }
     loadData();
@@ -77,37 +90,44 @@ export default function HomePage() {
 
         <div className="container hero-content">
           <div className="row align-items-center min-vh-100">
-            <div className="col-lg-7">
-              <h1 className="hero-title">
-                Discover the Art of<br />
-                <span className="highlight">Handcrafted</span> Elegance
-              </h1>
-              <p className="hero-subtitle">
-                Exquisite accessories crafted with love in Turkey. Each piece tells a story 
-                of artistry, tradition, and modern charm.
-              </p>
-              <div className="d-flex gap-3 flex-wrap" style={{ animation: 'fadeInUp 1s 0.6s ease forwards', opacity: 0 }}>
+            <div className="col-lg-6">
+              <AnimatedSection delay={200}>
+                <h1 className="display-3 fw-bold mb-4" style={{ fontFamily: 'var(--font-heading)' }}>
+                  {t('hero.title')}
+                </h1>
+                <p className="lead mb-5" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                  {t('hero.subtitle')}
+                </p>
+              </AnimatedSection>
+              
+              <div className="d-flex gap-3 mb-4" style={{ animation: 'fadeInUp 1s 0.6s ease forwards', opacity: 0 }}>
                 <Link href="/products" className="btn-mers-primary">
-                  ✨ Explore Collection
+                  {t('hero.explore')}
                 </Link>
                 <Link href="/about" className="btn-mers-outline">
-                  Our Story
+                  {t('hero.our_story')}
                 </Link>
               </div>
 
               {/* Stats */}
               <div className="row mt-5 pt-3" style={{ animation: 'fadeInUp 1s 0.9s ease forwards', opacity: 0 }}>
-                <div className="col-4">
+                <div className="col-6 col-md-3 mb-3 mb-md-0">
+                  <h3 style={{ color: 'var(--gold-light)', fontFamily: 'var(--font-heading)' }}>
+                    {siteViews.toLocaleString()}
+                  </h3>
+                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', margin: 0 }}>{t('stats.site_views')}</p>
+                </div>
+                <div className="col-6 col-md-3 mb-3 mb-md-0">
                   <h3 style={{ color: 'var(--gold-light)', fontFamily: 'var(--font-heading)' }}>500+</h3>
-                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', margin: 0 }}>Happy Customers</p>
+                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', margin: 0 }}>{t('stats.happy_customers')}</p>
                 </div>
-                <div className="col-4">
+                <div className="col-6 col-md-3">
                   <h3 style={{ color: 'var(--gold-light)', fontFamily: 'var(--font-heading)' }}>100+</h3>
-                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', margin: 0 }}>Unique Designs</p>
+                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', margin: 0 }}>{t('stats.unique_designs')}</p>
                 </div>
-                <div className="col-4">
+                <div className="col-6 col-md-3">
                   <h3 style={{ color: 'var(--gold-light)', fontFamily: 'var(--font-heading)' }}>6</h3>
-                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', margin: 0 }}>Categories</p>
+                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', margin: 0 }}>{t('stats.categories')}</p>
                 </div>
               </div>
             </div>
@@ -120,8 +140,8 @@ export default function HomePage() {
         <div className="container">
           <AnimatedSection>
             <div className="section-title">
-              <h2>Featured Collection</h2>
-              <p>Handpicked favorites from our latest arrivals — each piece crafted with meticulous attention to detail</p>
+              <h2>{t('section.featured.title')}</h2>
+              <p>{t('section.featured.subtitle')}</p>
             </div>
           </AnimatedSection>
 
@@ -146,12 +166,12 @@ export default function HomePage() {
       </section>
 
       {/* ====== CATEGORIES ====== */}
-      <section className="section-mers bg-soft">
+      <section className="section-mers" style={{ backgroundColor: 'var(--rose-gold-light)' }}>
         <div className="container">
           <AnimatedSection>
             <div className="section-title">
-              <h2>Shop by Category</h2>
-              <p>Browse our curated collections of handcrafted Turkish accessories</p>
+              <h2>{t('section.categories.title')}</h2>
+              <p>{t('section.categories.subtitle')}</p>
             </div>
           </AnimatedSection>
 
@@ -207,12 +227,12 @@ export default function HomePage() {
       </section>
 
       {/* ====== TESTIMONIALS ====== */}
-      <section className="section-mers bg-soft">
+      <section className="section-mers" style={{ backgroundColor: 'var(--deep-plum)', color: 'white' }}>
         <div className="container">
           <AnimatedSection>
-            <div className="section-title">
-              <h2>What Our Customers Say</h2>
-              <p>Join hundreds of happy customers who love MERS Tassel accessories</p>
+            <div className="section-title text-white">
+              <h2 style={{ color: 'white' }}>{t('testimonials.title')}</h2>
+              <p style={{ color: 'rgba(255,255,255,0.8)' }}>{t('testimonials.subtitle')}</p>
             </div>
           </AnimatedSection>
 
