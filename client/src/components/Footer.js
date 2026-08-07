@@ -13,7 +13,7 @@ export default function Footer() {
               MERS <span>Tassel</span>
             </span>
             <p className="footer-description">
-              Handcrafted accessories from Turkey, designed to add elegance and charm 
+              Handcrafted accessories from Turkey, designed to add elegance and charm
               to your everyday style. Each piece tells a story of artistry and passion.
             </p>
             <div className="footer-social">
@@ -54,7 +54,7 @@ export default function Footer() {
               <li>📍 Istanbul, Turkey</li>
               <li>📧 hello@merstassel.com</li>
               <li>📱 +90 555 123 4567</li>
-              <li>🕐 Mon-Sat: 9AM - 8PM</li>
+              <li>🕐 : 24/7 Support</li>
             </ul>
           </div>
         </div>
