@@ -114,3 +114,26 @@ export async function submitContactForm(data) {
     body: JSON.stringify(data),
   });
 }
+
+// ============================================
+// ANALYTICS API
+// ============================================
+
+/**
+ * Record a site visit
+ * @param {string} page - The page path visited
+ * @param {string} referrer - The document referrer
+ */
+export async function recordVisit(page = '/', referrer = '') {
+  return apiFetch('/analytics/record/', {
+    method: 'POST',
+    body: JSON.stringify({ page, referrer }),
+  });
+}
+
+/**
+ * Get current site statistics
+ */
+export async function getSiteStats() {
+  return apiFetch('/analytics/stats/');
+}
