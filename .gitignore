@@ -1,0 +1,71 @@
+# ==============================
+# MERS Tassel - Root .gitignore
+# ==============================
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# ==============================
+# Python / Django (server/)
+# ==============================
+server/venv/
+server/__pycache__/
+server/**/__pycache__/
+server/**/*.pyc
+server/**/*.pyo
+server/*.pyc
+*.pyc
+*.pyo
+__pycache__/
+server/db.sqlite3
+server/media/
+server/staticfiles/
+server/*.log
+server/.env
+
+# ==============================
+# Node.js / Next.js (client/)
+# ==============================
+client/node_modules/
+client/.next/
+client/out/
+client/.env
+client/.env.local
+client/.env.production.local
+client/.env.development.local
+client/npm-debug.log*
+client/yarn-debug.log*
+client/yarn-error.log*
+node_modules/
+
+# Temp project folder (if exists)
+client_temp/
+
+# ==============================
+# Misc
+# ==============================
+*.log
+*.tmp
+*.bak
+*.cache
+.gemini/
