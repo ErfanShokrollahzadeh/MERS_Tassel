@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AnimatedSection from '@/components/AnimatedSection';
 import ProductCard from '@/components/ProductCard';
+import VisitorStats from '@/components/VisitorStats';
 import { getFeaturedProducts, getCategories } from '@/lib/api';
 
 // Fallback data when API is not available

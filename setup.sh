@@ -20,7 +20,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Run migrations
-python manage.py makemigrations products contact
+python manage.py makemigrations products contact analytics
 python manage.py migrate
 
 # Seed sample data
