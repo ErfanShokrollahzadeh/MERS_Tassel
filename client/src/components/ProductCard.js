@@ -1,9 +1,13 @@
+'use client';
+
 import Link from 'next/link';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 /**
  * ProductCard - Displays a product with image, category, name, price, and hover effects.
  */
 export default function ProductCard({ product }) {
+  const { t } = useLanguage();
   const hasImage = product.image && !product.image.includes('undefined');
   const isOnSale = product.discount_price && product.discount_price < product.price;
 
@@ -23,7 +27,7 @@ export default function ProductCard({ product }) {
     <div className="product-card h-100">
       <div className="product-card-image">
         {isOnSale && (
-          <span className="product-card-badge">SALE</span>
+          <span className="product-card-badge">{t('general.sale')}</span>
         )}
         {hasImage ? (
           <img 

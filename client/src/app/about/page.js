@@ -1,29 +1,32 @@
 'use client';
 
 import AnimatedSection from '@/components/AnimatedSection';
-
-const values = [
-  { icon: '🎨', title: 'Artisan Craft', desc: 'Every piece is handcrafted by skilled Turkish artisans, preserving centuries-old traditions while embracing modern design.' },
-  { icon: '🌿', title: 'Sustainable', desc: 'We use ethically sourced materials and eco-friendly packaging to minimize our environmental footprint.' },
-  { icon: '💖', title: 'Made with Love', desc: 'Passion drives everything we do. Each accessory carries the warmth and dedication of its maker.' },
-  { icon: '✨', title: 'Unique Designs', desc: 'No two pieces are exactly alike. Our designs blend Turkish heritage with contemporary fashion trends.' },
-];
-
-const team = [
-  { name: 'Merve Yılmaz', role: 'Founder & Designer', emoji: '👩‍🎨' },
-  { name: 'Selin Kaya', role: 'Head Artisan', emoji: '👩‍🔧' },
-  { name: 'Emre Demir', role: 'Operations Manager', emoji: '👨‍💼' },
-];
-
-const milestones = [
-  { year: '2020', event: 'MERS Tassel was born from a small workshop in Istanbul.' },
-  { year: '2021', event: 'Launched online store and shipped first international orders.' },
-  { year: '2022', event: 'Expanded collection to 100+ unique designs across 6 categories.' },
-  { year: '2023', event: 'Reached 500+ happy customers worldwide.' },
-  { year: '2024', event: 'Introduced new Jasuichi and Solid Azon collections.' },
-];
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function AboutPage() {
+  const { t } = useLanguage();
+
+  const values = [
+    { icon: '🎨', title: t('about.values.1.title'), desc: t('about.values.1.desc') },
+    { icon: '🌿', title: t('about.values.2.title'), desc: t('about.values.2.desc') },
+    { icon: '💖', title: t('about.values.3.title'), desc: t('about.values.3.desc') },
+    { icon: '✨', title: t('about.values.4.title'), desc: t('about.values.4.desc') },
+  ];
+
+  const team = [
+    { name: 'Merve Yılmaz', role: t('about.team.role1'), emoji: '👩‍🎨' },
+    { name: 'Selin Kaya', role: t('about.team.role2'), emoji: '👩‍🔧' },
+    { name: 'Emre Demir', role: t('about.team.role3'), emoji: '👨‍💼' },
+  ];
+
+  const milestones = [
+    { year: '2020', event: t('about.journey.1') },
+    { year: '2021', event: t('about.journey.2') },
+    { year: '2022', event: t('about.journey.3') },
+    { year: '2023', event: t('about.journey.4') },
+    { year: '2024', event: t('about.journey.5') },
+  ];
+
   return (
     <>
       {/* Hero */}
@@ -31,8 +34,8 @@ export default function AboutPage() {
         <div className="floating-shape" style={{ width: 250, height: 250, top: '5%', right: '8%', animation: 'float 8s ease-in-out infinite' }}></div>
         <div className="floating-shape" style={{ width: 180, height: 180, bottom: '5%', left: '5%', animation: 'float 6s ease-in-out infinite reverse' }}></div>
         <div className="container">
-          <h1>About MERS Tassel</h1>
-          <p>Our story, our passion, our craft — all from the heart of Turkey</p>
+          <h1>{t('about.title')}</h1>
+          <p>{t('about.subtitle')}</p>
         </div>
       </div>
 
@@ -58,26 +61,19 @@ export default function AboutPage() {
             <div className="col-lg-6">
               <AnimatedSection delay={200}>
                 <p style={{ color: 'var(--rose-gold)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '2px', fontSize: '0.9rem', marginBottom: '12px' }}>
-                  Our Story
+                  {t('hero.our_story')}
                 </p>
                 <h2 style={{ marginBottom: '24px' }}>
-                  Where Tradition Meets Modern Elegance
+                  {t('about.story.title')}
                 </h2>
                 <p style={{ fontSize: '1.05rem', lineHeight: 1.8, marginBottom: '16px' }}>
-                  MERS Tassel was founded in 2020 in the vibrant city of Istanbul, Turkey — a place 
-                  where East meets West, and centuries of artisan tradition flow through every street 
-                  and bazaar.
+                  {t('about.story.p1')}
                 </p>
                 <p style={{ fontSize: '1.05rem', lineHeight: 1.8, marginBottom: '16px' }}>
-                  What started as a small passion project creating tassel accessories for friends and 
-                  family has grown into a beloved brand serving customers worldwide. Our founder, 
-                  inspired by the rich tapestry of Turkish craftsmanship, set out to create accessories 
-                  that are both beautiful and meaningful.
+                  {t('about.story.p2')}
                 </p>
                 <p style={{ fontSize: '1.05rem', lineHeight: 1.8 }}>
-                  Today, every MERS Tassel piece is still handcrafted with the same love and attention 
-                  to detail that started it all — from our signature necklaces to our unique Jasuichi 
-                  and Solid Azon collections.
+                  {t('about.story.p3')}
                 </p>
               </AnimatedSection>
             </div>
@@ -90,8 +86,8 @@ export default function AboutPage() {
         <div className="container">
           <AnimatedSection>
             <div className="section-title">
-              <h2>Our Values</h2>
-              <p>The principles that guide every accessory we create</p>
+              <h2>{t('about.values.title')}</h2>
+              <p>{t('about.values.subtitle')}</p>
             </div>
           </AnimatedSection>
 
@@ -116,8 +112,8 @@ export default function AboutPage() {
         <div className="container">
           <AnimatedSection>
             <div className="section-title">
-              <h2>Our Journey</h2>
-              <p>From a small Istanbul workshop to a global accessories brand</p>
+              <h2>{t('about.journey.title')}</h2>
+              <p>{t('about.journey.subtitle')}</p>
             </div>
           </AnimatedSection>
 
@@ -170,8 +166,8 @@ export default function AboutPage() {
         <div className="container">
           <AnimatedSection>
             <div className="section-title">
-              <h2>Meet Our Team</h2>
-              <p>The passionate people behind MERS Tassel</p>
+              <h2>{t('about.team.title')}</h2>
+              <p>{t('about.team.subtitle')}</p>
             </div>
           </AnimatedSection>
 
@@ -202,13 +198,13 @@ export default function AboutPage() {
         <div className="container">
           <AnimatedSection>
             <h2 style={{ color: 'var(--white)', marginBottom: '16px' }}>
-              Join the MERS Tassel Family
+              {t('cta.title')}
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.8)', maxWidth: '500px', margin: '0 auto 30px', fontSize: '1.1rem' }}>
-              Discover accessories that celebrate craftsmanship, culture, and creativity.
+              {t('cta.subtitle')}
             </p>
             <a href="/products" className="btn-mers-gold">
-              ✨ Explore Our Collection
+              {t('cta.btn')}
             </a>
           </AnimatedSection>
         </div>

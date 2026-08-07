@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import AnimatedSection from '@/components/AnimatedSection';
 import ProductCard from '@/components/ProductCard';
 import { getProducts, getCategories } from '@/lib/api';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // Fallback data
 const fallbackProducts = [
@@ -26,19 +27,20 @@ const fallbackProducts = [
   { id: 16, name: 'Rainbow Charm Bracelet', slug: 'rainbow-charm-bracelet', category_name: 'Cute Accessories', price: '44.99', discount_price: '34.99', is_on_sale: true, image: null },
 ];
 
-const categoryList = [
-  { slug: '', name: 'All Products' },
-  { slug: 'necklaces', name: 'Necklaces' },
-  { slug: 'pendants', name: 'Pendants' },
-  { slug: 'bag-accessories', name: 'Bag Accessories' },
-  { slug: 'jasuichi', name: 'Jasuichi' },
-  { slug: 'solid-azon', name: 'Solid Azon' },
-  { slug: 'cute-accessories', name: 'Cute Accessories' },
-];
-
 function ProductsContent() {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get('category') || '';
+  const { t } = useLanguage();
+
+  const categoryList = [
+    { slug: '', name: t('products.all') },
+    { slug: 'necklaces', name: t('category.necklaces') },
+    { slug: 'pendants', name: t('category.pendants') },
+    { slug: 'bag-accessories', name: t('category.bag-accessories') },
+    { slug: 'jasuichi', name: t('category.jasuichi') },
+    { slug: 'solid-azon', name: t('category.solid-azon') },
+    { slug: 'cute-accessories', name: t('category.cute-accessories') },
+  ];
 
   const [products, setProducts] = useState(fallbackProducts);
   const [activeCategory, setActiveCategory] = useState(initialCategory);
@@ -102,8 +104,8 @@ function ProductsContent() {
         <div className="floating-shape" style={{ width: 200, height: 200, top: '10%', left: '5%', animation: 'float 8s ease-in-out infinite' }}></div>
         <div className="floating-shape" style={{ width: 150, height: 150, bottom: '10%', right: '10%', animation: 'float 6s ease-in-out infinite reverse' }}></div>
         <div className="container">
-          <h1>Our Collection</h1>
-          <p>Discover handcrafted accessories that tell a story</p>
+          <h1>{t('products.title')}</h1>
+          <p>{t('products.subtitle')}</p>
         </div>
       </div>
 
@@ -117,7 +119,7 @@ function ProductsContent() {
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="🔍 Search accessories..."
+                    placeholder={t('products.search')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     style={{
@@ -158,8 +160,8 @@ function ProductsContent() {
           {!loading && (
             <>
               <p className="text-center mb-4" style={{ color: 'var(--gray-500)' }}>
-                Showing {products.length} product{products.length !== 1 ? 's' : ''}
-                {activeCategory && ` in ${categoryList.find(c => c.slug === activeCategory)?.name}`}
+                {t('products.showing')} {products.length} {products.length !== 1 ? t('products.products') : t('products.product')}
+                {activeCategory && ` ${t('products.in')} ${categoryList.find(c => c.slug === activeCategory)?.name}`}
               </p>
               <div className="row g-4">
                 {products.map((product, index) => (
@@ -174,13 +176,13 @@ function ProductsContent() {
               {products.length === 0 && (
                 <div className="text-center py-5">
                   <p style={{ fontSize: '4rem', marginBottom: '16px' }}>🔍</p>
-                  <h3 style={{ color: 'var(--gray-500)' }}>No products found</h3>
-                  <p style={{ color: 'var(--gray-500)' }}>Try a different category or search term</p>
+                  <h3 style={{ color: 'var(--gray-500)' }}>{t('products.no_found')}</h3>
+                  <p style={{ color: 'var(--gray-500)' }}>{t('products.try_diff')}</p>
                   <button
                     className="btn-mers-primary mt-3"
                     onClick={() => { setActiveCategory(''); setSearchTerm(''); }}
                   >
-                    View All Products
+                    {t('products.view_all')}
                   </button>
                 </div>
               )}

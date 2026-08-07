@@ -198,17 +198,17 @@ export default function HomePage() {
         <div className="container">
           <AnimatedSection>
             <div className="section-title">
-              <h2>Why Choose MERS Tassel</h2>
-              <p>We pour our heart into every accessory we create</p>
+              <h2>{t('section.why.title')}</h2>
+              <p>{t('section.why.subtitle')}</p>
             </div>
           </AnimatedSection>
 
           <div className="row g-4">
             {[
-              { icon: '🎨', title: 'Handcrafted', desc: 'Each piece is carefully handcrafted by skilled artisans in Turkey using traditional techniques.' },
-              { icon: '💎', title: 'Premium Quality', desc: 'We use only the finest materials — from sterling silver to natural gemstones and premium silks.' },
-              { icon: '🚚', title: 'Worldwide Shipping', desc: 'We ship our accessories worldwide so everyone can enjoy Turkish craftsmanship.' },
-              { icon: '💝', title: 'Gift Ready', desc: 'Every order comes beautifully packaged, perfect for gifting to your loved ones.' },
+              { icon: '🎨', title: t('section.why.1.title'), desc: t('section.why.1.desc') },
+              { icon: '💎', title: t('section.why.2.title'), desc: t('section.why.2.desc') },
+              { icon: '🚚', title: t('section.why.3.title'), desc: t('section.why.3.desc') },
+              { icon: '💝', title: t('section.why.4.title'), desc: t('section.why.4.desc') },
             ].map((feature, index) => (
               <div className="col-lg-3 col-md-6" key={index}>
                 <AnimatedSection delay={index * 150}>
@@ -259,13 +259,13 @@ export default function HomePage() {
         <div className="container">
           <AnimatedSection>
             <h2 style={{ color: 'var(--white)', marginBottom: '16px' }}>
-              Ready to Find Your Perfect Accessory?
+              {t('cta.title')}
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.8)', maxWidth: '500px', margin: '0 auto 30px', fontSize: '1.1rem' }}>
-              Explore our full collection and discover handcrafted treasures from Turkey.
+              {t('cta.subtitle')}
             </p>
             <Link href="/products" className="btn-mers-gold">
-              ✨ Shop the Collection
+              {t('cta.btn')}
             </Link>
           </AnimatedSection>
         </div>

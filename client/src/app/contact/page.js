@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import AnimatedSection from '@/components/AnimatedSection';
 import { submitContactForm } from '@/lib/api';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ContactPage() {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -40,13 +42,6 @@ export default function ContactPage() {
     }
   };
 
-  const contactInfo = [
-    { icon: '📍', title: 'Visit Us', text: 'Istanbul, Turkey\nGrand Bazaar District' },
-    { icon: '📧', title: 'Email Us', text: 'hello@merstassel.com\nsupport@merstassel.com' },
-    { icon: '📱', title: 'Call Us', text: '+90 555 123 4567\nMon-Sat: 9AM - 8PM (GMT+3)' },
-    { icon: '💬', title: 'Social Media', text: '@merstassel on Instagram\nMERS Tassel on Facebook' },
-  ];
-
   return (
     <>
       {/* Hero */}
@@ -54,8 +49,8 @@ export default function ContactPage() {
         <div className="floating-shape" style={{ width: 220, height: 220, top: '8%', left: '8%', animation: 'float 7s ease-in-out infinite' }}></div>
         <div className="floating-shape" style={{ width: 160, height: 160, bottom: '8%', right: '12%', animation: 'float 5s ease-in-out infinite reverse' }}></div>
         <div className="container">
-          <h1>Contact Us</h1>
-          <p>We&apos;d love to hear from you — reach out anytime!</p>
+          <h1>{t('contact.title')}</h1>
+          <p>{t('contact.subtitle')}</p>
         </div>
       </div>
 
@@ -66,25 +61,43 @@ export default function ContactPage() {
             <div className="col-lg-5">
               <AnimatedSection>
                 <div className="contact-info-card">
-                  <h3>Get in Touch</h3>
+                  <h3>{t('contact.get_in_touch')}</h3>
                   <p style={{ color: 'rgba(255,255,255,0.8)', marginBottom: '35px', fontSize: '1.05rem' }}>
-                    Have a question about our products? Want to place a custom order? 
-                    We&apos;re here to help!
+                    {t('contact.get_in_touch_desc')}
                   </p>
 
-                  {contactInfo.map((item, index) => (
-                    <div className="contact-info-item" key={index}>
-                      <span className="icon">{item.icon}</span>
-                      <div>
-                        <strong>{item.title}</strong>
-                        <p style={{ whiteSpace: 'pre-line' }}>{item.text}</p>
-                      </div>
+                  <div className="contact-info-item">
+                    <span className="icon">📍</span>
+                    <div>
+                      <strong>{t('contact.visit_us')}</strong>
+                      <p style={{ whiteSpace: 'pre-line' }}>{t('contact.visit_us_desc')}</p>
                     </div>
-                  ))}
+                  </div>
+                  <div className="contact-info-item">
+                    <span className="icon">📧</span>
+                    <div>
+                      <strong>{t('contact.email_us')}</strong>
+                      <p style={{ whiteSpace: 'pre-line' }}>hello@merstassel.com{'\n'}support@merstassel.com</p>
+                    </div>
+                  </div>
+                  <div className="contact-info-item">
+                    <span className="icon">📱</span>
+                    <div>
+                      <strong>{t('contact.call_us')}</strong>
+                      <p style={{ whiteSpace: 'pre-line' }}>{t('contact.call_us_desc')}</p>
+                    </div>
+                  </div>
+                  <div className="contact-info-item">
+                    <span className="icon">💬</span>
+                    <div>
+                      <strong>{t('contact.social')}</strong>
+                      <p style={{ whiteSpace: 'pre-line' }}>@merstassel on Instagram{'\n'}MERS Tassel on Facebook</p>
+                    </div>
+                  </div>
 
                   {/* Social Links */}
                   <div style={{ marginTop: '30px', paddingTop: '30px', borderTop: '1px solid rgba(255,255,255,0.15)' }}>
-                    <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '12px', fontWeight: 500 }}>Follow Us</p>
+                    <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '12px', fontWeight: 500 }}>{t('contact.follow_us')}</p>
                     <div className="footer-social">
                       <a href="#" aria-label="Instagram" style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'var(--white)' }}>📷</a>
                       <a href="#" aria-label="Facebook" style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'var(--white)' }}>📘</a>
@@ -106,9 +119,9 @@ export default function ContactPage() {
                   boxShadow: 'var(--shadow-sm)',
                   border: '1px solid rgba(183,110,121,0.08)',
                 }}>
-                  <h3 style={{ marginBottom: '8px' }}>Send Us a Message</h3>
+                  <h3 style={{ marginBottom: '8px' }}>{t('contact.send_message')}</h3>
                   <p style={{ marginBottom: '30px', color: 'var(--gray-500)' }}>
-                    Fill out the form below and we&apos;ll respond within 24 hours.
+                    {t('contact.send_message_desc')}
                   </p>
 
                   {/* Status Messages */}
@@ -121,19 +134,19 @@ export default function ContactPage() {
                   <form className="contact-form" onSubmit={handleSubmit}>
                     <div className="row g-3">
                       <div className="col-md-6">
-                        <label className="form-label">Your Name *</label>
+                        <label className="form-label">{t('contact.form.name')}</label>
                         <input
                           type="text"
                           name="name"
                           className="form-control"
-                          placeholder="e.g. Ayşe Yılmaz"
+                          placeholder={t('contact.form.name_ph')}
                           value={formData.name}
                           onChange={handleChange}
                           required
                         />
                       </div>
                       <div className="col-md-6">
-                        <label className="form-label">Email Address *</label>
+                        <label className="form-label">{t('contact.form.email')}</label>
                         <input
                           type="email"
                           name="email"
@@ -145,24 +158,24 @@ export default function ContactPage() {
                         />
                       </div>
                       <div className="col-12">
-                        <label className="form-label">Subject *</label>
+                        <label className="form-label">{t('contact.form.subject')}</label>
                         <input
                           type="text"
                           name="subject"
                           className="form-control"
-                          placeholder="e.g. Custom order inquiry"
+                          placeholder={t('contact.form.subject_ph')}
                           value={formData.subject}
                           onChange={handleChange}
                           required
                         />
                       </div>
                       <div className="col-12">
-                        <label className="form-label">Message *</label>
+                        <label className="form-label">{t('contact.form.message')}</label>
                         <textarea
                           name="message"
                           className="form-control"
                           rows="6"
-                          placeholder="Tell us what's on your mind..."
+                          placeholder={t('contact.form.message_ph')}
                           value={formData.message}
                           onChange={handleChange}
                           required
@@ -178,10 +191,10 @@ export default function ContactPage() {
                           {submitting ? (
                             <>
                               <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                              Sending...
+                              {t('contact.form.sending')}
                             </>
                           ) : (
-                            '💌 Send Message'
+                            t('contact.form.submit')
                           )}
                         </button>
                       </div>
@@ -199,18 +212,18 @@ export default function ContactPage() {
         <div className="container">
           <AnimatedSection>
             <div className="section-title">
-              <h2>Frequently Asked Questions</h2>
-              <p>Quick answers to common questions</p>
+              <h2>{t('contact.faq.title')}</h2>
+              <p>{t('contact.faq.subtitle')}</p>
             </div>
           </AnimatedSection>
 
           <div className="row justify-content-center">
             <div className="col-lg-8">
               {[
-                { q: 'Do you ship internationally?', a: 'Yes! We ship worldwide from Istanbul, Turkey. Standard international shipping takes 7-14 business days.' },
-                { q: 'Can I request a custom order?', a: 'Absolutely! We love creating custom pieces. Send us your idea through the contact form or email us directly.' },
-                { q: 'What materials do you use?', a: 'We use premium materials including sterling silver, natural gemstones, silk threads, genuine leather, and gold-plated hardware.' },
-                { q: 'What is your return policy?', a: 'We offer a 30-day return policy for unused items in original packaging. Contact us to initiate a return.' },
+                { q: t('contact.faq.1.q'), a: t('contact.faq.1.a') },
+                { q: t('contact.faq.2.q'), a: t('contact.faq.2.a') },
+                { q: t('contact.faq.3.q'), a: t('contact.faq.3.a') },
+                { q: t('contact.faq.4.q'), a: t('contact.faq.4.a') },
               ].map((faq, index) => (
                 <AnimatedSection key={index} delay={index * 100}>
                   <div style={{
