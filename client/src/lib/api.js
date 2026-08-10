@@ -7,31 +7,36 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/a
 
 /**
  * Generic fetch wrapper with error handling
+ * @param {string} endpoint - API endpoint
+ * @param {Object} options - Fetch options (may include `token` for auth)
  */
 async function apiFetch(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
-  
-  const defaultOptions = {
-    headers: {
-      'Content-Type': 'application/json',
-    },
+
+  const { token, ...fetchOptions } = options;
+
+  const defaultHeaders = {
+    'Content-Type': 'application/json',
   };
 
+  if (token) {
+    defaultHeaders['Authorization'] = `Token ${token}`;
+  }
+
   const mergedOptions = {
-    ...defaultOptions,
-    ...options,
+    ...fetchOptions,
     headers: {
-      ...defaultOptions.headers,
-      ...options.headers,
+      ...defaultHeaders,
+      ...fetchOptions.headers,
     },
   };
 
   try {
     const response = await fetch(url, mergedOptions);
-    
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || `API Error: ${response.status} ${response.statusText}`);
+      throw new Error(errorData.detail || JSON.stringify(errorData) || `API Error: ${response.status} ${response.statusText}`);
     }
 
     return await response.json();
@@ -137,3 +142,49 @@ export async function recordVisit(page = '/', referrer = '') {
 export async function getSiteStats() {
   return apiFetch('/analytics/stats/');
 }
+
+// ============================================
+// ACCOUNTS / AUTH API
+// ============================================
+
+/**
+ * Register a new user
+ * @param {Object} data - { username, email, first_name, last_name, password, password2 }
+ */
+export async function registerUser(data) {
+  return apiFetch('/accounts/register/', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Log in with username and password
+ * @param {Object} data - { username, password }
+ */
+export async function loginUser(data) {
+  return apiFetch('/accounts/login/', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Log out (invalidates the token)
+ * @param {string} token - Auth token
+ */
+export async function logoutUser(token) {
+  return apiFetch('/accounts/logout/', {
+    method: 'POST',
+    token,
+  });
+}
+
+/**
+ * Get the current user's profile
+ * @param {string} token - Auth token
+ */
+export async function getUserProfile(token) {
+  return apiFetch('/accounts/profile/', { token });
+}
+

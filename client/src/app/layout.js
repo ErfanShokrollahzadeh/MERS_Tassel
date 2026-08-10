@@ -3,6 +3,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
 import { LanguageProvider } from '@/contexts/LanguageContext';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 export const metadata = {
   title: 'MERS Tassel | Handcrafted Accessories from Turkey',
@@ -32,10 +33,12 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <LanguageProvider>
-          <Navbar />
-          <main>{children}</main>
-          <Footer />
-          <ScrollToTop />
+          <AuthProvider>
+            <Navbar />
+            <main>{children}</main>
+            <Footer />
+            <ScrollToTop />
+          </AuthProvider>
         </LanguageProvider>
 
         {/* Bootstrap JS */}

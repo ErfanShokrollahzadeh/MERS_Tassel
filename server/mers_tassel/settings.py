@@ -26,11 +26,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # Third party
     'rest_framework',
+    'rest_framework.authtoken',
     'corsheaders',
     # Local apps
     'products',
     'contact',
     'analytics',
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -106,6 +108,9 @@ CORS_ALLOW_CREDENTIALS = True
 
 # REST Framework settings
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
