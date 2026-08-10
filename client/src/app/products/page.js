@@ -22,9 +22,9 @@ const fallbackProducts = [
   { id: 11, name: 'Jasuichi Tassel Earrings', slug: 'jasuichi-tassel-earrings', category_name: 'Jasuichi', price: '59.99', discount_price: null, is_on_sale: false, image: null },
   { id: 12, name: 'Solid Azon Statement Ring', slug: 'solid-azon-statement-ring', category_name: 'Solid Azon', price: '109.99', discount_price: null, is_on_sale: false, image: null },
   { id: 13, name: 'Solid Azon Cuff Bracelet', slug: 'solid-azon-cuff-bracelet', category_name: 'Solid Azon', price: '139.99', discount_price: '109.99', is_on_sale: true, image: null },
-  { id: 14, name: 'Mini Flower Hair Clips Set', slug: 'mini-flower-hair-clips-set', category_name: 'Cute Accessories', price: '19.99', discount_price: null, is_on_sale: false, image: null },
-  { id: 15, name: 'Kawaii Cat Ear Headband', slug: 'kawaii-cat-ear-headband', category_name: 'Cute Accessories', price: '29.99', discount_price: null, is_on_sale: false, image: null },
-  { id: 16, name: 'Rainbow Charm Bracelet', slug: 'rainbow-charm-bracelet', category_name: 'Cute Accessories', price: '44.99', discount_price: '34.99', is_on_sale: true, image: null },
+  { id: 14, name: 'Mini Flower Hair Clips Set', slug: 'mini-flower-hair-clips-set', category_name: 'Prayer Beads', price: '19.99', discount_price: null, is_on_sale: false, image: null },
+  { id: 15, name: 'Kawaii Cat Ear Headband', slug: 'kawaii-cat-ear-headband', category_name: 'Prayer Beads', price: '29.99', discount_price: null, is_on_sale: false, image: null },
+  { id: 16, name: 'Rainbow Charm Bracelet', slug: 'rainbow-charm-bracelet', category_name: 'Prayer Beads', price: '44.99', discount_price: '34.99', is_on_sale: true, image: null },
 ];
 
 function ProductsContent() {
