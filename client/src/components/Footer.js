@@ -20,10 +20,10 @@ export default function Footer() {
               {t('footer.brand_desc')}
             </p>
             <div className="footer-social">
-              <a href="#" aria-label="Instagram">📷</a>
-              <a href="#" aria-label="Facebook">📘</a>
-              <a href="#" aria-label="Twitter">🐦</a>
-              <a href="#" aria-label="Pinterest">📌</a>
+              <a href="#" aria-label="Instagram"><i className="fa-brands fa-instagram"></i></a>
+              <a href="#" aria-label="Facebook"><i className="fa-brands fa-facebook"></i></a>
+              <a href="#" aria-label="X (Twitter)"><i className="fa-brands fa-x-twitter"></i></a>
+              <a href="#" aria-label="Pinterest"><i className="fa-brands fa-pinterest"></i></a>
             </div>
           </div>
 
@@ -57,7 +57,7 @@ export default function Footer() {
               <li>📍 Turkey</li>
               <li>📧 hello@merstassel.com</li>
               <li>📱 +90 555 123 4567</li>
-              <li>🕐 : 24/7 Support</li>
+              <li>🕐 : 7/24 Support</li>
             </ul>
           </div>
         </div>
