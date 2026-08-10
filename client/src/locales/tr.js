@@ -73,6 +73,7 @@ export const tr = {
   "category.bag-accessories": "Çanta Aksesuarları",
   "category.keychains": "Anahtarlıklar",
   "category.earrings": "Küpeler",
+  "category.prayer-beads": "Tespihler",
   "category.jasuichi": "Jasuichi",
   "category.solid-azon": "Solid Azon",
   "category.cute-accessories": "Sevimli Aksesuarlar",

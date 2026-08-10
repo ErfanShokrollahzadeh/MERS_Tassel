@@ -16,9 +16,9 @@ export default function ProductCard({ product }) {
     'Necklaces': '📿',
     'Pendants': '💎',
     'Bag Accessories': '👜',
-    'Jasuichi': '✨',
-    'Solid Azon': '💍',
-    'Cute Accessories': '🎀',
+    'Keychains': '🔑',
+    'Earrings': '💍',
+    'Prayer Beads': '📿',
   };
 
   const emoji = categoryEmojis[product.category_name] || '✨';
@@ -30,8 +30,8 @@ export default function ProductCard({ product }) {
           <span className="product-card-badge">{t('general.sale')}</span>
         )}
         {hasImage ? (
-          <img 
-            src={product.image} 
+          <img
+            src={product.image}
             alt={product.image_alt || product.name}
             loading="lazy"
           />

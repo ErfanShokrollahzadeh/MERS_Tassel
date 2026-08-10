@@ -39,7 +39,7 @@ function ProductsContent() {
     { slug: 'bag-accessories', name: t('category.bag-accessories') },
     { slug: 'keychains', name: t('category.keychains') },
     { slug: 'earrings', name: t('category.earrings') },
-    { slug: 'cute-accessories', name: t('category.cute-accessories') },
+    { slug: 'prayer-beads', name: t('category.prayer-beads') },
   ];
 
   const [products, setProducts] = useState(fallbackProducts);

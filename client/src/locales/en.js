@@ -73,6 +73,7 @@ export const en = {
   "category.bag-accessories": "Bag Accessories",
   "category.keychains": "Keychains",
   "category.earrings": "Earrings",
+  "category.prayer-beads": "Prayer Beads",
   "category.jasuichi": "Jasuichi",
   "category.solid-azon": "Solid Azon",
   "category.cute-accessories": "Cute Accessories",
