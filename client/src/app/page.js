@@ -24,8 +24,8 @@ const categoryData = [
   { slug: 'necklaces', name: 'Necklaces', icon: '📿', desc: 'Elegant chain & tassel designs' },
   { slug: 'pendants', name: 'Pendants', icon: '💎', desc: 'Stunning crystal & gem pendants' },
   { slug: 'bag-accessories', name: 'Bag Accessories', icon: '👜', desc: 'Charms & keychains' },
-  { slug: 'jasuichi', name: 'Jasuichi', icon: '✨', desc: 'Traditional artisan pieces' },
-  { slug: 'solid-azon', name: 'Solid Azon', icon: '💍', desc: 'Bold statement pieces' },
+  { slug: 'keychains', name: 'Keychains', icon: '🔑', desc: 'Traditional artisan pieces' },
+  { slug: 'earrings', name: 'Earrings', icon: '💍', desc: 'Bold statement pieces' },
   { slug: 'cute-accessories', name: 'Cute Accessories', icon: '🎀', desc: 'Adorable daily essentials' },
 ];
 
@@ -65,7 +65,7 @@ export default function HomePage() {
       } finally {
         setLoading(false);
       }
-      
+
       try {
         const statsData = await recordVisit('/');
         if (statsData && statsData.display_total) {
@@ -99,7 +99,7 @@ export default function HomePage() {
                   {t('hero.subtitle')}
                 </p>
               </AnimatedSection>
-              
+
               <div className="d-flex gap-3 mb-4" style={{ animation: 'fadeInUp 1s 0.6s ease forwards', opacity: 0 }}>
                 <Link href="/products" className="btn-mers-primary">
                   {t('hero.explore')}
