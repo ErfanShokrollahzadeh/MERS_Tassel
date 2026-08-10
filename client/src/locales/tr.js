@@ -172,4 +172,23 @@ export const tr = {
   "auth.have_account": "Zaten hesabınız var mı?",
   "auth.or": "veya",
   "auth.welcome": "Hoş Geldiniz",
+
+  // Product Detail & Checkout Pages
+  "product.buy_now": "Hemen Al",
+  "product.description": "Açıklama",
+  "product.back_to_products": "← Ürünlere Dön",
+  "product.not_found": "Ürün bulunamadı",
+  "checkout.title": "Ödeme",
+  "checkout.subtitle": "Alışverişi tamamlayın",
+  "checkout.order_summary": "Sipariş Özeti",
+  "checkout.total": "Toplam",
+  "checkout.payment_details": "Ödeme Bilgileri",
+  "checkout.name_on_card": "Kart Üzerindeki İsim",
+  "checkout.card_number": "Kart Numarası",
+  "checkout.address": "Teslimat Adresi",
+  "checkout.confirm_payment": "Ödemeyi Onayla",
+  "checkout.processing": "İşleniyor...",
+  "checkout.success": "Ödeme Başarılı!",
+  "checkout.success_desc": "Alışverişiniz için teşekkür ederiz. Siparişiniz yakında işleme alınacaktır.",
+  "checkout.back_home": "Ana Sayfaya Dön",
 };

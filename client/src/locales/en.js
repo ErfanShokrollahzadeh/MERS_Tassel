@@ -172,4 +172,23 @@ export const en = {
   "auth.have_account": "Already have an account?",
   "auth.or": "or",
   "auth.welcome": "Welcome",
+
+  // Product Detail & Checkout Pages
+  "product.buy_now": "Buy Now",
+  "product.description": "Description",
+  "product.back_to_products": "← Back to Products",
+  "product.not_found": "Product not found",
+  "checkout.title": "Checkout",
+  "checkout.subtitle": "Complete your purchase",
+  "checkout.order_summary": "Order Summary",
+  "checkout.total": "Total",
+  "checkout.payment_details": "Payment Details",
+  "checkout.name_on_card": "Name on Card",
+  "checkout.card_number": "Card Number",
+  "checkout.address": "Shipping Address",
+  "checkout.confirm_payment": "Confirm Payment",
+  "checkout.processing": "Processing...",
+  "checkout.success": "Payment Successful!",
+  "checkout.success_desc": "Thank you for your purchase. We will process your order soon.",
+  "checkout.back_home": "Back to Home",
 };
