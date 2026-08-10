@@ -45,8 +45,8 @@ export default function Footer() {
               <li><Link href="/products?category=necklaces">{t('category.necklaces')}</Link></li>
               <li><Link href="/products?category=pendants">{t('category.pendants')}</Link></li>
               <li><Link href="/products?category=bag-accessories">{t('category.bag-accessories')}</Link></li>
-              <li><Link href="/products?category=jasuichi">{t('category.jasuichi')}</Link></li>
-              <li><Link href="/products?category=cute-accessories">{t('category.cute-accessories')}</Link></li>
+              <li><Link href="/products?category=keychains">{t('category.keychains')}</Link></li>
+              <li><Link href="/products?category=prayer-beads">{t('category.prayer-beads')}</Link></li>
             </ul>
           </div>
 

@@ -255,9 +255,9 @@ export default function HomePage() {
       </section>
 
       {/* ====== CTA BANNER ====== */}
-      <section className="section-mers bg-dark" style={{ textAlign: 'center' }}>
-        <div className="container">
-          <AnimatedSection>
+      <AnimatedSection>
+        <section className="section-mers bg-dark" style={{ textAlign: 'center' }}>
+          <div className="container">
             <h2 style={{ color: 'var(--white)', marginBottom: '16px' }}>
               {t('cta.title')}
             </h2>
@@ -267,9 +267,9 @@ export default function HomePage() {
             <Link href="/products" className="btn-mers-gold">
               {t('cta.btn')}
             </Link>
-          </AnimatedSection>
-        </div>
-      </section>
+          </div>
+        </section>
+      </AnimatedSection>
     </>
   );
 }
