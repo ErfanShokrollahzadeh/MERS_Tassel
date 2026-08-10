@@ -71,6 +71,8 @@ export const en = {
   "category.necklaces": "Necklaces",
   "category.pendants": "Pendants",
   "category.bag-accessories": "Bag Accessories",
+  "category.keychains": "Keychains",
+  "category.earrings": "Earrings",
   "category.jasuichi": "Jasuichi",
   "category.solid-azon": "Solid Azon",
   "category.cute-accessories": "Cute Accessories",
