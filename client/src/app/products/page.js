@@ -37,8 +37,8 @@ function ProductsContent() {
     { slug: 'necklaces', name: t('category.necklaces') },
     { slug: 'pendants', name: t('category.pendants') },
     { slug: 'bag-accessories', name: t('category.bag-accessories') },
-    { slug: 'jasuichi', name: t('category.jasuichi') },
-    { slug: 'solid-azon', name: t('category.solid-azon') },
+    { slug: 'keychains', name: t('category.keychains') },
+    { slug: 'earrings', name: t('category.earrings') },
     { slug: 'cute-accessories', name: t('category.cute-accessories') },
   ];
 

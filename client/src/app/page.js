@@ -177,7 +177,7 @@ export default function HomePage() {
 
           <div className="row g-4">
             {categoryData.map((cat, index) => (
-              <div className="col-lg-2 col-md-4 col-6" key={cat.slug}>
+              <div className="col-lg-4 col-md-6 col-sm-6 col-12" key={cat.slug}>
                 <AnimatedSection delay={index * 100}>
                   <Link href={`/products?category=${cat.slug}`} style={{ textDecoration: 'none' }}>
                     <div className="category-card">
