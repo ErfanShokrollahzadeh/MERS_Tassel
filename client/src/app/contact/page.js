@@ -67,28 +67,28 @@ export default function ContactPage() {
                   </p>
 
                   <div className="contact-info-item">
-                    <span className="icon">📍</span>
+                    <span className="icon"><i className="fa-solid fa-location-dot" style={{ color: 'var(--gold-light)' }}></i></span>
                     <div>
                       <strong>{t('contact.visit_us')}</strong>
                       <p style={{ whiteSpace: 'pre-line' }}>{t('contact.visit_us_desc')}</p>
                     </div>
                   </div>
                   <div className="contact-info-item">
-                    <span className="icon">📧</span>
+                    <span className="icon"><i className="fa-solid fa-envelope" style={{ color: 'var(--gold-light)' }}></i></span>
                     <div>
                       <strong>{t('contact.email_us')}</strong>
                       <p style={{ whiteSpace: 'pre-line' }}>hello@merstassel.com{'\n'}support@merstassel.com</p>
                     </div>
                   </div>
                   <div className="contact-info-item">
-                    <span className="icon">📱</span>
+                    <span className="icon"><i className="fa-solid fa-phone" style={{ color: 'var(--gold-light)' }}></i></span>
                     <div>
                       <strong>{t('contact.call_us')}</strong>
                       <p style={{ whiteSpace: 'pre-line' }}>{t('contact.call_us_desc')}</p>
                     </div>
                   </div>
                   <div className="contact-info-item">
-                    <span className="icon">💬</span>
+                    <span className="icon"><i className="fa-solid fa-comments" style={{ color: 'var(--gold-light)' }}></i></span>
                     <div>
                       <strong>{t('contact.social')}</strong>
                       <p style={{ whiteSpace: 'pre-line' }}>@merstassel on Instagram{'\n'}MERS Tassel on Facebook</p>
@@ -99,10 +99,10 @@ export default function ContactPage() {
                   <div style={{ marginTop: '30px', paddingTop: '30px', borderTop: '1px solid rgba(255,255,255,0.15)' }}>
                     <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '12px', fontWeight: 500 }}>{t('contact.follow_us')}</p>
                     <div className="footer-social">
-                      <a href="#" aria-label="Instagram" style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'var(--white)' }}>📷</a>
-                      <a href="#" aria-label="Facebook" style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'var(--white)' }}>📘</a>
-                      <a href="#" aria-label="Twitter" style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'var(--white)' }}>🐦</a>
-                      <a href="#" aria-label="Pinterest" style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'var(--white)' }}>📌</a>
+                      <a href="#" aria-label="Instagram"><i className="fa-brands fa-instagram"></i></a>
+                      <a href="#" aria-label="Facebook"><i className="fa-brands fa-facebook"></i></a>
+                      <a href="#" aria-label="X (Twitter)"><i className="fa-brands fa-x-twitter"></i></a>
+                      <a href="#" aria-label="Pinterest"><i className="fa-brands fa-pinterest"></i></a>
                     </div>
                   </div>
                 </div>

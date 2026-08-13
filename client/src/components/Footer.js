@@ -54,10 +54,10 @@ export default function Footer() {
           <div className="col-lg-3 col-md-6">
             <h5 className="footer-title">{t('footer.contact_us')}</h5>
             <ul className="footer-links">
-              <li>📍 Turkey</li>
-              <li>📧 hello@merstassel.com</li>
-              <li>📱 +90 555 123 4567</li>
-              <li>🕐 : 7/24 Support</li>
+              <li><i className="fa-solid fa-location-dot me-2" style={{ color: 'var(--gold-light)' }}></i> Turkey</li>
+              <li><i className="fa-solid fa-envelope me-2" style={{ color: 'var(--gold-light)' }}></i> hello@merstassel.com</li>
+              <li><i className="fa-solid fa-phone me-2" style={{ color: 'var(--gold-light)' }}></i> +90 555 123 4567</li>
+              <li><i className="fa-solid fa-clock me-2" style={{ color: 'var(--gold-light)' }}></i> 7/24 Support</li>
             </ul>
           </div>
         </div>
