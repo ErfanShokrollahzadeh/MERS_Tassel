@@ -255,21 +255,21 @@ export default function HomePage() {
       </section>
 
       {/* ====== CTA BANNER ====== */}
-      <AnimatedSection>
-        <section className="section-mers bg-dark" style={{ textAlign: 'center' }}>
-          <div className="container">
+      <section className="section-mers" style={{ background: 'var(--gradient-hero)', textAlign: 'center' }}>
+        <div className="container">
+          <AnimatedSection>
             <h2 style={{ color: 'var(--white)', marginBottom: '16px' }}>
               {t('cta.title')}
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.8)', maxWidth: '500px', margin: '0 auto 30px', fontSize: '1.1rem' }}>
+            <p style={{ color: 'rgba(255,255,255,0.9)', maxWidth: '500px', margin: '0 auto 30px', fontSize: '1.1rem' }}>
               {t('cta.subtitle')}
             </p>
             <Link href="/products" className="btn-mers-gold">
               {t('cta.btn')}
             </Link>
-          </div>
-        </section>
-      </AnimatedSection>
+          </AnimatedSection>
+        </div>
+      </section>
     </>
   );
 }

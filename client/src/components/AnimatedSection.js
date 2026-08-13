@@ -15,13 +15,15 @@ export default function AnimatedSection({ children, className = '', delay = 0 })
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setTimeout(() => {
-              entry.target.classList.add('revealed');
+              if (entry.target) {
+                entry.target.classList.add('revealed');
+              }
             }, delay);
             observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+      { threshold: 0.05, rootMargin: '0px 0px 50px 0px' }
     );
 
     if (ref.current) {
