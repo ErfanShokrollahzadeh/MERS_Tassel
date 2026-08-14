@@ -55,6 +55,7 @@ class StripeCheckoutItemSerializer(serializers.Serializer):
 class StripeCheckoutSerializer(serializers.Serializer):
     email = serializers.EmailField()
     shipping_tier = serializers.ChoiceField(choices=['standard', 'express'], default='standard')
+    locale = serializers.ChoiceField(choices=['auto', 'en', 'tr'], default='auto')
     items = StripeCheckoutItemSerializer(many=True, allow_empty=False)
 
     def validate_items(self, items):

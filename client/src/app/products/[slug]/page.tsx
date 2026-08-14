@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { findProduct, products } from '@/data/store';
 import { ProductDetail } from '@/components/ProductDetail';
+import { cookies } from 'next/headers';
+import { productCopy } from '@/i18n/catalog';
 
 export function generateStaticParams() { return products.map((product) => ({ slug: product.slug })); }
 
@@ -9,11 +11,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const product = findProduct(slug);
   if (!product) return { title: 'Piece not found' };
+  const cookieStore = await cookies();
+  const locale = cookieStore.get('mers-locale')?.value === 'tr' ? 'tr' : 'en';
+  const display = productCopy(product, locale);
   return {
-    title: product.name,
-    description: product.description,
-    openGraph: { title: `${product.name} · MERS Tassel`, description: product.description, images: [{ url: product.image }] },
-    twitter: { card: 'summary_large_image', title: `${product.name} · MERS Tassel`, description: product.description, images: [product.image] },
+    title: display.name,
+    description: display.description,
+    openGraph: { title: `${display.name} · MERS Tassel`, description: display.description, images: [{ url: product.image }] },
+    twitter: { card: 'summary_large_image', title: `${display.name} · MERS Tassel`, description: display.description, images: [product.image] },
   };
 }
 

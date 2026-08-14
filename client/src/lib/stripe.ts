@@ -1,4 +1,5 @@
 import type { CartLine } from '@/types/commerce';
+import type { Locale } from '@/i18n/I18nProvider';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -22,10 +23,10 @@ async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
-export function createCheckoutSession(lines: CartLine[], email: string, shippingTier: 'standard' | 'express') {
+export function createCheckoutSession(lines: CartLine[], email: string, shippingTier: 'standard' | 'express', locale: Locale) {
   return apiRequest<CheckoutSessionResponse>('/v1/commerce/stripe/checkout-session/', {
     method: 'POST',
-    body: JSON.stringify({ email, shipping_tier: shippingTier, items: lines.map((line) => ({ slug: line.product.slug, color: line.color, quantity: line.quantity })) }),
+    body: JSON.stringify({ email, shipping_tier: shippingTier, locale, items: lines.map((line) => ({ slug: line.product.slug, color: line.color, quantity: line.quantity })) }),
   });
 }
 

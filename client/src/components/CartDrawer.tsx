@@ -6,6 +6,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react';
 import { cartSubtotal, useCartStore } from '@/stores/cart';
 import { MediaImage } from '@/components/MediaImage';
+import { useI18n } from '@/i18n/I18nProvider';
+import { colorName, productCopy } from '@/i18n/catalog';
 
 export function CartDrawer() {
   const { lines, isOpen, close, remove, setQuantity } = useCartStore();
@@ -15,6 +17,7 @@ export function CartDrawer() {
   const previousFocus = useRef<HTMLElement | null>(null);
   const estimatedShipping = subtotal >= 120 ? 0 : 9;
   const estimatedTax = subtotal * .08;
+  const { t, locale } = useI18n();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -42,23 +45,23 @@ export function CartDrawer() {
 
   return (
     <div className={isOpen ? 'drawer-root drawer-root--open' : 'drawer-root'} aria-hidden={!isOpen}>
-      <button className="drawer-scrim" onClick={close} aria-label="Close shopping bag" tabIndex={isOpen ? 0 : -1} />
+      <button className="drawer-scrim" onClick={close} aria-label={t('cart.close')} tabIndex={isOpen ? 0 : -1} />
       <aside ref={drawerRef} className="cart-drawer glass-overlay" role="dialog" aria-modal="true" aria-labelledby="cart-title">
-        <header className="drawer-header"><div><span className="eyebrow">Your selection</span><h2 id="cart-title">Shopping bag</h2></div><button ref={closeButtonRef} className="icon-button" onClick={close} aria-label="Close"><X /></button></header>
+        <header className="drawer-header"><div><span className="eyebrow">{t('cart.eyebrow')}</span><h2 id="cart-title">{t('cart.title')}</h2></div><button ref={closeButtonRef} className="icon-button" onClick={close} aria-label={t('cart.close')}><X /></button></header>
         {lines.length === 0 ? (
-          <div className="empty-cart"><span><ShoppingBag size={28} /></span><h3>Your bag is beautifully empty.</h3><p>Discover a piece made slowly, by hand.</p><Link className="button button--primary" href="/products" onClick={close}>Explore the collection</Link></div>
+          <div className="empty-cart"><span><ShoppingBag size={28} /></span><h3>{t('cart.emptyTitle')}</h3><p>{t('cart.emptyCopy')}</p><Link className="button button--primary" href="/products" onClick={close}>{t('common.explore')}</Link></div>
         ) : (
           <>
             <div className="cart-lines"><AnimatePresence initial={false}>
-              {lines.map((line) => (
+              {lines.map((line) => { const display = productCopy(line.product, locale); return (
                 <motion.article className="cart-line" key={`${line.product.id}-${line.color}`} layout initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 24, height: 0, paddingTop: 0, paddingBottom: 0 }}>
                   <MediaImage src={line.product.image} alt="" sizes="82px" />
-                  <div className="cart-line__copy"><h3>{line.product.name}</h3><p>{line.color}</p><div className="quantity-control" aria-label={`Quantity for ${line.product.name}`}><button onClick={() => setQuantity(line.product.id, line.color, line.quantity - 1)} aria-label="Decrease quantity"><Minus size={14} /></button><span>{line.quantity}</span><button onClick={() => setQuantity(line.product.id, line.color, line.quantity + 1)} aria-label="Increase quantity"><Plus size={14} /></button></div></div>
-                  <div className="cart-line__end"><strong>${(line.product.price.amount * line.quantity).toFixed(0)}</strong><button onClick={() => remove(line.product.id, line.color)} aria-label={`Remove ${line.product.name}`}><Trash2 size={16} /></button></div>
+                  <div className="cart-line__copy"><h3>{display.name}</h3><p>{colorName(line.color, locale)}</p><div className="quantity-control" aria-label={t('cart.quantity', { name: display.name })}><button onClick={() => setQuantity(line.product.id, line.color, line.quantity - 1)} aria-label={t('cart.decrease')}><Minus size={14} /></button><span>{line.quantity}</span><button onClick={() => setQuantity(line.product.id, line.color, line.quantity + 1)} aria-label={t('cart.increase')}><Plus size={14} /></button></div></div>
+                  <div className="cart-line__end"><strong>${(line.product.price.amount * line.quantity).toFixed(0)}</strong><button onClick={() => remove(line.product.id, line.color)} aria-label={t('cart.remove', { name: display.name })}><Trash2 size={16} /></button></div>
                 </motion.article>
-              ))}
+              ); })}
             </AnimatePresence></div>
-            <footer className="drawer-footer"><div className="cart-estimates"><p><span>Subtotal</span><b>${subtotal.toFixed(0)}</b></p><p><span>Estimated delivery</span><b>{estimatedShipping ? `$${estimatedShipping}` : 'Complimentary'}</b></p><p><span>Estimated tax</span><b>${estimatedTax.toFixed(0)}</b></p><div><span>Estimated total</span><strong>${(subtotal + estimatedShipping + estimatedTax).toFixed(0)}</strong></div></div><small className="estimate-note">Tax is an estimate and is finalized during secure checkout.</small><Link href="/checkout" className="button button--primary button--block" onClick={close}>Continue to checkout</Link><button className="text-button" onClick={close}>Continue shopping</button></footer>
+            <footer className="drawer-footer"><div className="cart-estimates"><p><span>{t('cart.subtotal')}</span><b>${subtotal.toFixed(0)}</b></p><p><span>{t('cart.delivery')}</span><b>{estimatedShipping ? `$${estimatedShipping}` : t('cart.complimentary')}</b></p><p><span>{t('cart.tax')}</span><b>${estimatedTax.toFixed(0)}</b></p><div><span>{t('cart.total')}</span><strong>${(subtotal + estimatedShipping + estimatedTax).toFixed(0)}</strong></div></div><small className="estimate-note">{t('cart.taxNote')}</small><Link href="/checkout" className="button button--primary button--block" onClick={close}>{t('cart.checkout')}</Link><button className="text-button" onClick={close}>{t('common.continueShopping')}</button></footer>
           </>
         )}
       </aside>

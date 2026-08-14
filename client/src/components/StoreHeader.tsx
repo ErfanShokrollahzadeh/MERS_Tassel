@@ -6,12 +6,14 @@ import { useEffect, useState } from 'react';
 import { Heart, Menu, Moon, Search, ShoppingBag, Sun, UserRound, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cartCount, useCartStore } from '@/stores/cart';
+import { useI18n, type TranslationKey } from '@/i18n/I18nProvider';
+import { LanguageSwitch } from '@/components/LanguageSwitch';
 
 const links = [
-  { href: '/', label: 'Home' },
-  { href: '/products', label: 'Shop' },
-  { href: '/about', label: 'Our story' },
-  { href: '/contact', label: 'Journal' },
+  { href: '/', key: 'nav.home' },
+  { href: '/products', key: 'nav.shop' },
+  { href: '/about', key: 'nav.story' },
+  { href: '/contact', key: 'nav.journal' },
 ];
 
 export function StoreHeader() {
@@ -20,6 +22,7 @@ export function StoreHeader() {
   const [dark, setDark] = useState(false);
   const count = useCartStore(cartCount);
   const openCart = useCartStore((state) => state.open);
+  const { t } = useI18n();
 
   useEffect(() => {
     const saved = window.localStorage.getItem('mers-theme');
@@ -38,7 +41,7 @@ export function StoreHeader() {
   return (
     <header className="store-header glass-bar">
       <div className="store-header__inner container-wide">
-        <button className="icon-button nav-menu-button" onClick={() => setMenuOpen((value) => !value)} aria-label="Toggle navigation" aria-expanded={menuOpen}>
+        <button className="icon-button nav-menu-button" onClick={() => setMenuOpen((value) => !value)} aria-label={t('header.menu')} aria-expanded={menuOpen}>
           {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
 
@@ -49,19 +52,21 @@ export function StoreHeader() {
 
         <nav className={menuOpen ? 'store-nav store-nav--open' : 'store-nav'} aria-label="Main navigation">
           {links.map((link) => (
-            <Link key={link.href} href={link.href} className={pathname === link.href ? 'active' : ''} onClick={() => setMenuOpen(false)}>{link.label}</Link>
+            <Link key={link.href} href={link.href} className={pathname === link.href ? 'active' : ''} onClick={() => setMenuOpen(false)}>{t(link.key as TranslationKey)}</Link>
           ))}
-          <Link className="admin-mobile-link" href="/admin">Atelier admin</Link>
+          <Link className="admin-mobile-link" href="/admin">{t('nav.admin')}</Link>
+          <div className="header-language-mobile"><LanguageSwitch /></div>
         </nav>
 
         <div className="header-actions">
-          <Link className="icon-button hide-mobile" href="/products?focus=search" aria-label="Search"><Search size={19} /></Link>
-          <button className="icon-button hide-mobile" aria-label="Saved pieces"><Heart size={19} /></button>
-          <button className="icon-button hide-mobile" onClick={toggleTheme} aria-label={`Use ${dark ? 'light' : 'dark'} theme`}>
+          <LanguageSwitch compact />
+          <Link className="icon-button hide-mobile" href="/products?focus=search" aria-label={t('header.search')}><Search size={19} /></Link>
+          <button className="icon-button hide-mobile" aria-label={t('header.saved')}><Heart size={19} /></button>
+          <button className="icon-button hide-mobile" onClick={toggleTheme} aria-label={t(dark ? 'header.light' : 'header.dark')}>
             {dark ? <Sun size={19} /> : <Moon size={19} />}
           </button>
-          <Link className="icon-button hide-mobile" href="/login" aria-label="Your account"><UserRound size={19} /></Link>
-          <button className="icon-button cart-button" onClick={openCart} aria-label={`Open bag with ${count} items`}>
+          <Link className="icon-button hide-mobile" href="/login" aria-label={t('header.account')}><UserRound size={19} /></Link>
+          <button className="icon-button cart-button" onClick={openCart} aria-label={t('header.bag', { count })}>
             <ShoppingBag size={19} />
             <AnimatePresence mode="popLayout">{count > 0 && <motion.span key={count} className="cart-count" initial={{ scale: .55, rotate: -12 }} animate={{ scale: [1, 1.28, 1], rotate: 0 }} exit={{ scale: 0 }} transition={{ duration: .34 }}>{count}</motion.span>}</AnimatePresence>
           </button>

@@ -12,6 +12,7 @@ A full-stack commerce and atelier-operations platform for handcrafted accessorie
 - Persistent slide-over bag with quantity controls, live delivery/tax estimates and focus management
 - Stripe-hosted Checkout with server-authoritative pricing, payment confirmation and cancel recovery
 - Responsive `next/image` media, loading skeletons, route/gallery/accordion transitions, light/dark themes and reduced-motion support
+- Complete English/Turkish storefront localization with persisted language preference, localized catalog copy, validation, checkout outcomes and Stripe-hosted payment UI
 - Product-specific Open Graph metadata and a bespoke social preview card
 
 ### Atelier workspace
@@ -78,6 +79,8 @@ npm run dev
 ```
 
 The product runs at `http://localhost:3000`; the atelier workspace begins at `/admin`.
+
+Use the `EN / TR` control in the header, footer, account, or checkout screens to switch languages. The preference is stored in both a cookie and local browser storage, updates the document language for assistive technology, and is passed to Stripe so its hosted payment page opens in the selected language. Internal product slugs and variant values remain language-neutral for reliable inventory and order matching.
 
 For a local end-to-end test, add an item, continue to Stripe Checkout, and use test card `4242 4242 4242 4242` with any future expiry and any CVC. The success page polls the local order until the verified webhook marks it paid; canceling keeps the persisted bag intact.
 

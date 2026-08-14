@@ -130,11 +130,13 @@ def create_checkout_session(validated_data):
         }
         for variant, quantity in resolved
     ]
-    shipping_name = 'Atelier express' if validated_data['shipping_tier'] == 'express' else 'Atelier standard'
+    is_turkish = validated_data.get('locale') == 'tr'
+    shipping_name = ('Hızlı teslimat' if validated_data['shipping_tier'] == 'express' else 'Atölye standart teslimat') if is_turkish else ('Atelier express' if validated_data['shipping_tier'] == 'express' else 'Atelier standard')
 
     try:
         session = stripe.checkout.Session.create(
             mode='payment',
+            locale=validated_data.get('locale', 'auto'),
             customer_email=validated_data['email'],
             client_reference_id=order.number,
             line_items=line_items,

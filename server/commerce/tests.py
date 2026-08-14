@@ -55,6 +55,7 @@ class StripeCheckoutTests(TestCase):
         self.payload = {
             'email': 'collector@example.com',
             'shipping_tier': 'standard',
+            'locale': 'tr',
             'items': [{'slug': product.slug, 'color': 'Rose', 'quantity': 2}],
         }
 
@@ -67,6 +68,8 @@ class StripeCheckoutTests(TestCase):
         self.assertEqual(response.data['checkout_url'], 'https://checkout.stripe.com/test')
         call = create_session.call_args.kwargs
         self.assertEqual(call['line_items'][0]['price_data']['unit_amount'], 14900)
+        self.assertEqual(call['locale'], 'tr')
+        self.assertEqual(call['shipping_options'][0]['shipping_rate_data']['display_name'], 'Atölye standart teslimat')
         self.assertIn('{CHECKOUT_SESSION_ID}', call['success_url'])
         order = Order.objects.get(stripe_checkout_session_id='cs_test_secure')
         self.assertEqual(order.total, Decimal('298.00'))
