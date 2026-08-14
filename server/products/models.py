@@ -38,6 +38,8 @@ class Product(models.Model):
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    seo_title = models.CharField(max_length=70, blank=True, default='')
+    meta_description = models.CharField(max_length=170, blank=True, default='')
 
     class Meta:
         ordering = ['-created_at']
@@ -48,3 +50,33 @@ class Product(models.Model):
     @property
     def is_on_sale(self):
         return self.discount_price is not None and self.discount_price < self.price
+
+
+class ProductVariant(models.Model):
+    """Sellable product configuration with its own inventory identity."""
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
+    title = models.CharField(max_length=120)
+    sku = models.CharField(max_length=64, unique=True)
+    color = models.CharField(max_length=80, blank=True)
+    size = models.CharField(max_length=40, blank=True)
+    price_override = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    stock = models.PositiveIntegerField(default=0)
+    low_stock_threshold = models.PositiveIntegerField(default=5)
+    is_active = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['product_id', 'id']
+
+    def __str__(self):
+        return f'{self.product.name} · {self.title}'
+
+
+class ProductMedia(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='media')
+    image = models.ImageField(upload_to='products/gallery/')
+    alt = models.CharField(max_length=200, blank=True)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['sort_order', 'id']

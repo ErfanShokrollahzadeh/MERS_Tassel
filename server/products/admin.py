@@ -1,5 +1,15 @@
 from django.contrib import admin
-from .models import Category, Product
+from .models import Category, Product, ProductMedia, ProductVariant
+
+
+class ProductVariantInline(admin.TabularInline):
+    model = ProductVariant
+    extra = 0
+
+
+class ProductMediaInline(admin.TabularInline):
+    model = ProductMedia
+    extra = 0
 
 
 @admin.register(Category)
@@ -15,6 +25,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    inlines = [ProductVariantInline, ProductMediaInline]
     list_display = ['name', 'category', 'price', 'discount_price', 'is_featured', 'is_available', 'created_at']
     list_filter = ['category', 'is_featured', 'is_available']
     prepopulated_fields = {'slug': ('name',)}
@@ -30,7 +41,7 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('price', 'discount_price', 'is_available')
         }),
         ('Media & Display', {
-            'fields': ('image', 'is_featured')
+            'fields': ('image', 'image_alt', 'is_featured', 'seo_title', 'meta_description')
         }),
     )
 

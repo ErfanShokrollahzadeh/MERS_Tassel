@@ -188,3 +188,57 @@ export async function getUserProfile(token) {
   return apiFetch('/accounts/profile/', { token });
 }
 
+// ============================================
+// VERSIONED COMMERCE PLATFORM API
+// ============================================
+
+/** Create a durable guest cart. */
+export async function createCart(email = '') {
+  return apiFetch('/v1/commerce/carts/', {
+    method: 'POST',
+    body: JSON.stringify({ email, currency: 'USD' }),
+  });
+}
+
+/** Add a sellable variant to an existing cart. */
+export async function addCartItem(cartId, variant, quantity = 1) {
+  return apiFetch(`/v1/commerce/carts/${cartId}/items/`, {
+    method: 'POST',
+    body: JSON.stringify({ variant, quantity }),
+  });
+}
+
+/** Atomically validate inventory and convert a cart into an order. */
+export async function checkoutCart(payload) {
+  return apiFetch('/v1/commerce/orders/checkout/', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getOrders(token, params = {}) {
+  const query = new URLSearchParams(params).toString();
+  return apiFetch(`/v1/commerce/orders/${query ? `?${query}` : ''}`, { token });
+}
+
+export async function recordCommerceEvent(event) {
+  return apiFetch('/v1/analytics/events/', {
+    method: 'POST',
+    body: JSON.stringify(event),
+  });
+}
+
+export async function getGrowthKPIs(token) {
+  return apiFetch('/v1/analytics/kpis/', { token });
+}
+
+export async function getSupportTickets(token, params = {}) {
+  const query = new URLSearchParams(params).toString();
+  return apiFetch(`/v1/support/tickets/${query ? `?${query}` : ''}`, { token });
+}
+
+export async function sendTicketMessage(token, ticketId, message) {
+  return apiFetch(`/v1/support/tickets/${ticketId}/messages/`, {
+    method: 'POST', token, body: JSON.stringify(message),
+  });
+}

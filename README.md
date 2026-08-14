@@ -1,179 +1,107 @@
-# 🌸 MERS Tassel — Handcrafted Accessories from Turkey
+# MERS Tassel
 
-<div align="center">
+A full-stack commerce and atelier-operations platform for handcrafted accessories. The experience combines a high-conversion storefront with a Liquid Glass staff workspace for orders, products, growth analytics, promotions, roles, and customer support.
 
-**✨ Beautiful accessories crafted with love in Istanbul, Turkey ✨**
+## What is included
 
-![Python](https://img.shields.io/badge/Python-3.9+-blue?style=for-the-badge&logo=python&logoColor=white)
-![Django](https://img.shields.io/badge/Django-4.2-green?style=for-the-badge&logo=django&logoColor=white)
-![DRF](https://img.shields.io/badge/DRF-3.14-red?style=for-the-badge&logo=django&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js&logoColor=white)
-![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-purple?style=for-the-badge&logo=bootstrap&logoColor=white)
+### Storefront
 
-</div>
+- Editorial home and collection discovery
+- Searchable, filterable and sortable catalog
+- Product detail gallery, finishes, stock state and related products
+- Persistent slide-over bag with quantity controls, live delivery/tax estimates and focus management
+- Stripe-hosted Checkout with server-authoritative pricing, payment confirmation and cancel recovery
+- Responsive `next/image` media, loading skeletons, route/gallery/accordion transitions, light/dark themes and reduced-motion support
+- Product-specific Open Graph metadata and a bespoke social preview card
 
----
+### Atelier workspace
 
-## 📋 About
+- Revenue, order, conversion and customer KPI overview
+- Order search, filters, batch selection and operational status
+- Product/inventory table and rich product editor workflow
+- Acquisition, attribution, funnel and cohort analytics
+- Promotion library and discount builder
+- Support inbox, accessible Kanban alternative, live thread, internal notes and customer context
+- Staff roles and permission matrix
+- Command palette and responsive/collapsible navigation
 
-**MERS Tassel** is a full-stack e-commerce platform for selling handcrafted accessories including:
+### Backend domains
 
-- 📿 **Necklaces** — Elegant chain & tassel designs
-- 💎 **Pendants** — Crystal & gemstone pendants
-- 👜 **Bag Accessories** — Charms, keychains & tassels
-- ✨ **Jasuichi** — Traditional artisan pieces
-- 💍 **Solid Azon** — Bold statement accessories
-- 🎀 **Cute Accessories** — Adorable daily essentials
+- Catalog variants and product media
+- Persistent carts and inventory-aware cart items
+- Atomic checkout, immutable order-item snapshots and expiring inventory reservations
+- Signed, idempotent Stripe webhooks that fulfill paid orders and release failed/expired reservations
+- Promotions and redemption limits
+- Ticketing, private internal notes, canned replies and attachments
+- Commerce events, daily metrics and staff KPI endpoint
+- Versioned `/api/v1/` routes alongside the original compatible endpoints
 
-## 🏗️ Architecture
+## Stack
 
-The project is split into two sections:
+- Next.js 16, React 19 and strict TypeScript
+- Zustand, TanStack Query, React Hook Form and Zod
+- Framer Motion, Recharts and Lucide
+- Django 4.2 and Django REST Framework
+- SQLite for local development; models are ready for PostgreSQL deployment
 
-```
-MERS_Tassel/
-├── server/          # 🐍 Django + Django REST Framework (Backend API)
-│   ├── mers_tassel/ # Django project settings
-│   ├── products/    # Products & categories API
-│   └── contact/     # Contact form API
-│
-├── client/          # ⚡ Next.js + Bootstrap 5 (Frontend)
-│   └── src/
-│       ├── app/     # Pages (Home, Products, About, Contact)
-│       ├── components/ # Reusable UI components
-│       └── lib/     # API utility functions
-│
-├── .gitignore
-└── README.md
-```
+## Local setup
 
-## 🎨 Design Features
-
-- **Rose Gold & Plum** color palette with gold accents
-- **Glassmorphism** navbar with blur effect
-- **15+ CSS animations** (fade-in, float, shimmer, pulse, parallax)
-- **Scroll-reveal** animations using Intersection Observer
-- **Fully responsive** design for mobile, tablet, and desktop
-- **Google Fonts** — Playfair Display + Poppins
-
-## 📄 Pages
-
-| Page | Description |
-|------|-------------|
-| 🏠 **Home** | Hero banner, featured products, categories, testimonials |
-| 🛍️ **Products** | Product grid with category filters & search |
-| 📖 **About Us** | Brand story, values, timeline, team |
-| 📬 **Contact** | Contact form (posts to API), FAQ section |
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- **Python 3.9+** and `pip`
-- **Node.js 18+** and `npm`
-
-### 1️⃣ Setup Backend (Django)
+### Backend
 
 ```bash
-# Navigate to server directory
 cd server
-
-# Create virtual environment
 python3 -m venv venv
-
-# Activate virtual environment
-source venv/bin/activate   # macOS/Linux
-# venv\Scripts\activate    # Windows
-
-# Install dependencies
+source venv/bin/activate
 pip install -r requirements.txt
-
-# Run migrations
-python manage.py makemigrations
+cp .env.example .env
+# Fill in the Stripe test keys, then export the file into this shell:
+set -a; source .env; set +a
 python manage.py migrate
-
-# Seed sample products
 python manage.py seed_data
-
-# Create admin user (optional)
-python manage.py createsuperuser
-
-# Start the server
 python manage.py runserver
 ```
 
-The API will be running at **http://localhost:8000**
+The API runs at `http://localhost:8000`. Django administration is at `/admin/`.
 
-### 2️⃣ Setup Frontend (Next.js)
+In another terminal, forward Stripe test events and copy the printed `whsec_...` value into `server/.env`:
 
 ```bash
-# Navigate to client directory
+stripe listen --forward-to localhost:8000/api/v1/commerce/stripe/webhook/
+```
+
+### Frontend
+
+```bash
 cd client
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
 ```
 
-The frontend will be running at **http://localhost:3000**
+The product runs at `http://localhost:3000`; the atelier workspace begins at `/admin`.
 
-### 3️⃣ Visit the App
+For a local end-to-end test, add an item, continue to Stripe Checkout, and use test card `4242 4242 4242 4242` with any future expiry and any CVC. The success page polls the local order until the verified webhook marks it paid; canceling keeps the persisted bag intact.
 
-- **Frontend**: http://localhost:3000
-- **API**: http://localhost:8000/api/
-- **Admin Panel**: http://localhost:8000/admin/
+### Stripe webhook events
 
-## 🔌 API Endpoints
+Register the production webhook URL `/api/v1/commerce/stripe/webhook/` for:
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/products/` | List all products |
-| `GET` | `/api/products/?category=necklaces` | Filter by category |
-| `GET` | `/api/products/?search=tassel` | Search products |
-| `GET` | `/api/products/featured/` | Featured products |
-| `GET` | `/api/products/{slug}/` | Product detail |
-| `GET` | `/api/products/categories/` | All categories |
-| `POST` | `/api/contact/` | Submit contact form |
+- `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.async_payment_failed`
+- `checkout.session.expired`
 
-## 🛠️ Tech Stack
+Never expose `STRIPE_SECRET_KEY` or `STRIPE_WEBHOOK_SECRET` through a `NEXT_PUBLIC_` variable.
 
-### Backend
-- **Python** — Programming language
-- **Django** — Web framework
-- **Django REST Framework** — API framework
-- **django-cors-headers** — CORS handling
-- **SQLite** — Database (dev)
-- **Pillow** — Image processing
+## Verification
 
-### Frontend
-- **Next.js 14** — React framework (App Router)
-- **Bootstrap 5** — CSS framework
-- **CSS3 Animations** — Custom keyframe animations
-- **JavaScript (ES6+)** — Fetch API for backend requests
+```bash
+cd client
+npm run typecheck
+npm run build
 
-## 📸 Screenshots
+cd ../server
+python manage.py check
+python manage.py test commerce support analytics products accounts
+```
 
-_Screenshots coming soon!_
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
-
-## 💖 Made with Love
-
-Crafted with ❤️ in Turkey by **MERS Tassel** team.
-
----
-
-<div align="center">
-  <strong>⭐ Star this repo if you like it! ⭐</strong>
-</div>
+Architecture and consistency rules are documented in [docs/architecture/implementation.md](docs/architecture/implementation.md). The design-system contract is in [docs/design-system.md](docs/design-system.md).

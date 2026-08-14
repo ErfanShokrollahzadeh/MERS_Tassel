@@ -3,7 +3,7 @@ Management command to seed the database with sample product data
 for MERS Tassel accessories store.
 """
 from django.core.management.base import BaseCommand
-from products.models import Category, Product
+from products.models import Category, Product, ProductVariant
 
 
 class Command(BaseCommand):
@@ -44,6 +44,10 @@ class Command(BaseCommand):
                 'slug': 'cute-accessories',
                 'description': 'Adorable accessories that add charm to any outfit'
             },
+            {'name': 'Rings', 'slug': 'rings', 'description': 'Sculptural rings finished by hand'},
+            {'name': 'Earrings', 'slug': 'earrings', 'description': 'Light-catching earrings for every day'},
+            {'name': 'Bracelets', 'slug': 'bracelets', 'description': 'Fluid chains and modern talismans'},
+            {'name': 'Bag Charms', 'slug': 'bag-charms', 'description': 'Small tactile objects for bags and keys'},
         ]
 
         categories = {}
@@ -198,16 +202,69 @@ class Command(BaseCommand):
                 'discount_price': 34.99,
                 'is_featured': False,
             },
+            {
+                'name': 'Lâle Pearl Tassel', 'slug': 'lale-pearl-tassel', 'category': categories['necklaces'],
+                'description': 'Freshwater pearls, hand-knotted silk and a warm vermeil finish.', 'price': 189, 'discount_price': 149,
+                'is_featured': True, 'colors': ['Rose', 'Ivory', 'Midnight'],
+            },
+            {
+                'name': 'Sedef Moon Pendant', 'slug': 'sedef-moon-pendant', 'category': categories['pendants'],
+                'description': 'Mother-of-pearl catches the light in a sculptural crescent setting.', 'price': 92,
+                'is_featured': True, 'colors': ['Gold', 'Silver'],
+            },
+            {
+                'name': 'Bosphorus Signet', 'slug': 'bosphorus-signet', 'category': categories['rings'],
+                'description': 'A softly sculpted signet with an ocean-blue enamel center.', 'price': 118,
+                'is_featured': True, 'colors': ['Bosphorus blue', 'Garnet'],
+            },
+            {
+                'name': 'Mira Drop Earrings', 'slug': 'mira-drop-earrings', 'category': categories['earrings'],
+                'description': 'Light-catching drops balanced for all-evening comfort.', 'price': 98, 'discount_price': 78,
+                'is_featured': True, 'colors': ['Gold', 'Silver'],
+            },
+            {
+                'name': 'Nazar Chain Bracelet', 'slug': 'nazar-chain-bracelet', 'category': categories['bracelets'],
+                'description': 'A refined protective eye motif on a fluid paperclip chain.', 'price': 64,
+                'is_featured': False, 'colors': ['Lapis', 'Pearl'],
+            },
+            {
+                'name': 'Haliç Crystal Pendant', 'slug': 'halic-crystal-pendant', 'category': categories['pendants'],
+                'description': 'A faceted smoky crystal suspended from a whisper-fine chain.', 'price': 106,
+                'is_featured': False, 'colors': ['Smoky quartz', 'Clear quartz'], 'stock': 0,
+            },
+            {
+                'name': 'Ada Layered Chain', 'slug': 'ada-layered-chain', 'category': categories['necklaces'],
+                'description': 'Two delicate textures meet in an effortless, pre-layered necklace.', 'price': 134,
+                'is_featured': False, 'colors': ['Silver', 'Gold'],
+            },
+            {
+                'name': 'Atelier Charm No. 7', 'slug': 'atelier-charm-no-7', 'category': categories['bag-charms'],
+                'description': 'Knotted silk, polished stone and a clip made for daily ritual.', 'price': 46,
+                'is_featured': False, 'colors': ['Mulberry', 'Sage', 'Saffron'],
+            },
         ]
 
         for prod_data in products_data:
+            colors = prod_data.pop('colors', None)
+            stock = prod_data.pop('stock', 18)
             prod, created = Product.objects.get_or_create(
                 slug=prod_data['slug'],
                 defaults=prod_data
             )
             status = 'Created' if created else 'Already exists'
             self.stdout.write(f'  ✨ Product: {prod.name} - {status}')
+            for index, color in enumerate(colors or ['Atelier finish'], start=1):
+                ProductVariant.objects.get_or_create(
+                    sku=f'MT-{prod.slug[:30].upper()}-{index}',
+                    defaults={
+                        'product': prod,
+                        'title': color,
+                        'color': color,
+                        'stock': stock,
+                        'low_stock_threshold': 5,
+                    },
+                )
 
         self.stdout.write(self.style.SUCCESS(
-            f'\n🎉 Done! {Category.objects.count()} categories, {Product.objects.count()} products seeded.'
+            f'\n🎉 Done! {Category.objects.count()} categories, {Product.objects.count()} products and {ProductVariant.objects.count()} variants seeded.'
         ))

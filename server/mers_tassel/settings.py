@@ -9,12 +9,12 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-mers-tassel-dev-key-change-in-production-2024'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-mers-tassel-local-only')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG', 'true').lower() == 'true'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [host.strip() for host in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if host.strip()]
 
 # Application definition
 INSTALLED_APPS = [
@@ -33,6 +33,8 @@ INSTALLED_APPS = [
     'contact',
     'analytics',
     'accounts',
+    'commerce',
+    'support',
 ]
 
 MIDDLEWARE = [
@@ -106,6 +108,12 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_CREDENTIALS = True
 
+# Stripe hosted checkout. Secret values are always server-only environment variables.
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
+STRIPE_CURRENCY = os.getenv('STRIPE_CURRENCY', 'usd').lower()
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000').rstrip('/')
+
 # REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -116,4 +124,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 12,
+    'DEFAULT_THROTTLE_RATES': {
+        'stripe_checkout': '20/minute',
+    },
 }

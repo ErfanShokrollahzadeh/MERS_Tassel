@@ -14,7 +14,7 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     """API endpoint for viewing products with filtering."""
-    queryset = Product.objects.filter(is_available=True).select_related('category')
+    queryset = Product.objects.filter(is_available=True).select_related('category').prefetch_related('variants', 'media')
     serializer_class = ProductSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description', 'category__name']

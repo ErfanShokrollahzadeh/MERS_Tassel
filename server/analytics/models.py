@@ -52,3 +52,30 @@ class VisitorCount(models.Model):
 
         counter.save()
         return counter
+
+
+class CommerceEvent(models.Model):
+    """Append-only event stream used for storefront funnel analytics."""
+    event_name = models.CharField(max_length=64, db_index=True)
+    session_id = models.CharField(max_length=72, db_index=True)
+    user_id = models.PositiveIntegerField(null=True, blank=True, db_index=True)
+    order_number = models.CharField(max_length=24, blank=True, db_index=True)
+    source = models.CharField(max_length=80, blank=True)
+    properties = models.JSONField(default=dict, blank=True)
+    occurred_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-occurred_at']
+
+
+class DailyMetric(models.Model):
+    date = models.DateField(unique=True)
+    revenue = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    orders = models.PositiveIntegerField(default=0)
+    sessions = models.PositiveIntegerField(default=0)
+    conversions = models.PositiveIntegerField(default=0)
+    ad_spend = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['date']
