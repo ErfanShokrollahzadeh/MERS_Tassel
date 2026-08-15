@@ -175,6 +175,9 @@ a { color:inherit; text-decoration:none; } button,input,textarea,select { font:i
 .field>span { color:var(--ink-soft); font-size:10px; font-weight:500; }
 .field input,.field select { width:100%; height:48px; padding:0 13px; border:1px solid var(--line); border-radius:10px; background:var(--canvas); color:var(--ink); outline:none; transition:border .2s,box-shadow .2s; }
 .field input:focus,.field select:focus { border-color:var(--plum); box-shadow:0 0 0 3px color-mix(in srgb,var(--plum) 12%,transparent); }
+.field textarea { width:100%; min-height:180px; padding:13px; border:1px solid var(--line); border-radius:10px; background:var(--canvas); color:var(--ink); caret-color:var(--ink); outline:none; resize:vertical; color-scheme:light dark; transition:border .2s,box-shadow .2s,background .2s; }
+.field textarea::placeholder { color:var(--ink-faint); opacity:1; }
+.field textarea:focus { border-color:var(--plum); box-shadow:0 0 0 3px color-mix(in srgb,var(--plum) 12%,transparent); }
 .field--error input { border-color:var(--danger); }
 .field>small { color:var(--danger); font-size:9px; }
 .delivery-options { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
