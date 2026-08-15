@@ -32,9 +32,12 @@ export default function SignupPage() {
       });
       setSession(session);
       await useCartStore.getState().load();
-      router.replace('/products');
+      router.replace('/account');
     } catch (requestError) {
-      setError(locale === 'tr' ? t('auth.signupError') : requestError instanceof ApiError ? requestError.message : t('auth.signupError'));
+      if (requestError instanceof ApiError && requestError.status === 0) setError(t('auth.connectionError'));
+      else if (requestError instanceof ApiError && requestError.details && typeof requestError.details === 'object' && 'email' in requestError.details) setError(t('auth.emailExists'));
+      else if (requestError instanceof ApiError && requestError.details && typeof requestError.details === 'object' && 'password' in requestError.details) setError(locale === 'tr' ? t('auth.passwordRejected') : requestError.message);
+      else setError(locale === 'tr' ? t('auth.signupError') : requestError instanceof ApiError ? requestError.message : t('auth.signupError'));
     } finally {
       setSubmitting(false);
     }

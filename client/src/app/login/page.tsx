@@ -13,7 +13,7 @@ import { useCartStore } from '@/stores/cart';
 
 function safeDestination() {
   const requested = new URLSearchParams(window.location.search).get('next');
-  return requested?.startsWith('/') && !requested.startsWith('//') ? requested : '/products';
+  return requested?.startsWith('/') && !requested.startsWith('//') ? requested : '/account';
 }
 
 export default function LoginPage() {
@@ -35,7 +35,7 @@ export default function LoginPage() {
       await useCartStore.getState().load();
       router.replace(safeDestination());
     } catch (requestError) {
-      setError(locale === 'tr' ? t('auth.loginError') : requestError instanceof ApiError ? requestError.message : t('auth.loginError'));
+      setError(requestError instanceof ApiError && requestError.status === 0 ? t('auth.connectionError') : locale === 'tr' ? t('auth.loginError') : requestError instanceof ApiError ? requestError.message : t('auth.loginError'));
     } finally {
       setSubmitting(false);
     }

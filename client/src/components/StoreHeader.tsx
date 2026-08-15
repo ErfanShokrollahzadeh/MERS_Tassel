@@ -25,7 +25,6 @@ export function StoreHeader() {
   const count = useCartStore(cartCount);
   const openCart = useCartStore((state) => state.open);
   const user = useAuthStore((state) => state.user);
-  const signOut = useAuthStore((state) => state.signOut);
   const { t } = useI18n();
 
   useEffect(() => {
@@ -50,12 +49,6 @@ export function StoreHeader() {
     openCart();
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    useCartStore.getState().clear();
-    router.push('/login');
-  };
-
   return (
     <header className="store-header glass-bar">
       <div className="store-header__inner container-wide">
@@ -72,6 +65,7 @@ export function StoreHeader() {
           {links.map((link) => (
             <Link key={link.href} href={link.href} className={pathname === link.href ? 'active' : ''} onClick={() => setMenuOpen(false)}>{t(link.key as TranslationKey)}</Link>
           ))}
+          <Link className="admin-mobile-link" href={user ? '/account' : '/login'} onClick={() => setMenuOpen(false)}>{t('header.account')}</Link>
           <Link className="admin-mobile-link" href="/admin">{t('nav.admin')}</Link>
           <div className="header-language-mobile"><LanguageSwitch /></div>
         </nav>
@@ -83,7 +77,7 @@ export function StoreHeader() {
           <button className="icon-button hide-mobile" onClick={toggleTheme} aria-label={t(dark ? 'header.light' : 'header.dark')}>
             {dark ? <Sun size={19} /> : <Moon size={19} />}
           </button>
-          {user ? <button className="icon-button hide-mobile" onClick={handleSignOut} aria-label={t('auth.signOut')} title={t('auth.signOut')}><UserRound size={19} /></button> : <Link className="icon-button hide-mobile" href="/login" aria-label={t('header.account')}><UserRound size={19} /></Link>}
+          <Link className="icon-button hide-mobile" href={user ? '/account' : '/login'} aria-label={t('header.account')}><UserRound size={19} /></Link>
           <button className="icon-button cart-button" onClick={openProtectedCart} aria-label={t('header.bag', { count })}>
             <ShoppingBag size={19} />
             <AnimatePresence mode="popLayout">{count > 0 && <motion.span key={count} className="cart-count" initial={{ scale: .55, rotate: -12 }} animate={{ scale: [1, 1.28, 1], rotate: 0 }} exit={{ scale: 0 }} transition={{ duration: .34 }}>{count}</motion.span>}</AnimatePresence>

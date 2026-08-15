@@ -24,14 +24,19 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}, access?: string): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(access ? { Authorization: `Bearer ${access}` } : {}),
-      ...init.headers,
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      ...init,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(access ? { Authorization: `Bearer ${access}` } : {}),
+        ...init.headers,
+      },
+    });
+  } catch (error) {
+    throw new ApiError('The account service is not running. Start the storefront with npm run dev and try again.', 0, error);
+  }
   const body = response.status === 204 ? null : await response.json().catch(() => ({}));
   if (!response.ok) {
     const record = body && typeof body === 'object' ? body as Record<string, unknown> : {};
