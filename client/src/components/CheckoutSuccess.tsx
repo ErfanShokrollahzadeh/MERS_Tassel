@@ -7,6 +7,7 @@ import { getCheckoutOrder, type CheckoutOrder } from '@/lib/stripe';
 import { useCartStore } from '@/stores/cart';
 import { useI18n } from '@/i18n/I18nProvider';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
+import { withFreshAccess } from '@/stores/auth';
 
 export function CheckoutSuccess({ sessionId }: { sessionId: string }) {
   const clear = useCartStore((state) => state.clear);
@@ -24,7 +25,7 @@ export function CheckoutSuccess({ sessionId }: { sessionId: string }) {
     let timeout = 0;
     const load = async () => {
       try {
-        const nextOrder = await getCheckoutOrder(sessionId, controller.signal);
+        const nextOrder = await withFreshAccess((access) => getCheckoutOrder(sessionId, access, controller.signal));
         setOrder(nextOrder);
         setError('');
         if (nextOrder.payment_status === 'paid' && !cleared.current) {

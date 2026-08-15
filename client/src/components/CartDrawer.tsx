@@ -8,6 +8,7 @@ import { cartSubtotal, useCartStore } from '@/stores/cart';
 import { MediaImage } from '@/components/MediaImage';
 import { useI18n } from '@/i18n/I18nProvider';
 import { colorName, productCopy } from '@/i18n/catalog';
+import { useAuthStore } from '@/stores/auth';
 
 export function CartDrawer() {
   const { lines, isOpen, close, remove, setQuantity } = useCartStore();
@@ -18,6 +19,7 @@ export function CartDrawer() {
   const estimatedShipping = subtotal >= 120 ? 0 : 9;
   const estimatedTax = subtotal * .08;
   const { t, locale } = useI18n();
+  const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -42,6 +44,8 @@ export function CartDrawer() {
       previousFocus.current?.focus();
     };
   }, [close, isOpen]);
+
+  if (!user) return null;
 
   return (
     <div className={isOpen ? 'drawer-root drawer-root--open' : 'drawer-root'} aria-hidden={!isOpen}>

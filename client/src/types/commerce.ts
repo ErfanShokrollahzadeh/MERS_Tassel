@@ -23,6 +23,7 @@ export type Product = {
 };
 
 export type CartLine = {
+  itemId?: number;
   product: Product;
   quantity: number;
   color: string;

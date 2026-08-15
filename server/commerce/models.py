@@ -2,6 +2,7 @@ import uuid
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 from products.models import ProductVariant
 
@@ -13,12 +14,25 @@ class Cart(models.Model):
         ABANDONED = 'abandoned', 'Abandoned'
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='carts')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE, related_name='carts')
     email = models.EmailField(blank=True)
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.OPEN)
     currency = models.CharField(max_length=3, default='USD')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(user__isnull=False) | ~Q(status='open'),
+                name='open_cart_requires_user',
+            ),
+            models.UniqueConstraint(
+                fields=['user'],
+                condition=Q(status='open'),
+                name='unique_open_cart_per_user',
+            ),
+        ]
 
     @property
     def subtotal(self):
@@ -29,6 +43,8 @@ class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     variant = models.ForeignKey(ProductVariant, on_delete=models.PROTECT)
     quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+    added_at = models.DateTimeField(default=timezone.now, editable=False)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=['cart', 'variant'], name='unique_cart_variant')]

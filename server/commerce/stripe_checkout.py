@@ -63,7 +63,7 @@ def _resolve_variant(item):
     return variant
 
 
-def create_checkout_session(validated_data):
+def create_checkout_session(validated_data, user):
     if not settings.STRIPE_SECRET_KEY:
         raise ImproperlyConfigured('STRIPE_SECRET_KEY is not configured.')
 
@@ -96,6 +96,7 @@ def create_checkout_session(validated_data):
             shipping_address={},
             idempotency_key=idempotency_key,
             channel='stripe-checkout',
+            user=user,
         )
         expires_at = now + RESERVATION_WINDOW
         for variant, quantity in resolved:

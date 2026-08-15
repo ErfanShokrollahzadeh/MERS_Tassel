@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { ArrowLeft, Check, ChevronDown, Heart, Minus, PackageCheck, Plus, RotateCcw, ShieldCheck, Star } from 'lucide-react';
 import { Product } from '@/types/commerce';
 import { useCartStore } from '@/stores/cart';
@@ -11,6 +12,7 @@ import { MediaImage } from '@/components/MediaImage';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useI18n } from '@/i18n/I18nProvider';
 import { colorName, productCopy } from '@/i18n/catalog';
+import { useAuthStore } from '@/stores/auth';
 
 export function ProductDetail({ product }: { product: Product }) {
   const [activeImage, setActiveImage] = useState(0);
@@ -18,11 +20,20 @@ export function ProductDetail({ product }: { product: Product }) {
   const [quantity, setQuantity] = useState(1);
   const [openDetail, setOpenDetail] = useState('story');
   const add = useCartStore((state) => state.add);
+  const user = useAuthStore((state) => state.user);
+  const router = useRouter();
+  const pathname = usePathname();
   const { t, locale } = useI18n();
   const display = productCopy(product, locale);
   const related = products.filter((item) => item.id !== product.id).slice(0, 4);
 
-  const addSelected = () => { for (let i = 0; i < quantity; i += 1) add(product, color); };
+  const addSelected = () => {
+    if (!user) {
+      router.push(`/login?next=${encodeURIComponent(pathname)}`);
+      return;
+    }
+    void add(product, color, quantity);
+  };
 
   return (
     <div className="pdp-page">

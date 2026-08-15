@@ -1,87 +1,75 @@
-"""
-MERS Tassel - Account Views
-"""
+"""JWT-backed account endpoints."""
 
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework import generics, permissions, status
-from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
+from .serializers import LoginSerializer, LogoutSerializer, RegisterSerializer, UserSerializer
+
+
+User = get_user_model()
+
+
+def auth_payload(user):
+    refresh = RefreshToken.for_user(user)
+    return {
+        'access': str(refresh.access_token),
+        'refresh': str(refresh),
+        'user': UserSerializer(user).data,
+    }
 
 
 class RegisterView(generics.CreateAPIView):
-    """Register a new user account."""
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_register'
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-
-        # Create auth token for auto-login after registration
-        token, _ = Token.objects.get_or_create(user=user)
-
-        return Response({
-            'token': token.key,
-            'user': UserSerializer(user).data,
-            'message': 'Account created successfully!'
-        }, status=status.HTTP_201_CREATED)
+        return Response(auth_payload(user), status=status.HTTP_201_CREATED)
 
 
 class LoginView(APIView):
-    """Log in with username and password, returns auth token."""
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_login'
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
+        email = serializer.validated_data['email']
+        user_record = User.objects.filter(profile__email__iexact=email).first() or User.objects.filter(email__iexact=email).first()
         user = authenticate(
-            username=serializer.validated_data['username'],
-            password=serializer.validated_data['password']
+            request=request,
+            username=user_record.username if user_record else email,
+            password=serializer.validated_data['password'],
         )
-
-        if user is None:
-            return Response(
-                {'detail': 'Invalid username or password.'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-
-        if not user.is_active:
-            return Response(
-                {'detail': 'This account has been deactivated.'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-
-        token, _ = Token.objects.get_or_create(user=user)
-
-        return Response({
-            'token': token.key,
-            'user': UserSerializer(user).data,
-        })
+        if user is None or not user.is_active:
+            return Response({'detail': 'Invalid email or password.'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(auth_payload(user))
 
 
 class LogoutView(APIView):
-    """Log out by deleting the auth token."""
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        # Delete the user's token to force re-login
+        serializer = LogoutSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         try:
-            request.user.auth_token.delete()
-        except Exception:
-            pass
-        return Response(
-            {'message': 'Logged out successfully.'},
-            status=status.HTTP_200_OK
-        )
+            RefreshToken(serializer.validated_data['refresh']).blacklist()
+        except TokenError:
+            return Response({'detail': 'Refresh token is invalid or expired.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class UserProfileView(generics.RetrieveAPIView):
-    """Get the authenticated user's profile."""
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 

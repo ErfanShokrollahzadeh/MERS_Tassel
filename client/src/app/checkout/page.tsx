@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ChevronLeft, CreditCard, LockKeyhole, PackageCheck, ShieldCheck, Truck } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -13,19 +14,28 @@ import { MediaImage } from '@/components/MediaImage';
 import { useI18n } from '@/i18n/I18nProvider';
 import { colorName, productCopy } from '@/i18n/catalog';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
+import { useAuthStore, withFreshAccess } from '@/stores/auth';
 
 type CheckoutFields = { email: string };
 
 export default function CheckoutPage() {
+  const router = useRouter();
+  const user = useAuthStore((state) => state.user);
+  const hasHydrated = useAuthStore((state) => state.hasHydrated);
   const lines = useCartStore((state) => state.lines);
   const subtotal = useCartStore(cartSubtotal);
   const showToast = useToastStore((state) => state.show);
   const { t, locale } = useI18n();
   const schema = useMemo(() => z.object({ email: z.string().email(t('checkout.emailError')) }), [t]);
   const [delivery, setDelivery] = useState<'standard' | 'express'>('standard');
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<CheckoutFields>({ resolver: zodResolver(schema) });
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CheckoutFields>({ resolver: zodResolver(schema) });
   const shipping = delivery === 'express' ? 18 : subtotal >= 120 ? 0 : 9;
   const total = subtotal + shipping;
+
+  useEffect(() => {
+    if (hasHydrated && !user) router.replace('/login?next=%2Fcheckout');
+    if (user) reset({ email: user.email });
+  }, [hasHydrated, reset, router, user]);
 
   const onSubmit = async ({ email }: CheckoutFields) => {
     if (!lines.length) {
@@ -33,12 +43,14 @@ export default function CheckoutPage() {
       return;
     }
     try {
-      const session = await createCheckoutSession(lines, email, delivery, locale);
+      const session = await withFreshAccess((access) => createCheckoutSession(lines, email, delivery, locale, access));
       window.location.assign(session.checkout_url);
     } catch (error) {
       showToast({ tone: 'error', title: t('checkout.failed'), message: locale === 'tr' ? t('checkout.retry') : error instanceof Error ? error.message : t('checkout.retry') });
     }
   };
+
+  if (!hasHydrated || !user) return <div className="checkout-auth-loading">{t('common.loading')}</div>;
 
   return (
     <div className="checkout-page">

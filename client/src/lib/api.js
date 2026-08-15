@@ -20,7 +20,7 @@ async function apiFetch(endpoint, options = {}) {
   };
 
   if (token) {
-    defaultHeaders['Authorization'] = `Token ${token}`;
+    defaultHeaders['Authorization'] = `Bearer ${token}`;
   }
 
   const mergedOptions = {
@@ -149,7 +149,7 @@ export async function getSiteStats() {
 
 /**
  * Register a new user
- * @param {Object} data - { username, email, first_name, last_name, password, password2 }
+ * @param {Object} data - { email, first_name, last_name, password }
  */
 export async function registerUser(data) {
   return apiFetch('/accounts/register/', {
@@ -160,7 +160,7 @@ export async function registerUser(data) {
 
 /**
  * Log in with username and password
- * @param {Object} data - { username, password }
+ * @param {Object} data - { email, password }
  */
 export async function loginUser(data) {
   return apiFetch('/accounts/login/', {

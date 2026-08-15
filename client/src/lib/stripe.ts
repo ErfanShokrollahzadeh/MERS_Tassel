@@ -1,5 +1,6 @@
 import type { CartLine } from '@/types/commerce';
 import type { Locale } from '@/i18n/I18nProvider';
+import { ApiError } from '@/lib/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -13,23 +14,23 @@ export type CheckoutOrder = {
   created_at: string;
 };
 
-async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, { ...init, headers: { 'Content-Type': 'application/json', ...init?.headers } });
+async function apiRequest<T>(path: string, init?: RequestInit, access?: string): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, { ...init, headers: { 'Content-Type': 'application/json', ...(access ? { Authorization: `Bearer ${access}` } : {}), ...init?.headers } });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const message = typeof body.detail === 'string' ? body.detail : body.items?.[0] || body.items || 'Something went wrong while preparing checkout.';
-    throw new Error(String(message));
+    throw new ApiError(String(message), response.status, body);
   }
   return body as T;
 }
 
-export function createCheckoutSession(lines: CartLine[], email: string, shippingTier: 'standard' | 'express', locale: Locale) {
+export function createCheckoutSession(lines: CartLine[], email: string, shippingTier: 'standard' | 'express', locale: Locale, access: string) {
   return apiRequest<CheckoutSessionResponse>('/v1/commerce/stripe/checkout-session/', {
     method: 'POST',
     body: JSON.stringify({ email, shipping_tier: shippingTier, locale, items: lines.map((line) => ({ slug: line.product.slug, color: line.color, quantity: line.quantity })) }),
-  });
+  }, access);
 }
 
-export function getCheckoutOrder(sessionId: string, signal?: AbortSignal) {
-  return apiRequest<CheckoutOrder>(`/v1/commerce/stripe/session/${encodeURIComponent(sessionId)}/`, { signal });
+export function getCheckoutOrder(sessionId: string, access: string, signal?: AbortSignal) {
+  return apiRequest<CheckoutOrder>(`/v1/commerce/stripe/session/${encodeURIComponent(sessionId)}/`, { signal }, access);
 }

@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.test import TestCase, override_settings
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework.test import APIClient
 from products.models import Category, Product, ProductVariant
@@ -12,18 +13,20 @@ from .serializers import CheckoutSerializer
 
 class CommerceDomainTests(TestCase):
     def setUp(self):
+        self.user = get_user_model().objects.create_user(username='domain-customer', email='domain@example.com', password='test-password')
         category = Category.objects.create(name='Necklaces', slug='necklaces')
         product = Product.objects.create(name='Lale', slug='lale', category=category, description='Handmade', price=Decimal('100.00'), image='products/lale.jpg')
         self.variant = ProductVariant.objects.create(product=product, title='Rose', sku='LALE-ROSE', color='Rose', stock=5)
 
     def test_checkout_reserves_inventory_and_is_idempotent(self):
-        cart = Cart.objects.create(email='collector@example.com')
+        cart = Cart.objects.create(user=self.user, email='collector@example.com')
         CartItem.objects.create(cart=cart, variant=self.variant, quantity=2)
         payload = {'cart_id': cart.id, 'email': cart.email, 'shipping_address': {'city': 'Istanbul'}, 'shipping_total': '9.00', 'idempotency_key': 'checkout-test-1'}
-        serializer = CheckoutSerializer(data=payload)
+        request = SimpleNamespace(user=self.user)
+        serializer = CheckoutSerializer(data=payload, context={'request': request})
         self.assertTrue(serializer.is_valid(), serializer.errors)
         first = serializer.save()
-        second_serializer = CheckoutSerializer(data=payload)
+        second_serializer = CheckoutSerializer(data=payload, context={'request': request})
         self.assertTrue(second_serializer.is_valid(), second_serializer.errors)
         second = second_serializer.save()
         self.variant.refresh_from_db()
@@ -45,6 +48,7 @@ class CommerceDomainTests(TestCase):
 )
 class StripeCheckoutTests(TestCase):
     def setUp(self):
+        self.user = get_user_model().objects.create_user(username='stripe-customer', email='collector@example.com', password='test-password')
         category = Category.objects.create(name='Necklaces', slug='stripe-necklaces')
         product = Product.objects.create(
             name='Lâle Pearl Tassel', slug='lale-pearl-tassel', category=category,
@@ -52,12 +56,46 @@ class StripeCheckoutTests(TestCase):
         )
         self.variant = ProductVariant.objects.create(product=product, title='Rose', sku='LALE-ROSE-STRIPE', color='Rose', stock=5)
         self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
         self.payload = {
             'email': 'collector@example.com',
             'shipping_tier': 'standard',
             'locale': 'tr',
             'items': [{'slug': product.slug, 'color': 'Rose', 'quantity': 2}],
         }
+
+    def test_guest_cannot_view_bag_or_begin_checkout(self):
+        guest = APIClient()
+        self.assertEqual(guest.get('/api/v1/commerce/shopping-bag/').status_code, 401)
+        self.assertEqual(guest.post('/api/v1/commerce/stripe/checkout-session/', self.payload, format='json').status_code, 401)
+
+    def test_authenticated_customer_can_only_fetch_their_bag(self):
+        other = get_user_model().objects.create_user(username='other-customer', email='other@example.com', password='test-password')
+        other_cart = Cart.objects.create(user=other, email=other.email)
+
+        response = self.client.get('/api/v1/commerce/shopping-bag/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['user_id'], self.user.id)
+        self.assertNotEqual(response.data['id'], str(other_cart.id))
+
+    def test_authenticated_customer_can_add_update_and_remove_a_bag_item(self):
+        added = self.client.post('/api/v1/commerce/shopping-bag/items/', {
+            'product_slug': self.variant.product.slug,
+            'color': self.variant.color,
+            'quantity': 2,
+        }, format='json')
+        self.assertEqual(added.status_code, 201, added.data)
+        item = added.data['items'][0]
+        self.assertEqual(item['quantity'], 2)
+        self.assertIn('added_at', item)
+
+        updated = self.client.patch(f"/api/v1/commerce/shopping-bag/items/{item['id']}/", {'quantity': 3}, format='json')
+        self.assertEqual(updated.status_code, 200)
+        self.assertEqual(updated.data['items'][0]['quantity'], 3)
+
+        removed = self.client.delete(f"/api/v1/commerce/shopping-bag/items/{item['id']}/")
+        self.assertEqual(removed.status_code, 200)
+        self.assertEqual(removed.data['items'], [])
 
     @patch('commerce.stripe_checkout.stripe.checkout.Session.create')
     def test_session_uses_database_price_and_reserves_without_decrementing(self, create_session):
@@ -72,6 +110,7 @@ class StripeCheckoutTests(TestCase):
         self.assertEqual(call['shipping_options'][0]['shipping_rate_data']['display_name'], 'Atölye standart teslimat')
         self.assertIn('{CHECKOUT_SESSION_ID}', call['success_url'])
         order = Order.objects.get(stripe_checkout_session_id='cs_test_secure')
+        self.assertEqual(order.user, self.user)
         self.assertEqual(order.total, Decimal('298.00'))
         self.assertEqual(order.payment_status, Order.PaymentStatus.UNPAID)
         self.assertEqual(order.reservations.get().status, InventoryReservation.Status.ACTIVE)

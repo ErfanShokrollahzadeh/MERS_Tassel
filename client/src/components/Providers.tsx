@@ -6,6 +6,7 @@ import { AppChrome } from '@/components/AppChrome';
 import { ToastViewport } from '@/components/ToastViewport';
 import { I18nProvider } from '@/i18n/I18nProvider';
 import type { Locale } from '@/i18n/I18nProvider';
+import { AuthBootstrap } from '@/components/AuthBootstrap';
 
 export function Providers({ children, initialLocale }: { children: React.ReactNode; initialLocale: Locale }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -15,6 +16,7 @@ export function Providers({ children, initialLocale }: { children: React.ReactNo
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider initialLocale={initialLocale}>
+        <AuthBootstrap />
         <AppChrome>{children}</AppChrome>
         <ToastViewport />
       </I18nProvider>
