@@ -1,10 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { CalendarDays, Check, Clock3, Copy, MoreHorizontal, Percent, Plus, Sparkles, TicketPercent, X } from 'lucide-react';
+import { NotConnected } from '@/components/admin/NotConnected';
 
-export default function PromotionsPage(){const [builder,setBuilder]=useState(false);const [code,setCode]=useState('SUMMER20');const [copied,setCopied]=useState(false);return <><div className="admin-page-heading"><div><span className="admin-kicker">Campaigns</span><h1>Promotions</h1><p>Build considered offers without eroding the value of your work.</p></div><button className="admin-button admin-button--primary" onClick={()=>setBuilder(true)}><Plus size={15}/> Create promotion</button></div>
-<section className="promotion-summary"><article className="admin-card promo-hero"><div><span className="admin-kicker">Live now</span><h2>Summer atelier edit</h2><p>20% off selected pendants · Ends Sunday at midnight.</p><div className="promo-code"><strong>SUMMER20</strong><button onClick={()=>{navigator.clipboard?.writeText('SUMMER20');setCopied(true)}}>{copied?<Check size={15}/>:<Copy size={15}/>}</button></div></div><div className="promo-stat"><span>Revenue</span><strong>$8,420</strong><small>+24.8% lift</small></div><div className="promo-stat"><span>Redemptions</span><strong>84</strong><small>42% of limit</small></div><div className="promo-orb"><Percent/></div></article>
-<div className="promo-mini-grid"><article className="admin-card"><TicketPercent/><span>Active codes</span><strong>4</strong><small>2 scheduled</small></article><article className="admin-card"><Sparkles/><span>Attributed revenue</span><strong>$12.8k</strong><small>This month</small></article><article className="admin-card"><Clock3/><span>Ending soon</span><strong>1</strong><small>Within 48 hours</small></article></div></section>
-<section className="admin-card table-card"><header className="card-heading promo-table-heading"><div><span>All promotions</span><h2>Campaign library</h2></div><button className="filter-pill">All statuses</button></header><div className="admin-table admin-table--large"><table><thead><tr><th>Name</th><th>Type</th><th>Status</th><th>Used</th><th>Revenue</th><th>Duration</th><th></th></tr></thead><tbody>{[['Summer atelier edit','20% off','Active','84 / 200','$8,420','Aug 8–16'],['Welcome to MERS','10% off','Active','218 / ∞','$21,460','Always on'],['Complimentary delivery','Free shipping','Scheduled','0 / ∞','$0','Aug 21–24'],['Collector thank-you','$25 off','Draft','—','—','Not scheduled']].map((row)=><tr key={row[0]}>{row.map((cell,index)=><td key={`${row[0]}-${index}`}>{index===0?<strong>{cell}</strong>:index===2?<span className={`status status--${cell.toLowerCase()}`}>{cell}</span>:cell}</td>)}<td><button className="table-more"><MoreHorizontal/></button></td></tr>)}</tbody></table></div></section>
-{builder&&<div className="panel-root"><button className="panel-scrim" onClick={()=>setBuilder(false)} aria-label="Close builder"/><aside className="editor-panel glass-overlay"><header><div><span className="admin-kicker">Promotion builder</span><h2>Create an offer</h2></div><button className="icon-button" onClick={()=>setBuilder(false)}><X/></button></header><div className="editor-body"><section className="editor-section"><h3>Method</h3><div className="promo-type-grid"><button className="active"><TicketPercent/><span><strong>Discount code</strong><small>Customers enter a code</small></span></button><button><Sparkles/><span><strong>Automatic</strong><small>Applied at checkout</small></span></button></div><label>Code<div className="input-action"><input value={code} onChange={(e)=>setCode(e.target.value.toUpperCase())}/><button onClick={()=>setCode(`MERS${Math.floor(Math.random()*900+100)}`)}>Generate</button></div></label></section><section className="editor-section"><h3>Value</h3><div className="editor-grid"><label>Discount type<select><option>Percentage</option><option>Fixed amount</option><option>Free shipping</option></select></label><label>Value<input type="number" defaultValue="20"/></label></div></section><section className="editor-section"><h3>Eligibility</h3><label>Applies to<select><option>Selected collections</option><option>All products</option><option>Selected products</option></select></label><label>Customer eligibility<select><option>Everyone</option><option>Specific segments</option><option>New customers</option></select></label></section><section className="editor-section"><h3>Schedule</h3><div className="editor-grid"><label>Starts<input type="date"/></label><label>Ends<input type="date"/></label></div></section></div><footer><button className="admin-button admin-button--secondary" onClick={()=>setBuilder(false)}>Save draft</button><button className="admin-button admin-button--primary" onClick={()=>setBuilder(false)}>Schedule promotion</button></footer></aside></div>}</>}
+export default function PromotionsPage() {
+  return (
+    <NotConnected
+      kicker="Campaigns"
+      title="Promotions"
+      summary="Discount codes and automatic offers."
+      planned={[
+        'Percentage, fixed-amount and free-shipping discounts',
+        'Redemption limits and scheduling windows',
+        'Eligibility by collection, product or customer segment',
+        'Attributed revenue per campaign',
+      ]}
+    />
+  );
+}

@@ -1,12 +1,19 @@
 'use client';
 
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { ArrowDownRight, ArrowUpRight, CalendarDays, Download, MousePointerClick, Radio, Users } from 'lucide-react';
-import { revenueSeries, trafficSeries } from '@/data/store';
+import { NotConnected } from '@/components/admin/NotConnected';
 
-const colors=['#7c4561','#bc7f90','#c69a62','#8c8186'];
-export default function MarketingPage(){return <><div className="admin-page-heading"><div><span className="admin-kicker">Growth intelligence</span><h1>Marketing pulse</h1><p>One clear view of acquisition, conversion and customer value.</p></div><div><button className="admin-button admin-button--secondary"><CalendarDays size={15}/> Aug 8–14</button><button className="admin-button admin-button--secondary"><Download size={15}/> Export</button></div></div>
-<section className="growth-kpis">{[{label:'Conversion rate',value:'3.84%',delta:'+0.42%',up:true},{label:'Average order value',value:'$139.93',delta:'+8.6%',up:true},{label:'Acquisition cost',value:'$18.20',delta:'-6.2%',up:true},{label:'Return on ad spend',value:'4.7×',delta:'-0.3×',up:false}].map((item)=><article className="admin-card" key={item.label}><span>{item.label}</span><div><strong>{item.value}</strong><b className={item.up?'trend-up':'trend-down'}>{item.up?<ArrowUpRight/>:<ArrowDownRight/>}{item.delta}</b></div><small>vs previous period</small></article>)}</section>
-<section className="analytics-grid"><article className="admin-card analytics-wide"><header className="card-heading"><div><span>Revenue & orders</span><h2>Daily performance</h2></div><div className="chart-legend"><span><i className="plum-dot"/> Revenue</span><span><i className="gold-dot"/> Orders</span></div></header><div className="chart-wrap chart-wrap--tall"><ResponsiveContainer width="100%" height="100%"><BarChart data={revenueSeries}><CartesianGrid vertical={false} stroke="var(--line)"/><XAxis dataKey="name" axisLine={false} tickLine={false}/><YAxis yAxisId="left" axisLine={false} tickLine={false} tickFormatter={(v)=>`$${v/1000}k`}/><YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false}/><Tooltip contentStyle={{background:'var(--surface)',border:'1px solid var(--line)',borderRadius:12}}/><Bar yAxisId="left" dataKey="revenue" fill="#7c4561" radius={[6,6,0,0]}/><Bar yAxisId="right" dataKey="orders" fill="#c69a62" radius={[6,6,0,0]}/></BarChart></ResponsiveContainer></div></article>
-<article className="admin-card traffic-card"><header className="card-heading"><div><span>Attribution</span><h2>Traffic sources</h2></div></header><div className="donut-wrap"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={trafficSeries} dataKey="value" innerRadius={62} outerRadius={88} paddingAngle={4}>{trafficSeries.map((entry,index)=><Cell key={entry.name} fill={colors[index]}/>)}</Pie><Tooltip/></PieChart></ResponsiveContainer><div><strong>18.2k</strong><span>sessions</span></div></div><div className="source-list">{trafficSeries.map((source,index)=><p key={source.name}><span><i style={{background:colors[index]}}/>{source.name}</span><strong>{source.value}%</strong></p>)}</div></article></section>
-<section className="analytics-grid analytics-grid--lower"><article className="admin-card"><header className="card-heading"><div><span>Funnel</span><h2>Customer journey</h2></div></header><div className="funnel-list">{[{label:'Sessions',value:'18,240',pct:100,icon:Users},{label:'Product views',value:'11,680',pct:64,icon:MousePointerClick},{label:'Checkout started',value:'1,248',pct:22,icon:Radio},{label:'Orders',value:'305',pct:12,icon:ArrowUpRight}].map((step,index)=><div key={step.label}><step.icon/><span>{step.label}<small>{index?`${Math.round(step.pct*1.52)}% step conversion`:'All visitors'}</small></span><strong>{step.value}</strong><i><b style={{width:`${step.pct}%`}}/></i></div>)}</div></article><article className="admin-card cohort-card"><header className="card-heading"><div><span>Retention</span><h2>Customer cohorts</h2></div></header><div className="cohort-table"><div><span>Cohort</span><span>W0</span><span>W1</span><span>W2</span><span>W3</span></div>{[['Jul 14','100','42','31','24'],['Jul 21','100','46','34','—'],['Jul 28','100','49','—','—'],['Aug 04','100','—','—','—']].map((row)=><div key={row[0]}>{row.map((cell,index)=><span key={index} style={index?{background:`color-mix(in srgb, var(--plum) ${cell==='—'?0:Number(cell)}%, transparent)`}:undefined}>{cell}{index&&cell!=='—'?'%':''}</span>)}</div>)}</div></article></section></>}
+export default function MarketingPage() {
+  return (
+    <NotConnected
+      kicker="Growth intelligence"
+      title="Marketing pulse"
+      summary="Acquisition, attribution and cohort analysis."
+      planned={[
+        'Session and funnel tracking from a commerce event stream',
+        'Attribution by traffic source and campaign',
+        'Cohort retention across weekly customer groups',
+        'Acquisition cost and return on ad spend',
+      ]}
+    />
+  );
+}

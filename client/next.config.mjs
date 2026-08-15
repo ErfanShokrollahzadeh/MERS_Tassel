@@ -1,17 +1,15 @@
 /** @type {import('next').NextConfig} */
+const apiUrl = new URL(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5080');
+
 const nextConfig = {
   images: {
+    // Product and branding media are served by the .NET API from its wwwroot/uploads tree.
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '8000',
-        pathname: '/media/**',
+        protocol: apiUrl.protocol.replace(':', ''),
+        hostname: apiUrl.hostname,
+        port: apiUrl.port || undefined,
+        pathname: '/uploads/**',
       },
     ],
   },

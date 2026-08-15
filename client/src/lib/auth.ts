@@ -1,72 +1,32 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { api, ApiError } from '@/lib/apiClient';
+import type { AuthSession, AuthUser } from '@/types/commerce';
 
-export type AuthUser = {
-  id: number;
-  email: string;
-  first_name: string;
-  last_name: string;
-  date_joined: string;
-  role: 'customer' | 'staff' | 'admin';
-};
+export { ApiError };
 
-export type AuthSession = { access: string; refresh: string; user: AuthUser };
-
-export class ApiError extends Error {
-  status: number;
-  details: unknown;
-
-  constructor(message: string, status: number, details?: unknown) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-    this.details = details;
-  }
-}
-
-async function request<T>(path: string, init: RequestInit = {}, access?: string): Promise<T> {
-  let response: Response;
-  try {
-    response = await fetch(`${API_URL}${path}`, {
-      ...init,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(access ? { Authorization: `Bearer ${access}` } : {}),
-        ...init.headers,
-      },
-    });
-  } catch (error) {
-    throw new ApiError('The account service is not running. Start the storefront with npm run dev and try again.', 0, error);
-  }
-  const body = response.status === 204 ? null : await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const record = body && typeof body === 'object' ? body as Record<string, unknown> : {};
-    const firstField = Object.values(record).find((value) => Array.isArray(value) || typeof value === 'string');
-    const message = typeof record.detail === 'string'
-      ? record.detail
-      : Array.isArray(firstField)
-        ? String(firstField[0])
-        : typeof firstField === 'string' ? firstField : 'The request could not be completed.';
-    throw new ApiError(message, response.status, body);
-  }
-  return body as T;
-}
-
-export function signup(payload: { email: string; first_name: string; last_name: string; password: string }) {
-  return request<AuthSession>('/accounts/register/', { method: 'POST', body: JSON.stringify(payload) });
+export function signup(payload: { email: string; firstName: string; lastName: string; password: string }) {
+  return api.post<AuthSession>('/auth/register', payload);
 }
 
 export function login(payload: { email: string; password: string }) {
-  return request<AuthSession>('/accounts/login/', { method: 'POST', body: JSON.stringify(payload) });
+  return api.post<AuthSession>('/auth/login', payload);
 }
 
 export function refreshSession(refresh: string) {
-  return request<{ access: string; refresh?: string }>('/accounts/token/refresh/', { method: 'POST', body: JSON.stringify({ refresh }) });
+  return api.post<AuthSession>('/auth/refresh', { refresh });
 }
 
-export function profile(access: string) {
-  return request<AuthUser>('/accounts/profile/', {}, access);
+export function profile() {
+  return api.get<AuthUser>('/auth/profile', { auth: true });
 }
 
-export function logout(access: string, refresh: string) {
-  return request<null>('/accounts/logout/', { method: 'POST', body: JSON.stringify({ refresh }) }, access);
+export function updateProfile(payload: { firstName: string; lastName: string }) {
+  return api.put<AuthUser>('/auth/profile', payload, { auth: true });
+}
+
+export function changePassword(payload: { currentPassword: string; newPassword: string }) {
+  return api.post<null>('/auth/change-password', payload, { auth: true });
+}
+
+export function logout(refresh: string) {
+  return api.post<null>('/auth/logout', { refresh }, { auth: true });
 }
