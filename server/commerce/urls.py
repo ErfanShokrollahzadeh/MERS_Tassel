@@ -5,7 +5,7 @@ from .views import CartViewSet, OrderViewSet, PromotionViewSet, ShoppingBagItemD
 router = DefaultRouter()
 router.register('carts', CartViewSet, basename='carts')
 router.register('orders', OrderViewSet, basename='orders')
-router.register('promotions', PromotionViewSet)
+router.register('promotions', PromotionViewSet, basename='promotions')
 urlpatterns = [
     path('shopping-bag/', ShoppingBagView.as_view(), name='shopping-bag'),
     path('shopping-bag/items/', ShoppingBagItemsView.as_view(), name='shopping-bag-items'),
