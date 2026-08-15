@@ -1,110 +1,146 @@
 # MERS Tassel
 
-A full-stack commerce and atelier-operations platform for handcrafted accessories. The experience combines a high-conversion storefront with a Liquid Glass staff workspace for orders, products, growth analytics, promotions, roles, and customer support.
-
-## What is included
-
-### Storefront
-
-- Editorial home and collection discovery
-- Searchable, filterable and sortable catalog
-- Product detail gallery, finishes, stock state and related products
-- Persistent slide-over bag with quantity controls, live delivery/tax estimates and focus management
-- Stripe-hosted Checkout with server-authoritative pricing, payment confirmation and cancel recovery
-- Responsive `next/image` media, loading skeletons, route/gallery/accordion transitions, light/dark themes and reduced-motion support
-- Complete English/Turkish storefront localization with persisted language preference, localized catalog copy, validation, checkout outcomes and Stripe-hosted payment UI
-- Product-specific Open Graph metadata and a bespoke social preview card
-
-### Atelier workspace
-
-- Revenue, order, conversion and customer KPI overview
-- Order search, filters, batch selection and operational status
-- Product/inventory table and rich product editor workflow
-- Acquisition, attribution, funnel and cohort analytics
-- Promotion library and discount builder
-- Support inbox, accessible Kanban alternative, live thread, internal notes and customer context
-- Staff roles and permission matrix
-- Command palette and responsive/collapsible navigation
-
-### Backend domains
-
-- Catalog variants and product media
-- Persistent carts and inventory-aware cart items
-- Atomic checkout, immutable order-item snapshots and expiring inventory reservations
-- Signed, idempotent Stripe webhooks that fulfill paid orders and release failed/expired reservations
-- Promotions and redemption limits
-- Ticketing, private internal notes, canned replies and attachments
-- Commerce events, daily metrics and staff KPI endpoint
-- Versioned `/api/v1/` routes alongside the original compatible endpoints
+A commerce platform for handcrafted accessories: a storefront for customers and an atelier
+workspace for managing the catalog, orders and site content.
 
 ## Stack
 
-- Next.js 16, React 19 and strict TypeScript
-- Zustand, TanStack Query, React Hook Form and Zod
-- Framer Motion, Recharts and Lucide
-- Django 4.2 and Django REST Framework
-- SQLite for local development; models are ready for PostgreSQL deployment
+- **API** — .NET 10, ASP.NET Core, EF Core with SQLite, ASP.NET Core Identity, Stripe.net
+- **Client** — Next.js 16, React 19, strict TypeScript, TanStack Query, Zustand, Framer Motion, Recharts
+
+The API lives in `api/` and the client in `client/`. The original Django backend is still in
+`server/` for reference; nothing in the client talks to it any more.
+
+## What works
+
+### Storefront
+
+- Editorial home page with hero, categories and featured pieces, all from the API
+- Catalog with server-side search, category filter, sorting and pagination
+- Product detail with a media gallery, per-finish stock and related pieces
+- Persistent shopping bag, checkout, order history and account
+- English/Turkish throughout, including product copy — translations are stored per record,
+  so anything added in the admin panel can be localized
+- Loading skeletons, empty states and error fallbacks on every data-backed view
+
+### Atelier workspace (`/admin`)
+
+- Administrator-only, guarded by role
+- Overview with revenue, orders, average order value and inventory, computed from real orders
+- Product management: create, edit and remove, with drag-and-drop image upload, live previews,
+  cover-image selection, per-finish variants and EN/TR fields
+- Order management with filters, search, expandable detail and status transitions that return
+  stock when an order is cancelled or refunded
+- People and roles, and a site-settings page for the logo, hero banner and contact details
+
+Growth, Promotions and Support have no backend yet. Those pages say so rather than showing
+placeholder numbers.
 
 ## Local setup
 
-### Backend
+### API
+
+Install the .NET 10 SDK if you do not have it:
 
 ```bash
-cd server
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-# Fill in the Stripe test keys, then export the file into this shell:
-set -a; source .env; set +a
-python manage.py migrate
-python manage.py seed_data
-python manage.py runserver
+curl -fsSL https://builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.sh | bash -s -- --channel 10.0
+export PATH="$HOME/.dotnet:$PATH"
 ```
 
-The API runs at `http://localhost:8000`. Django administration is at `/admin/`.
-
-In another terminal, forward Stripe test events and copy the printed `whsec_...` value into `server/.env`:
+Then run it:
 
 ```bash
-stripe listen --forward-to localhost:8000/api/v1/commerce/stripe/webhook/
+cd api/src/MersTassel.Api
+dotnet run
 ```
 
-### Frontend
+The API listens on `http://localhost:5080`, with Swagger at `/swagger` in development.
+
+On first run it applies migrations, seeds the catalog from `api/seed-assets/`, and creates an
+administrator. **The generated password is printed to the console once** — save it, or set your
+own beforehand:
+
+```bash
+export Seed__AdminEmail=you@example.com
+export Seed__AdminPassword='your-password'
+```
+
+### Client
 
 ```bash
 cd client
 npm install
+cp .env.example .env.local   # NEXT_PUBLIC_API_URL=http://localhost:5080
 npm run dev
 ```
 
-The product runs at `http://localhost:3000`; the atelier workspace begins at `/admin`.
+The storefront runs at `http://localhost:3000` and the workspace at `/admin`.
 
-Use the `EN / TR` control in the header, footer, account, or checkout screens to switch languages. The preference is stored in both a cookie and local browser storage, updates the document language for assistive technology, and is passed to Stripe so its hosted payment page opens in the selected language. Internal product slugs and variant values remain language-neutral for reliable inventory and order matching.
+`npm run dev` starts the API and the client together. To run only the client, use `npm run dev:next`.
 
-For a local end-to-end test, add an item, continue to Stripe Checkout, and use test card `4242 4242 4242 4242` with any future expiry and any CVC. The success page polls the local order until the verified webhook marks it paid; canceling keeps the persisted bag intact.
+## Configuration
 
-### Stripe webhook events
+Set through `appsettings.json`, environment variables or user-secrets. Nested keys use `__` in
+environment variables (`Jwt__SigningKey`).
 
-Register the production webhook URL `/api/v1/commerce/stripe/webhook/` for:
+| Key | Purpose |
+| --- | --- |
+| `ConnectionStrings:Default` | SQLite connection string |
+| `Jwt:SigningKey` | Token signing key. **Required outside Development** — the API refuses to start without it |
+| `Jwt:AccessTokenMinutes` / `Jwt:RefreshTokenDays` | Token lifetimes (default 15 minutes / 7 days) |
+| `Cors:AllowedOrigins` | Origins allowed to call the API |
+| `Storage:MaxBytes` | Upload size limit (default 10 MB) |
+| `Stripe:SecretKey` / `Stripe:WebhookSecret` | Enables payments; without both, checkout returns a `payments_not_configured` 503 |
+| `Seed:AdminEmail` / `Seed:AdminPassword` | Administrator seeded on first run |
+
+Never expose `Stripe:SecretKey` or `Jwt:SigningKey` through a `NEXT_PUBLIC_` variable.
+
+### Payments
+
+Checkout writes the order and reserves stock before any payment provider is involved, so the
+flow works without Stripe — the order is simply left unpaid. With keys configured, the client
+is handed a Stripe Checkout session and the webhook marks the order paid.
+
+Register the webhook at `/api/v1/payments/stripe/webhook` for:
 
 - `checkout.session.completed`
 - `checkout.session.async_payment_succeeded`
 - `checkout.session.async_payment_failed`
 - `checkout.session.expired`
 
-Never expose `STRIPE_SECRET_KEY` or `STRIPE_WEBHOOK_SECRET` through a `NEXT_PUBLIC_` variable.
+Locally, forward events and copy the printed `whsec_...` value into your configuration:
+
+```bash
+stripe listen --forward-to localhost:5080/api/v1/payments/stripe/webhook
+```
+
+## API shape
+
+Every response uses the same envelope:
+
+```json
+{ "success": true, "data": { }, "message": null, "errors": null, "code": null }
+```
+
+Lists add `items`, `page`, `pageSize`, `total` and `totalPages`. Failures set `success: false`
+with a `code` (`validation_failed`, `not_found`, `conflict`, `payments_not_configured`, …) and,
+for validation errors, a per-field `errors` map keyed in camelCase.
+
+Uploaded media is stored under `wwwroot/uploads/{entity}/{yyyy}/{MM}/` and returned as a
+relative path such as `/uploads/products/2026/08/{guid}.jpg`; the client resolves it against
+the API origin. Uploads are validated by magic bytes rather than by file extension.
+
+Records are soft-deleted through an `isDelete` column with a global query filter, so removing a
+product hides it from the storefront while order history keeps its reference.
 
 ## Verification
 
 ```bash
-cd client
+cd api
+dotnet build
+dotnet test          # 47 unit and integration tests
+
+cd ../client
 npm run typecheck
 npm run build
-
-cd ../server
-python manage.py check
-python manage.py test commerce support analytics products accounts
 ```
-
-Architecture and consistency rules are documented in [docs/architecture/implementation.md](docs/architecture/implementation.md). The design-system contract is in [docs/design-system.md](docs/design-system.md).
