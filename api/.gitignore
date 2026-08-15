@@ -1,0 +1,15 @@
+# Build output
+bin/
+obj/
+
+# Local database
+*.db
+*.db-shm
+*.db-wal
+
+# Uploaded and seeded media — generated at runtime from seed-assets/
+src/MersTassel.Api/wwwroot/uploads/
+
+# User secrets / local overrides
+appsettings.Local.json
+appsettings.Development.local.json
