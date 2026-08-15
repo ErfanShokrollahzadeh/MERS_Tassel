@@ -18,12 +18,16 @@ export function ProductTile({ product, priority = false }: { product: Product; p
   const { t, locale } = useI18n();
   const display = productCopy(product, locale);
   const sale = product.compareAt && product.compareAt.amount > product.price.amount;
+
   const addProtected = () => {
     if (!user) {
       router.push(`/login?next=${encodeURIComponent(pathname)}`);
       return;
     }
-    void add(product);
+    // Quick-add takes the first available finish; the detail page is where colour is chosen.
+    const firstInStock = product.variants.find((variant) => variant.stock > 0) ?? product.variants[0];
+    if (!firstInStock) return;
+    void add(product.slug, firstInStock.color);
   };
 
   return (

@@ -1,47 +1,128 @@
 'use client';
 
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ChevronDown, SlidersHorizontal, Sparkles, X } from 'lucide-react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ProductTile } from '@/components/ProductTile';
-import { products } from '@/data/store';
+import { EmptyState, ErrorState, ProductGridSkeleton } from '@/components/DataStates';
+import { catalogKeys, fetchCategories, fetchProducts, type CatalogSort } from '@/lib/catalog';
 import { useI18n } from '@/i18n/I18nProvider';
-import { categoryName, productCopy } from '@/i18n/catalog';
+import { categoryName } from '@/i18n/catalog';
 
-const filters = [
-  { name: 'All pieces', slug: '' }, { name: 'Necklaces', slug: 'necklaces' }, { name: 'Pendants', slug: 'pendants' },
-  { name: 'Earrings', slug: 'earrings' }, { name: 'Rings', slug: 'rings' }, { name: 'Bracelets', slug: 'bracelets' }, { name: 'Bag charms', slug: 'bag-charms' },
-];
+const PAGE_SIZE = 12;
 
 function Catalog() {
   const { t, locale } = useI18n();
   const searchParams = useSearchParams();
+
   const [category, setCategory] = useState(searchParams.get('category') || '');
   const [query, setQuery] = useState('');
-  const [sort, setSort] = useState(searchParams.get('sort') === 'new' ? 'newest' : 'featured');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [sort, setSort] = useState<CatalogSort>(searchParams.get('sort') === 'new' ? 'newest' : 'featured');
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [page, setPage] = useState(1);
 
-  const visible = useMemo(() => {
-    const filtered = products.filter((product) => { const display = productCopy(product, locale); return (!category || product.categorySlug === category) && (!query || `${display.name} ${display.category} ${display.description}`.toLocaleLowerCase(locale).includes(query.toLocaleLowerCase(locale))); });
-    return [...filtered].sort((a, b) => sort === 'price-low' ? a.price.amount - b.price.amount : sort === 'price-high' ? b.price.amount - a.price.amount : sort === 'newest' ? Number(b.isNew) - Number(a.isNew) : Number(b.isFeatured) - Number(a.isFeatured));
-  }, [category, locale, query, sort]);
+  // Debounce so typing does not fire a request per keystroke.
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  // Any change to the filters invalidates the current page number.
+  useEffect(() => setPage(1), [category, debouncedQuery, sort]);
+
+  const params = useMemo(
+    () => ({ category: category || undefined, search: debouncedQuery || undefined, sort, page, pageSize: PAGE_SIZE }),
+    [category, debouncedQuery, sort, page],
+  );
+
+  const products = useQuery({
+    queryKey: catalogKeys.products(params),
+    queryFn: () => fetchProducts(params),
+    // Keeps the previous page visible while the next one loads, avoiding a full-grid flash.
+    placeholderData: keepPreviousData,
+  });
+
+  const categories = useQuery({ queryKey: catalogKeys.categories(), queryFn: () => fetchCategories() });
+
+  const clearAll = () => { setCategory(''); setQuery(''); setDebouncedQuery(''); };
+  const result = products.data;
 
   return (
     <div className="catalog-page">
       <section className="catalog-hero"><div className="ambient ambient--one" /><div className="container-wide"><span className="eyebrow"><Sparkles size={12} /> {t('catalog.eyebrow')}</span><h1>{t('catalog.title1')}<br /><em>{t('catalog.title2')}</em></h1><p>{t('catalog.lede')}</p></div></section>
+
       <section className="catalog-shell container-wide">
         <div className="catalog-toolbar">
-          <div className="category-tabs" role="tablist" aria-label={t('catalog.categories')}>{filters.map((filter) => <button key={filter.slug} role="tab" aria-selected={category === filter.slug} onClick={() => setCategory(filter.slug)}>{filter.slug ? categoryName(filter.name, locale) : t('catalog.all')}</button>)}</div>
+          <div className="category-tabs" role="tablist" aria-label={t('catalog.categories')}>
+            <button role="tab" aria-selected={category === ''} onClick={() => setCategory('')}>{t('catalog.all')}</button>
+            {categories.data?.map((item) => (
+              <button key={item.slug} role="tab" aria-selected={category === item.slug} onClick={() => setCategory(item.slug)}>
+                {categoryName(item, locale)}
+              </button>
+            ))}
+          </div>
           <button className="filter-trigger" onClick={() => setFiltersOpen((open) => !open)} aria-expanded={filtersOpen}><SlidersHorizontal size={16} /> {t('catalog.filters')}</button>
-          <label className="sort-control"><span className="sr-only">{t('catalog.sort')}</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="featured">{t('catalog.featured')}</option><option value="newest">{t('catalog.newest')}</option><option value="price-low">{t('catalog.low')}</option><option value="price-high">{t('catalog.high')}</option></select><ChevronDown size={15} /></label>
+          <label className="sort-control">
+            <span className="sr-only">{t('catalog.sort')}</span>
+            <select value={sort} onChange={(event) => setSort(event.target.value as CatalogSort)}>
+              <option value="featured">{t('catalog.featured')}</option>
+              <option value="newest">{t('catalog.newest')}</option>
+              <option value="price-low">{t('catalog.low')}</option>
+              <option value="price-high">{t('catalog.high')}</option>
+            </select>
+            <ChevronDown size={15} />
+          </label>
         </div>
-        {filtersOpen && <div className="filter-panel glass-panel"><label><span>{t('catalog.search')}</span><div><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('catalog.searchPlaceholder')} />{query && <button onClick={() => setQuery('')} aria-label={t('catalog.clearSearch')}><X size={15} /></button>}</div></label><label><span>{t('catalog.availability')}</span><select><option>{t('catalog.allAvailability')}</option><option>{t('catalog.ready')}</option><option>{t('catalog.made')}</option></select></label><label><span>{t('catalog.material')}</span><select><option>{t('catalog.allMaterials')}</option><option>{t('catalog.gold')}</option><option>{t('catalog.silver')}</option><option>{t('catalog.silk')}</option></select></label></div>}
-        <div className="catalog-meta"><span>{t('catalog.count', { count: visible.length })}</span>{(category || query) && <button onClick={() => { setCategory(''); setQuery(''); }}>{t('catalog.clear')} <X size={13} /></button>}</div>
-        {visible.length ? <div className="product-grid catalog-grid">{visible.map((product) => <ProductTile key={product.id} product={product} />)}</div> : <div className="empty-results"><h2>{t('catalog.empty')}</h2><p>{t('catalog.emptyCopy')}</p><button className="button button--primary" onClick={() => { setCategory(''); setQuery(''); }}>{t('catalog.viewAll')}</button></div>}
+
+        {filtersOpen && (
+          <div className="filter-panel glass-panel">
+            <label>
+              <span>{t('catalog.search')}</span>
+              <div>
+                <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('catalog.searchPlaceholder')} />
+                {query && <button onClick={() => setQuery('')} aria-label={t('catalog.clearSearch')}><X size={15} /></button>}
+              </div>
+            </label>
+          </div>
+        )}
+
+        <div className="catalog-meta">
+          <span>{result ? t('catalog.count', { count: result.total }) : ' '}</span>
+          {(category || query) && <button onClick={clearAll}>{t('catalog.clear')} <X size={13} /></button>}
+        </div>
+
+        {products.isPending && <ProductGridSkeleton count={PAGE_SIZE} />}
+        {products.isError && <ErrorState error={products.error} onRetry={() => products.refetch()} />}
+
+        {result && (result.items.length ? (
+          <>
+            <div className={`product-grid catalog-grid${products.isFetching ? ' product-grid--refreshing' : ''}`}>
+              {result.items.map((product) => <ProductTile key={product.id} product={product} />)}
+            </div>
+            {result.totalPages > 1 && (
+              <nav className="catalog-pagination" aria-label={t('catalog.sort')}>
+                <button disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>{t('common.previous')}</button>
+                {Array.from({ length: result.totalPages }).map((_, index) => (
+                  <button key={index} className={page === index + 1 ? 'active' : ''} onClick={() => setPage(index + 1)} aria-current={page === index + 1 ? 'page' : undefined}>
+                    {index + 1}
+                  </button>
+                ))}
+                <button disabled={page >= result.totalPages} onClick={() => setPage((current) => current + 1)}>{t('common.next')}</button>
+              </nav>
+            )}
+          </>
+        ) : (
+          <EmptyState title={t('catalog.empty')} message={t('catalog.emptyCopy')} action={<button className="button button--primary" onClick={clearAll}>{t('catalog.viewAll')}</button>} />
+        ))}
       </section>
+
       <section className="catalog-note"><div className="container-narrow"><span className="eyebrow">{t('catalog.promise')}</span><h2>{t('catalog.promiseTitle')}</h2><p>{t('catalog.promiseCopy')}</p></div></section>
     </div>
   );
 }
 
-export default function ProductsPage() { return <Suspense fallback={<div className="page-loading">Curating the collection…</div>}><Catalog /></Suspense>; }
+export default function ProductsPage() {
+  return <Suspense fallback={<div className="page-loading">Curating the collection…</div>}><Catalog /></Suspense>;
+}

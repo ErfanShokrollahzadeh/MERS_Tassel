@@ -1,0 +1,123 @@
+namespace MersTassel.Infrastructure.Data;
+
+/// <summary>
+/// The launch catalog. This carries over the eight pieces and their Turkish copy that used
+/// to live in the frontend's <c>data/store.ts</c> — the difference is that these are now
+/// seed rows an admin can edit or delete, not literals compiled into the UI.
+/// </summary>
+internal static class CatalogSeedData
+{
+    internal record SeedProduct(
+        string Name,
+        string NameTr,
+        string Slug,
+        string CategorySlug,
+        string Description,
+        string DescriptionTr,
+        string Story,
+        string StoryTr,
+        string Material,
+        string MaterialTr,
+        string Dimensions,
+        string DimensionsTr,
+        decimal Price,
+        decimal? CompareAt,
+        double Rating,
+        int Reviews,
+        int Stock,
+        bool IsFeatured,
+        bool IsNew,
+        IReadOnlyList<(string Color, string ColorTr, string Hex)> Colors,
+        IReadOnlyList<string> Images);
+
+    public static readonly IReadOnlyList<SeedProduct> Products =
+    [
+        new("Lâle Pearl Tassel", "Lâle İnci Püskül", "lale-pearl-tassel", "necklaces",
+            "Freshwater pearls, hand-knotted silk and a warm vermeil finish.",
+            "Tatlı su incileri, elde düğümlenmiş ipek ve sıcak vermeil dokunuş.",
+            "Named for Istanbul's tulip gardens, Lâle is assembled bead by bead in our atelier. The silk tassel is combed by hand for a fluid, weightless finish.",
+            "Adını İstanbul'un lale bahçelerinden alan Lâle, atölyemizde boncuk boncuk birleştirilir. İpek püskül, akışkan ve hafif bir bitiş için elde taranır.",
+            "Freshwater pearl · 18k vermeil · silk", "Tatlı su incisi · 18 ayar vermeil · ipek",
+            "76 cm chain · 9 cm tassel", "76 cm zincir · 9 cm püskül",
+            149m, 189m, 4.9, 128, 12, true, false,
+            [("Rose", "Gül", "#81435c"), ("Ivory", "Fildişi", "#d8d5cf"), ("Midnight", "Gece mavisi", "#244760")],
+            ["pearl", "gold", "studio"]),
+
+        new("Sedef Moon Pendant", "Sedef Ay Kolye Ucu", "sedef-moon-pendant", "pendants",
+            "Mother-of-pearl catches the light in a sculptural crescent setting.",
+            "Sedef, heykelsi hilal yuvasında ışığı yakalar.",
+            "Sedef pairs nacre selected for its natural glow with a compact form inspired by moonlight on the Bosphorus.",
+            "Sedef; doğal ışıltısı için seçilen sedefi, Boğaz üzerindeki ay ışığından ilham alan kompakt bir formla buluşturur.",
+            "Mother-of-pearl · recycled brass", "Sedef · geri dönüştürülmüş pirinç",
+            "45 cm chain · 24 mm pendant", "45 cm zincir · 24 mm uç",
+            92m, null, 4.8, 84, 7, true, true,
+            [("Gold", "Altın", "#bd9057"), ("Silver", "Gümüş", "#d8d5cf")],
+            ["gold", "pearl"]),
+
+        new("Bosphorus Signet", "Boğaz Mühür Yüzük", "bosphorus-signet", "rings",
+            "A softly sculpted signet with an ocean-blue enamel center.",
+            "Okyanus mavisi mine merkezli, yumuşak hatlı mühür yüzük.",
+            "Each enamel center is poured and polished by hand, so every surface carries tiny variations of its maker.",
+            "Her mine merkezi elde dökülüp cilalandığı için yüzeyinde ustasının küçük izlerini taşır.",
+            "18k gold-plated silver · enamel", "18 ayar altın kaplama gümüş · mine",
+            "Sizes 5–10", "5–10 numara",
+            118m, null, 4.7, 63, 19, true, false,
+            [("Bosphorus blue", "Boğaz mavisi", "#244760"), ("Garnet", "Lal", "#81435c")],
+            ["ring", "silver"]),
+
+        new("Mira Drop Earrings", "Mira Sallantılı Küpe", "mira-drop-earrings", "earrings",
+            "Light-catching drops balanced for all-evening comfort.",
+            "Tüm gece rahatlık için dengelenmiş, ışığı yakalayan sallantılar.",
+            "Mira translates traditional filigree into a clean, modern silhouette with movement from every angle.",
+            "Mira, geleneksel telkâriyi her açıdan hareket taşıyan temiz ve modern bir siluete dönüştürür.",
+            "Gold vermeil · crystal quartz", "Altın vermeil · kristal kuvars",
+            "48 mm drop", "48 mm uzunluk",
+            78m, 98m, 4.9, 96, 4, true, false,
+            [("Gold", "Altın", "#bd9057"), ("Silver", "Gümüş", "#d8d5cf")],
+            ["earrings", "gold"]),
+
+        new("Nazar Chain Bracelet", "Nazar Zincir Bileklik", "nazar-chain-bracelet", "bracelets",
+            "A refined protective eye motif on a fluid paperclip chain.",
+            "Akışkan ataç zincir üzerinde yalın bir nazar motifi.",
+            "Our minimal interpretation of the familiar Nazar is designed as an everyday talisman and thoughtful gift.",
+            "Tanıdık nazarın minimal yorumunu, her gün taşınan bir tılsım ve anlamlı bir hediye olarak tasarladık.",
+            "Recycled silver · hand-set enamel", "Geri dönüştürülmüş gümüş · elde yerleştirilmiş mine",
+            "16–20 cm adjustable", "16–20 cm ayarlanabilir",
+            64m, null, 4.8, 211, 26, false, true,
+            [("Lapis", "Lapis", "#244760"), ("Pearl", "İnci", "#d8d5cf")],
+            ["bracelet", "silver"]),
+
+        new("Haliç Crystal Pendant", "Haliç Kristal Kolye Ucu", "halic-crystal-pendant", "pendants",
+            "A faceted smoky crystal suspended from a whisper-fine chain.",
+            "İncecik zincirde asılı, fasetli dumanlı kristal.",
+            "Cut to gather low evening light, Haliç is an understated centerpiece inspired by the Golden Horn at dusk.",
+            "Akşamın loş ışığını toplamak için kesilen Haliç, gün batımındaki Altın Boynuz'dan esinlenen sakin bir odak noktasıdır.",
+            "Natural quartz · gold vermeil", "Doğal kuvars · altın vermeil",
+            "50 cm chain · 18 mm stone", "50 cm zincir · 18 mm taş",
+            106m, null, 4.6, 47, 0, false, false,
+            [("Smoky quartz", "Dumanlı kuvars", "#8c8186"), ("Clear quartz", "Berrak kuvars", "#d8d5cf")],
+            ["pendant", "studio"]),
+
+        new("Ada Layered Chain", "Ada Katmanlı Zincir", "ada-layered-chain", "necklaces",
+            "Two delicate textures meet in an effortless, pre-layered necklace.",
+            "İki narin doku, zahmetsiz ve hazır katmanlı bir kolyede buluşur.",
+            "Ada is named for the Princes' Islands and made for slow summer days, with a clasp that keeps both layers aligned.",
+            "Adını Prens Adaları'ndan alan Ada, iki katmanı hizalı tutan tokasıyla yavaş yaz günleri için üretildi.",
+            "Recycled sterling silver", "Geri dönüştürülmüş 925 ayar gümüş",
+            "42 cm and 48 cm layers", "42 cm ve 48 cm katmanlar",
+            134m, null, 4.8, 71, 15, false, false,
+            [("Silver", "Gümüş", "#d8d5cf"), ("Gold", "Altın", "#bd9057")],
+            ["silver", "pearl"]),
+
+        new("Atelier Charm No. 7", "Atölye Charm No. 7", "atelier-charm-no-7", "bag-charms",
+            "Knotted silk, polished stone and a clip made for daily ritual.",
+            "Düğümlü ipek, cilalı taş ve günlük ritüeller için bir klips.",
+            "A playful assemblage of atelier remnants turns precious materials into a small object of joy.",
+            "Atölyeden kalan malzemelerin neşeli birleşimi, değerli parçaları küçük bir mutluluk nesnesine dönüştürür.",
+            "Silk · agate · brass", "İpek · akik · pirinç",
+            "14 cm drop", "14 cm uzunluk",
+            46m, null, 4.7, 38, 31, false, true,
+            [("Mulberry", "Dut", "#81435c"), ("Sage", "Adaçayı", "#8c8186"), ("Saffron", "Safran", "#bd9057")],
+            ["studio", "earrings"]),
+    ];
+}

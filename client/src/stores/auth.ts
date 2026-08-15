@@ -2,7 +2,9 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { ApiError, logout as logoutRequest, profile, refreshSession, type AuthSession, type AuthUser } from '@/lib/auth';
+import { connectAuthBridge } from '@/lib/apiClient';
+import { ApiError, logout as logoutRequest, profile } from '@/lib/auth';
+import type { AuthSession, AuthUser } from '@/types/commerce';
 
 type AuthState = {
   user: AuthUser | null;
@@ -12,7 +14,6 @@ type AuthState = {
   setSession: (session: AuthSession) => void;
   clearSession: () => void;
   setHydrated: (value: boolean) => void;
-  refreshAccess: () => Promise<string | null>;
   restore: () => Promise<boolean>;
   signOut: () => Promise<void>;
 };
@@ -24,52 +25,40 @@ export const useAuthStore = create<AuthState>()(
       access: null,
       refresh: null,
       hasHydrated: false,
-      setSession: (session) => set(session),
+
+      setSession: ({ user, access, refresh }) => set({ user, access, refresh }),
       clearSession: () => set({ user: null, access: null, refresh: null }),
       setHydrated: (hasHydrated) => set({ hasHydrated }),
-      refreshAccess: async () => {
-        const currentRefresh = get().refresh;
-        if (!currentRefresh) return null;
-        try {
-          const next = await refreshSession(currentRefresh);
-          set({ access: next.access, refresh: next.refresh || currentRefresh });
-          return next.access;
-        } catch {
-          get().clearSession();
-          return null;
-        }
-      },
+
+      /**
+       * Confirms a persisted session is still valid. The api client transparently rotates
+       * an expired access token, so a single profile call is enough.
+       */
       restore: async () => {
-        let access = get().access;
-        if (!access || !get().refresh) {
+        if (!get().access || !get().refresh) {
           get().clearSession();
           return false;
         }
+
         try {
-          const user = await profile(access);
-          set({ user });
+          set({ user: await profile() });
           return true;
         } catch (error) {
-          if (!(error instanceof ApiError) || error.status !== 401) {
-            get().clearSession();
+          if (error instanceof ApiError && error.status === 0) {
+            // API unreachable — keep the stored session so a restart doesn't sign the user out.
             return false;
           }
-        }
-        access = await get().refreshAccess();
-        if (!access) return false;
-        try {
-          const user = await profile(access);
-          set({ user });
-          return true;
-        } catch {
           get().clearSession();
           return false;
         }
       },
+
       signOut: async () => {
-        const { access, refresh } = get();
+        const { refresh } = get();
         try {
-          if (access && refresh) await logoutRequest(access, refresh);
+          if (refresh) await logoutRequest(refresh);
+        } catch {
+          // Revoking is best-effort; the local session is cleared either way.
         } finally {
           get().clearSession();
         }
@@ -83,15 +72,12 @@ export const useAuthStore = create<AuthState>()(
   ),
 );
 
-export async function withFreshAccess<T>(operation: (access: string) => Promise<T>): Promise<T> {
-  const auth = useAuthStore.getState();
-  if (!auth.access) throw new ApiError('Authentication required.', 401);
-  try {
-    return await operation(auth.access);
-  } catch (error) {
-    if (!(error instanceof ApiError) || error.status !== 401) throw error;
-    const access = await useAuthStore.getState().refreshAccess();
-    if (!access) throw error;
-    return operation(access);
-  }
-}
+// Give the api client read/write access to the tokens without importing the store from it.
+connectAuthBridge({
+  getAccess: () => useAuthStore.getState().access,
+  getRefresh: () => useAuthStore.getState().refresh,
+  onRefreshed: (access, refresh) => useAuthStore.setState({ access, refresh }),
+  onSignedOut: () => useAuthStore.getState().clearSession(),
+});
+
+export const isAdmin = (state: AuthState) => state.user?.role === 'admin';

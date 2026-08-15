@@ -1,95 +1,107 @@
 'use client';
 
 import { create } from 'zustand';
-import { products } from '@/data/store';
-import { addShoppingBagItem, fetchShoppingBag, removeShoppingBagItem, updateShoppingBagItem, type ShoppingBag } from '@/lib/shoppingBag';
-import { useAuthStore, withFreshAccess } from '@/stores/auth';
-import type { CartLine, Product } from '@/types/commerce';
+import {
+  addCartItem,
+  fetchCart,
+  removeCartItem,
+  updateCartItem,
+} from '@/lib/commerce';
+import { ApiError } from '@/lib/apiClient';
+import { useAuthStore } from '@/stores/auth';
+import { useToastStore } from '@/stores/toast';
+import type { Cart, CartItem } from '@/types/commerce';
 
 type CartState = {
-  lines: CartLine[];
+  items: CartItem[];
+  subtotal: number;
   isOpen: boolean;
   isLoading: boolean;
   load: () => Promise<void>;
-  add: (product: Product, color?: string, quantity?: number) => Promise<void>;
-  remove: (productId: number, color: string) => Promise<void>;
-  setQuantity: (productId: number, color: string, quantity: number) => Promise<void>;
+  add: (productSlug: string, color: string, quantity?: number) => Promise<void>;
+  remove: (itemId: number) => Promise<void>;
+  setQuantity: (itemId: number, quantity: number) => Promise<void>;
   clear: () => void;
   open: () => void;
   close: () => void;
 };
 
-function linesFromBag(bag: ShoppingBag): CartLine[] {
-  return bag.items.flatMap((item) => {
-    const product = products.find((candidate) => candidate.slug === item.product_slug);
-    return product ? [{ itemId: item.id, product, color: item.color || product.colors[0], quantity: item.quantity }] : [];
-  });
+function apply(cart: Cart) {
+  return { items: cart.items, subtotal: cart.subtotal, isLoading: false };
+}
+
+function reportError(error: unknown, fallback: string) {
+  const message = error instanceof ApiError ? error.message : fallback;
+  useToastStore.getState().show({ tone: 'error', title: 'Bag not updated', message });
 }
 
 export const useCartStore = create<CartState>()((set, get) => ({
-  lines: [],
+  items: [],
+  subtotal: 0,
   isOpen: false,
   isLoading: false,
+
   load: async () => {
     if (!useAuthStore.getState().access) {
-      set({ lines: [], isLoading: false, isOpen: false });
+      set({ items: [], subtotal: 0, isLoading: false, isOpen: false });
       return;
     }
+
     set({ isLoading: true });
     try {
-      const bag = await withFreshAccess((access) => fetchShoppingBag(access));
-      set({ lines: linesFromBag(bag), isLoading: false });
+      set(apply(await fetchCart()));
     } catch {
-      set({ lines: [], isLoading: false, isOpen: false });
+      // A failed load must not wipe a bag the server still holds.
+      set({ isLoading: false });
     }
   },
-  add: async (product, color = product.colors[0], quantity = 1) => {
+
+  add: async (productSlug, color, quantity = 1) => {
     if (!useAuthStore.getState().access) return;
-    const previous = get().lines;
-    const existing = previous.find((line) => line.product.id === product.id && line.color === color);
-    const lines = existing
-      ? previous.map((line) => line === existing ? { ...line, quantity: Math.min(line.quantity + quantity, product.stock, 10) } : line)
-      : [...previous, { product, color, quantity: Math.min(quantity, product.stock, 10) }];
-    set({ lines, isOpen: true });
+
+    set({ isOpen: true, isLoading: true });
     try {
-      const bag = await withFreshAccess((access) => addShoppingBagItem(access, product.slug, color, quantity));
-      set({ lines: linesFromBag(bag) });
-    } catch {
-      set({ lines: previous });
+      set(apply(await addCartItem(productSlug, color, quantity)));
+    } catch (error) {
+      set({ isLoading: false });
+      reportError(error, 'This piece could not be added to your bag.');
     }
   },
-  remove: async (productId, color) => {
-    const previous = get().lines;
-    const target = previous.find((line) => line.product.id === productId && line.color === color);
-    if (!target?.itemId) return;
-    set({ lines: previous.filter((line) => line !== target) });
+
+  remove: async (itemId) => {
+    const previous = get().items;
+    // Optimistic: drop the line immediately, restore it if the server disagrees.
+    set({ items: previous.filter((item) => item.id !== itemId) });
+
     try {
-      const bag = await withFreshAccess((access) => removeShoppingBagItem(access, target.itemId!));
-      set({ lines: linesFromBag(bag) });
-    } catch {
-      set({ lines: previous });
+      set(apply(await removeCartItem(itemId)));
+    } catch (error) {
+      set({ items: previous });
+      reportError(error, 'This piece could not be removed.');
     }
   },
-  setQuantity: async (productId, color, quantity) => {
+
+  setQuantity: async (itemId, quantity) => {
     if (quantity <= 0) {
-      await get().remove(productId, color);
+      await get().remove(itemId);
       return;
     }
-    const previous = get().lines;
-    const target = previous.find((line) => line.product.id === productId && line.color === color);
-    if (!target?.itemId) return;
-    set({ lines: previous.map((line) => line === target ? { ...line, quantity: Math.min(quantity, line.product.stock, 10) } : line) });
+
+    const previous = get().items;
+    set({ items: previous.map((item) => (item.id === itemId ? { ...item, quantity } : item)) });
+
     try {
-      const bag = await withFreshAccess((access) => updateShoppingBagItem(access, target.itemId!, quantity));
-      set({ lines: linesFromBag(bag) });
-    } catch {
-      set({ lines: previous });
+      set(apply(await updateCartItem(itemId, quantity)));
+    } catch (error) {
+      set({ items: previous });
+      reportError(error, 'The quantity could not be updated.');
     }
   },
-  clear: () => set({ lines: [], isOpen: false }),
+
+  clear: () => set({ items: [], subtotal: 0, isOpen: false }),
   open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false }),
 }));
 
-export const cartCount = (state: CartState) => state.lines.reduce((total, line) => total + line.quantity, 0);
-export const cartSubtotal = (state: CartState) => state.lines.reduce((total, line) => total + line.product.price.amount * line.quantity, 0);
+export const cartCount = (state: CartState) => state.items.reduce((total, item) => total + item.quantity, 0);
+export const cartSubtotal = (state: CartState) => state.subtotal;
