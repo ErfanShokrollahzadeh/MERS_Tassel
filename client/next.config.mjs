@@ -8,13 +8,13 @@ const isLocalApi = ['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(apiUrl.
 
 const nextConfig = {
   images: {
-    // Product and branding media are served by the .NET API from its wwwroot/uploads tree.
+    // Product and branding media are served by Django from its MEDIA_ROOT.
     remotePatterns: [
       {
         protocol: apiUrl.protocol.replace(':', ''),
         hostname: apiUrl.hostname,
         port: apiUrl.port || undefined,
-        pathname: '/uploads/**',
+        pathname: '/media/**',
       },
     ],
     dangerouslyAllowLocalIP: isLocalApi,

@@ -29,7 +29,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const locale: Locale = saved === 'tr' ? 'tr' : 'en';
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body><Providers initialLocale={locale}>{children}</Providers></body>
+      <body suppressHydrationWarning><Providers initialLocale={locale}>{children}</Providers></body>
     </html>
   );
 }

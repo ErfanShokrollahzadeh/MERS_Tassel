@@ -28,7 +28,7 @@ export function fetchRelatedProducts(slug: string, take = 4, signal?: AbortSigna
 }
 
 export function fetchCategories(signal?: AbortSignal) {
-  return api.get<Category[]>('/categories', { signal });
+  return api.get<Category[]>('/products/categories', { signal });
 }
 
 export function fetchSiteSettings(signal?: AbortSignal) {
