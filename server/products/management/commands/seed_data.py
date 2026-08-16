@@ -2,6 +2,8 @@
 Management command to seed the database with sample product data
 for MERS Tassel accessories store.
 """
+import os
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from products.models import Category, Product, ProductVariant
 
@@ -60,6 +62,18 @@ class Command(BaseCommand):
             status = 'Created' if created else 'Already exists'
             self.stdout.write(f'  📁 Category: {cat.name} - {status}')
 
+        # ── Map of available media files to product slugs ────────────────
+        # The seed images live in MEDIA_ROOT/products/; we assign them here
+        # so every product shows an image on the storefront.
+        media_dir = os.path.join(settings.MEDIA_ROOT, 'products')
+        available_media = set(os.listdir(media_dir)) if os.path.isdir(media_dir) else set()
+
+        def pick_image(filename):
+            """Return relative upload path if the file exists on disk."""
+            if filename in available_media:
+                return f'products/{filename}'
+            return ''
+
         # Create products
         products_data = [
             # Necklaces
@@ -71,6 +85,7 @@ class Command(BaseCommand):
                 'price': 149.99,
                 'discount_price': 119.99,
                 'is_featured': True,
+                'image': pick_image('necklace-1.webp'),
             },
             {
                 'name': 'Pearl Drop Chain Necklace',
@@ -79,6 +94,7 @@ class Command(BaseCommand):
                 'description': 'Delicate pearl drops on a fine chain. Perfect for both casual and formal occasions.',
                 'price': 89.99,
                 'is_featured': True,
+                'image': pick_image('necklace2.webp'),
             },
             {
                 'name': 'Boho Layered Necklace Set',
@@ -88,6 +104,7 @@ class Command(BaseCommand):
                 'price': 199.99,
                 'discount_price': 159.99,
                 'is_featured': False,
+                'image': pick_image('necklace3.webp'),
             },
             # Pendants
             {
@@ -97,6 +114,7 @@ class Command(BaseCommand):
                 'description': 'A mesmerizing crystal moon pendant that catches the light beautifully. Symbolizes elegance and mystery.',
                 'price': 79.99,
                 'is_featured': True,
+                'image': pick_image('pendants1.webp'),
             },
             {
                 'name': 'Vintage Heart Locket',
@@ -106,6 +124,7 @@ class Command(BaseCommand):
                 'price': 129.99,
                 'discount_price': 99.99,
                 'is_featured': True,
+                'image': pick_image('pendants2.png'),
             },
             {
                 'name': 'Butterfly Wings Pendant',
@@ -114,6 +133,7 @@ class Command(BaseCommand):
                 'description': 'Delicate butterfly wings pendant with iridescent enamel detailing.',
                 'price': 69.99,
                 'is_featured': False,
+                'image': pick_image('pendants3.jpeg'),
             },
             # Bag Accessories
             {
@@ -123,6 +143,7 @@ class Command(BaseCommand):
                 'description': 'Luxurious silk tassel bag charm in pastel colors. Instantly elevates any handbag.',
                 'price': 39.99,
                 'is_featured': True,
+                'image': pick_image('bag_accessory1.webp'),
             },
             {
                 'name': 'Beaded Keychain Charm',
@@ -131,6 +152,7 @@ class Command(BaseCommand):
                 'description': 'Colorful beaded keychain charm with a cute miniature tassel. Perfect gift idea.',
                 'price': 24.99,
                 'is_featured': False,
+                'image': pick_image('bag_accessory2.webp'),
             },
             {
                 'name': 'Leather Tassel Keyring',
@@ -139,6 +161,7 @@ class Command(BaseCommand):
                 'description': 'Premium leather tassel keyring with gold-tone hardware. Durable and stylish.',
                 'price': 34.99,
                 'is_featured': False,
+                'image': pick_image('bag_accessory3.jpg'),
             },
             # Jasuichi
             {
@@ -149,6 +172,7 @@ class Command(BaseCommand):
                 'price': 159.99,
                 'discount_price': 129.99,
                 'is_featured': True,
+                'image': pick_image('prayer_beads.jpg'),
             },
             {
                 'name': 'Jasuichi Tassel Earrings',
@@ -157,6 +181,7 @@ class Command(BaseCommand):
                 'description': 'Elegant tassel earrings inspired by Jasuichi artistry. Lightweight and comfortable.',
                 'price': 59.99,
                 'is_featured': False,
+                'image': pick_image('prayer_beads_2.jpg'),
             },
             # Solid Azon
             {
@@ -166,6 +191,7 @@ class Command(BaseCommand):
                 'description': 'Bold solid azon statement ring with a geometric design. Makes a lasting impression.',
                 'price': 109.99,
                 'is_featured': True,
+                'image': pick_image('keychain1.webp'),
             },
             {
                 'name': 'Solid Azon Cuff Bracelet',
@@ -175,6 +201,7 @@ class Command(BaseCommand):
                 'price': 139.99,
                 'discount_price': 109.99,
                 'is_featured': False,
+                'image': pick_image('keychain2.jpg'),
             },
             # Cute Accessories
             {
@@ -184,6 +211,7 @@ class Command(BaseCommand):
                 'description': 'Set of 6 adorable mini flower hair clips in assorted pastel colors. Perfect for daily wear.',
                 'price': 19.99,
                 'is_featured': True,
+                'image': pick_image('earring1.webp'),
             },
             {
                 'name': 'Kawaii Cat Ear Headband',
@@ -192,6 +220,7 @@ class Command(BaseCommand):
                 'description': 'Super cute cat ear headband with sparkly rhinestone details. Fun and fashionable.',
                 'price': 29.99,
                 'is_featured': False,
+                'image': pick_image('earring2.jpeg'),
             },
             {
                 'name': 'Rainbow Charm Bracelet',
@@ -201,53 +230,62 @@ class Command(BaseCommand):
                 'price': 44.99,
                 'discount_price': 34.99,
                 'is_featured': False,
+                'image': pick_image('earring3.png'),
             },
             {
                 'name': 'Lâle Pearl Tassel', 'slug': 'lale-pearl-tassel', 'category': categories['necklaces'],
                 'description': 'Freshwater pearls, hand-knotted silk and a warm vermeil finish.', 'price': 189, 'discount_price': 149,
                 'is_featured': True, 'colors': ['Rose', 'Ivory', 'Midnight'],
+                'image': pick_image('necklace-1.webp'),
             },
             {
                 'name': 'Sedef Moon Pendant', 'slug': 'sedef-moon-pendant', 'category': categories['pendants'],
                 'description': 'Mother-of-pearl catches the light in a sculptural crescent setting.', 'price': 92,
                 'is_featured': True, 'colors': ['Gold', 'Silver'],
+                'image': pick_image('pendants1.webp'),
             },
             {
                 'name': 'Bosphorus Signet', 'slug': 'bosphorus-signet', 'category': categories['rings'],
                 'description': 'A softly sculpted signet with an ocean-blue enamel center.', 'price': 118,
                 'is_featured': True, 'colors': ['Bosphorus blue', 'Garnet'],
+                'image': pick_image('keychain3.webp'),
             },
             {
                 'name': 'Mira Drop Earrings', 'slug': 'mira-drop-earrings', 'category': categories['earrings'],
                 'description': 'Light-catching drops balanced for all-evening comfort.', 'price': 98, 'discount_price': 78,
                 'is_featured': True, 'colors': ['Gold', 'Silver'],
+                'image': pick_image('earring1.webp'),
             },
             {
                 'name': 'Nazar Chain Bracelet', 'slug': 'nazar-chain-bracelet', 'category': categories['bracelets'],
                 'description': 'A refined protective eye motif on a fluid paperclip chain.', 'price': 64,
                 'is_featured': False, 'colors': ['Lapis', 'Pearl'],
+                'image': pick_image('prayer_beads.jpg'),
             },
             {
                 'name': 'Haliç Crystal Pendant', 'slug': 'halic-crystal-pendant', 'category': categories['pendants'],
                 'description': 'A faceted smoky crystal suspended from a whisper-fine chain.', 'price': 106,
                 'is_featured': False, 'colors': ['Smoky quartz', 'Clear quartz'], 'stock': 0,
+                'image': pick_image('pendants3.jpeg'),
             },
             {
                 'name': 'Ada Layered Chain', 'slug': 'ada-layered-chain', 'category': categories['necklaces'],
                 'description': 'Two delicate textures meet in an effortless, pre-layered necklace.', 'price': 134,
                 'is_featured': False, 'colors': ['Silver', 'Gold'],
+                'image': pick_image('necklace3.webp'),
             },
             {
                 'name': 'Atelier Charm No. 7', 'slug': 'atelier-charm-no-7', 'category': categories['bag-charms'],
                 'description': 'Knotted silk, polished stone and a clip made for daily ritual.', 'price': 46,
                 'is_featured': False, 'colors': ['Mulberry', 'Sage', 'Saffron'],
+                'image': pick_image('bag_accessory1.webp'),
             },
         ]
 
         for prod_data in products_data:
             colors = prod_data.pop('colors', None)
             stock = prod_data.pop('stock', 18)
-            prod, created = Product.objects.get_or_create(
+            prod, created = Product.objects.update_or_create(
                 slug=prod_data['slug'],
                 defaults=prod_data
             )

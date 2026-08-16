@@ -118,6 +118,9 @@ FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000').rstrip('/')
 
 # REST Framework settings
 REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'mers_tassel.renderers.EnvelopeRenderer',
+    ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.TokenAuthentication',

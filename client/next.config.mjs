@@ -24,6 +24,7 @@ const nextConfig = {
       // to match the API's exact host and port, Next 16 refusing to optimize any upstream that
       // resolves to a private IP, and the browser needing cross-origin access to the API.
       { source: '/uploads/:path*', destination: `${API_ORIGIN}/uploads/:path*` },
+      { source: '/media/:path*', destination: `${API_ORIGIN}/media/:path*` },
     ];
   },
 };
