@@ -7,7 +7,30 @@
  * refreshes would invalidate each other and sign the user out.
  */
 
-export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5080').replace(/\/$/, '');
+/**
+ * Origin of the API, e.g. `http://localhost:5080`.
+ *
+ * This project previously pointed at Django using a path suffix
+ * (`NEXT_PUBLIC_API_URL=http://localhost:8000/api`). A carried-over value of that shape would
+ * otherwise build `…/api/api/v1/products` and 404 every request — including every image, since
+ * media resolves against the same base. Trim the known suffixes so an upgraded checkout keeps
+ * working, and say so once in development rather than fixing it silently.
+ */
+function resolveApiBase(): string {
+  const configured = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5080').trim().replace(/\/+$/, '');
+  const normalized = configured.replace(/\/api(\/v\d+)?$/i, '');
+
+  if (normalized !== configured && process.env.NODE_ENV !== 'production' && typeof window !== 'undefined') {
+    console.warn(
+      `[api] NEXT_PUBLIC_API_URL should be the API origin, not a path. ` +
+        `Using "${normalized}" instead of "${configured}".`,
+    );
+  }
+
+  return normalized || 'http://localhost:5080';
+}
+
+export const API_BASE_URL = resolveApiBase();
 export const API_URL = `${API_BASE_URL}/api/v1`;
 
 /** Resolves a stored relative path (`/uploads/...`) to an absolute URL. */
@@ -161,12 +184,16 @@ async function send<T>(path: string, options: RequestOptions, accessOverride?: s
   const envelope = (await response.json().catch(() => null)) as ApiEnvelope<T> | null;
 
   if (!response.ok || !envelope?.success) {
-    throw new ApiError(
-      envelope?.message || `Request failed (${response.status}).`,
-      response.status,
-      envelope?.code,
-      envelope?.errors,
-    );
+    // No envelope at all means the body was not this API's JSON — almost always a
+    // misconfigured base URL answering from some other server. Say that, rather than
+    // reporting a bare status code that gives the reader nothing to act on.
+    const message =
+      envelope?.message ||
+      (envelope === null
+        ? `Unexpected ${response.status} from ${API_URL}. Check NEXT_PUBLIC_API_URL points at the API origin.`
+        : `Request failed (${response.status}).`);
+
+    throw new ApiError(message, response.status, envelope?.code, envelope?.errors);
   }
 
   return envelope.data as T;
