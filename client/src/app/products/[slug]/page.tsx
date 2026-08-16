@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { ProductDetail } from '@/components/ProductDetail';
 import { fetchProduct, fetchRelatedProducts } from '@/lib/catalog';
-import { mediaUrl } from '@/lib/apiClient';
+import { absoluteMediaUrl } from '@/lib/apiClient';
 import { productCopy } from '@/i18n/catalog';
 import type { Product } from '@/types/commerce';
 
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const display = productCopy(product, locale);
 
   // Open Graph needs absolute URLs; stored paths are relative to the API host.
-  const image = mediaUrl(product.image);
+  const image = absoluteMediaUrl(product.image);
 
   return {
     title: product.seoTitle || display.name,

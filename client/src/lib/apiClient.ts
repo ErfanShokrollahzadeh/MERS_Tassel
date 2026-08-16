@@ -33,8 +33,25 @@ function resolveApiBase(): string {
 export const API_BASE_URL = resolveApiBase();
 export const API_URL = `${API_BASE_URL}/api/v1`;
 
-/** Resolves a stored relative path (`/uploads/...`) to an absolute URL. */
+/**
+ * URL for rendering stored media.
+ *
+ * Deliberately relative: `/uploads/...` is proxied to the API by the rewrite in
+ * next.config.mjs, so images are same-origin. That keeps <Image> on its local-path code path
+ * and removes the need for the URL to survive remotePatterns matching, Next's private-IP
+ * optimizer check, and cross-origin access — each of which could independently break media.
+ */
 export function mediaUrl(path?: string | null): string {
+  if (!path) return '';
+  if (/^https?:\/\//i.test(path)) return path;
+  return path.startsWith('/') ? path : `/${path}`;
+}
+
+/**
+ * Absolute URL for places a relative path cannot work — Open Graph and other metadata read by
+ * external crawlers, which have no notion of this site's origin.
+ */
+export function absoluteMediaUrl(path?: string | null): string {
   if (!path) return '';
   if (/^https?:\/\//i.test(path)) return path;
   return `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;

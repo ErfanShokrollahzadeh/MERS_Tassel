@@ -1,23 +1,30 @@
 /** @type {import('next').NextConfig} */
-const apiUrl = new URL(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5080');
 
-// Next 16 refuses to optimize images whose host resolves to a private IP, which blocks the
-// local API during development. Allow it only when the configured host really is local, so
-// the SSRF protection stays on for any deployed origin.
-const isLocalApi = ['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(apiUrl.hostname);
+/**
+ * Origin of the API. Mirrors resolveApiBase() in src/lib/apiClient.ts: callers should supply
+ * an origin, but a legacy value carrying a `/api` path suffix is tolerated rather than
+ * silently producing broken URLs.
+ */
+function resolveApiOrigin() {
+  const configured = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5080')
+    .trim()
+    .replace(/\/+$/, '');
+
+  return configured.replace(/\/api(\/v\d+)?$/i, '') || 'http://localhost:5080';
+}
+
+const API_ORIGIN = resolveApiOrigin();
 
 const nextConfig = {
-  images: {
-    // Product and branding media are served by the .NET API from its wwwroot/uploads tree.
-    remotePatterns: [
-      {
-        protocol: apiUrl.protocol.replace(':', ''),
-        hostname: apiUrl.hostname,
-        port: apiUrl.port || undefined,
-        pathname: '/uploads/**',
-      },
-    ],
-    dangerouslyAllowLocalIP: isLocalApi,
+  async rewrites() {
+    return [
+      // Uploaded media is proxied through this origin instead of being linked directly at the
+      // API. Keeping the URL relative means <Image> takes its local-path code path, which
+      // avoids three separate ways images used to break in development: remotePatterns having
+      // to match the API's exact host and port, Next 16 refusing to optimize any upstream that
+      // resolves to a private IP, and the browser needing cross-origin access to the API.
+      { source: '/uploads/:path*', destination: `${API_ORIGIN}/uploads/:path*` },
+    ];
   },
 };
 
