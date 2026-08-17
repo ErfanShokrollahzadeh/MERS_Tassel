@@ -2,9 +2,11 @@
 
 import { AlertCircle, PackageOpen, RefreshCw } from 'lucide-react';
 import { ApiError } from '@/lib/apiClient';
+import { useI18n } from '@/i18n/I18nProvider';
 
 /** Placeholder tiles that hold the catalog grid's shape while products load. */
 export function ProductGridSkeleton({ count = 4 }: { count?: number }) {
+  const { t } = useI18n();
   return (
     <div className="product-grid" aria-busy="true" aria-live="polite">
       {Array.from({ length: count }).map((_, index) => (
@@ -14,12 +16,13 @@ export function ProductGridSkeleton({ count = 4 }: { count?: number }) {
           <span className="tile-skeleton__line tile-skeleton__line--short skeleton-block" />
         </article>
       ))}
-      <span className="sr-only">Loading pieces…</span>
+      <span className="sr-only">{t('common.loading')}</span>
     </div>
   );
 }
 
 export function TableSkeleton({ rows = 6, columns = 5 }: { rows?: number; columns?: number }) {
+  const { t } = useI18n();
   return (
     <div className="table-skeleton" aria-busy="true" aria-live="polite">
       {Array.from({ length: rows }).map((_, row) => (
@@ -29,7 +32,7 @@ export function TableSkeleton({ rows = 6, columns = 5 }: { rows?: number; column
           ))}
         </div>
       ))}
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t('common.loadingShort')}</span>
     </div>
   );
 }
@@ -70,27 +73,24 @@ export function EmptyState({
 export function ErrorState({
   error,
   onRetry,
-  title = 'Something went wrong',
+  title,
 }: {
   error: unknown;
   onRetry?: () => void;
   title?: string;
 }) {
+  const { t } = useI18n();
   const offline = error instanceof ApiError && error.status === 0;
-  const message = offline
-    ? 'The atelier service is not responding. Check that the API is running, then try again.'
-    : error instanceof Error
-      ? error.message
-      : 'An unexpected error occurred.';
+  const message = offline ? t('common.offlineCopy') : t('common.unexpected');
 
   return (
     <div className="state-block state-block--error" role="alert">
       <AlertCircle size={26} />
-      <h3>{offline ? 'Cannot reach the service' : title}</h3>
+      <h3>{offline ? t('common.offlineTitle') : title || t('common.errorTitle')}</h3>
       <p>{message}</p>
       {onRetry && (
         <button type="button" className="button button--ghost" onClick={onRetry}>
-          <RefreshCw size={15} /> Try again
+          <RefreshCw size={15} /> {t('common.retry')}
         </button>
       )}
     </div>

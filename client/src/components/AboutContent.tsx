@@ -30,7 +30,7 @@ export function AboutContent() {
       <section className="story-hero"><div className="container-narrow"><span className="eyebrow">{t('about.eyebrow')}</span><h1>{t('about.title1')}<br /><em>{t('about.title2')}</em></h1><p>{t('about.lede')}</p></div></section>
 
       <section className="story-split">
-        <div>{atelierImage ? <MediaImage src={atelierImage} alt="MERS Tassel atelier" sizes="(max-width: 800px) 100vw, 52vw" /> : <span className="skeleton-block story-image-placeholder" />}</div>
+        <div>{atelierImage ? <MediaImage src={atelierImage} alt={t('common.atelierAlt')} sizes="(max-width: 800px) 100vw, 52vw" /> : <span className="skeleton-block story-image-placeholder" />}</div>
         <article>
           <span className="eyebrow">{t('about.beginning')}</span>
           <h2>{headline || t('about.idea')}</h2>

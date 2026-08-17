@@ -11,6 +11,7 @@ import { ApiError } from '@/lib/apiClient';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
 import type { Cart, CartItem } from '@/types/commerce';
+import { translate, type Locale, type TranslationKey } from '@/i18n/I18nProvider';
 
 type CartState = {
   items: CartItem[];
@@ -30,9 +31,16 @@ function apply(cart: Cart) {
   return { items: cart.items, subtotal: cart.subtotal, isLoading: false };
 }
 
-function reportError(error: unknown, fallback: string) {
-  const message = error instanceof ApiError ? error.message : fallback;
-  useToastStore.getState().show({ tone: 'error', title: 'Bag not updated', message });
+function activeLocale(): Locale {
+  return typeof window !== 'undefined' && window.localStorage.getItem('mers-locale') === 'tr' ? 'tr' : 'en';
+}
+
+function reportError(error: unknown, fallback: TranslationKey) {
+  const locale = activeLocale();
+  // API domain errors are currently English. Keep their detail in English mode, but never
+  // leak an untranslated server sentence into the Turkish storefront.
+  const message = locale === 'en' && error instanceof ApiError ? error.message : translate(locale, fallback);
+  useToastStore.getState().show({ tone: 'error', title: translate(locale, 'cart.updateFailed'), message });
 }
 
 export const useCartStore = create<CartState>()((set, get) => ({
@@ -64,7 +72,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
       set(apply(await addCartItem(productSlug, color, quantity)));
     } catch (error) {
       set({ isLoading: false });
-      reportError(error, 'This piece could not be added to your bag.');
+      reportError(error, 'cart.addFailed');
     }
   },
 
@@ -77,7 +85,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
       set(apply(await removeCartItem(itemId)));
     } catch (error) {
       set({ items: previous });
-      reportError(error, 'This piece could not be removed.');
+      reportError(error, 'cart.removeFailed');
     }
   },
 
@@ -94,7 +102,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
       set(apply(await updateCartItem(itemId, quantity)));
     } catch (error) {
       set({ items: previous });
-      reportError(error, 'The quantity could not be updated.');
+      reportError(error, 'cart.quantityFailed');
     }
   },
 

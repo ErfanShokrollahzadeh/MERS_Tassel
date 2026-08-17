@@ -43,9 +43,11 @@ export default function LoginPage() {
       router.replace(safeDestination());
     } catch (requestError) {
       setError(
-        requestError instanceof ApiError
-          ? requestError.status === 0 ? t('auth.connectionError') : requestError.message
-          : t('auth.loginError'),
+        requestError instanceof ApiError && requestError.status === 0
+          ? t('auth.connectionError')
+          : requestError instanceof ApiError && requestError.code === 'locked_out'
+            ? t('auth.locked')
+            : t('auth.loginError'),
       );
     } finally {
       setSubmitting(false);
@@ -57,7 +59,7 @@ export default function LoginPage() {
   return (
     <div className="auth-page">
       <div className="auth-visual">
-        {art ? <MediaImage src={art} alt="Handcrafted jewelry detail" sizes="55vw" priority /> : <span className="skeleton-block auth-visual__placeholder" />}
+        {art ? <MediaImage src={art} alt={t('common.jewelryAlt')} sizes="55vw" priority /> : <span className="skeleton-block auth-visual__placeholder" />}
         <Link href="/" className="wordmark wordmark--footer"><span className="wordmark__seal">M</span><span>MERS <i>Tassel</i></span></Link>
         <blockquote>{t('auth.loginQuote')}</blockquote>
       </div>

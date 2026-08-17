@@ -23,6 +23,7 @@ export default function HomePage() {
 
   const hero = settings.data;
   const heroProduct = featured.data?.[0];
+  const heroProductName = locale === 'tr' && heroProduct?.nameTr ? heroProduct.nameTr : heroProduct?.name;
   // Hero art comes from site settings, falling back to the leading product's photograph.
   const heroImage = hero?.heroImagePath || heroProduct?.image || '';
 
@@ -44,12 +45,12 @@ export default function HomePage() {
           </motion.div>
           <motion.div className="hero-visual" initial={{ opacity: 0, scale: .96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: .9, delay: .1 }}>
             <div className="hero-image-wrap">
-              {heroImage ? <MediaImage src={heroImage} alt={heroProduct?.name || 'MERS Tassel'} sizes="(max-width: 720px) 92vw, 52vw" priority /> : <span className="skeleton-block hero-image-placeholder" />}
+              {heroImage ? <MediaImage src={heroImage} alt={heroProductName || 'MERS Tassel'} sizes="(max-width: 720px) 92vw, 52vw" priority /> : <span className="skeleton-block hero-image-placeholder" />}
             </div>
             {heroProduct && (
               <div className="hero-float-card glass-panel">
                 <span className="mini-label">{t('home.pick')}</span>
-                <strong>{locale === 'tr' && heroProduct.nameTr ? heroProduct.nameTr : heroProduct.name}</strong>
+                <strong>{heroProductName}</strong>
                 <span>{t('home.handknotted')}</span>
                 <Link href={`/products/${heroProduct.slug}`} aria-label={t('home.viewProduct')}><ArrowRight size={17} /></Link>
               </div>
@@ -99,7 +100,7 @@ export default function HomePage() {
       {heroProduct && (
         <section className="editorial-section">
           <div className="editorial-image">
-            <MediaImage src={featured.data?.at(-1)?.image || heroProduct.image} alt="Details from the MERS Tassel studio" sizes="(max-width: 720px) 100vw, 55vw" />
+            <MediaImage src={featured.data?.at(-1)?.image || heroProduct.image} alt={t('common.studioDetailAlt')} sizes="(max-width: 720px) 100vw, 55vw" />
             <span className="editorial-caption">{t('home.atelierCaption')}</span>
           </div>
           <motion.div className="editorial-copy" {...reveal}><span className="eyebrow">{t('home.hands')}</span><h2>{t('home.slowTitle')}</h2><p>{t('home.slowCopy')}</p><blockquote>{t('home.quote')}<cite>{t('home.quoteBy')}</cite></blockquote><Link className="text-link" href="/about">{t('home.stepInside')} <ArrowRight size={17} /></Link></motion.div>

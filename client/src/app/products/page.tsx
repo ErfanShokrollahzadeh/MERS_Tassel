@@ -124,5 +124,6 @@ function Catalog() {
 }
 
 export default function ProductsPage() {
-  return <Suspense fallback={<div className="page-loading">Curating the collection…</div>}><Catalog /></Suspense>;
+  const { t } = useI18n();
+  return <Suspense fallback={<div className="page-loading">{t('common.loading')}</div>}><Catalog /></Suspense>;
 }

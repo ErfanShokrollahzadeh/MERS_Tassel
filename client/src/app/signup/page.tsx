@@ -18,7 +18,7 @@ export default function SignupPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const setSession = useAuthStore((state) => state.setSession);
   const router = useRouter();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const settings = useSiteSettings();
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -45,7 +45,7 @@ export default function SignupPage() {
         } else {
           // Server-side field errors bind straight onto the inputs.
           setFieldErrors(requestError.errors ?? {});
-          setError(requestError.errors ? '' : requestError.message);
+          setError(requestError.errors ? '' : t('auth.signupError'));
         }
       } else {
         setError(t('auth.signupError'));
@@ -56,12 +56,21 @@ export default function SignupPage() {
   };
 
   const art = settings.data?.heroImagePath;
-  const fieldError = (name: string) => fieldErrors[name]?.[0];
+  const fieldError = (name: string) => {
+    const serverMessage = fieldErrors[name]?.[0];
+    if (!serverMessage || locale === 'en') return serverMessage;
+    if (name === 'email' && serverMessage.toLowerCase().includes('already exists')) return t('auth.emailExists');
+    if (name === 'email') return t('auth.emailError');
+    if (name === 'firstName') return t('auth.firstError');
+    if (name === 'lastName') return t('auth.lastError');
+    if (name === 'password') return t('auth.passwordRejected');
+    return t('auth.signupError');
+  };
 
   return (
     <div className="auth-page">
       <div className="auth-visual auth-visual--signup">
-        {art ? <MediaImage src={art} alt="Gold jewelry in the atelier" sizes="55vw" priority /> : <span className="skeleton-block auth-visual__placeholder" />}
+        {art ? <MediaImage src={art} alt={t('common.jewelryAlt')} sizes="55vw" priority /> : <span className="skeleton-block auth-visual__placeholder" />}
         <Link href="/" className="wordmark wordmark--footer"><span className="wordmark__seal">M</span><span>MERS <i>Tassel</i></span></Link>
         <blockquote>{t('auth.signupQuote')}</blockquote>
       </div>

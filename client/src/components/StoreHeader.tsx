@@ -56,12 +56,12 @@ export function StoreHeader() {
           {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
 
-        <Link href="/" className="wordmark" aria-label="MERS Tassel home">
+        <Link href="/" className="wordmark" aria-label={t('header.home')}>
           <span className="wordmark__seal">M</span>
           <span>MERS <i>Tassel</i></span>
         </Link>
 
-        <nav className={menuOpen ? 'store-nav store-nav--open' : 'store-nav'} aria-label="Main navigation">
+        <nav className={menuOpen ? 'store-nav store-nav--open' : 'store-nav'} aria-label={t('header.navigation')}>
           {links.map((link) => (
             <Link key={link.href} href={link.href} className={pathname === link.href ? 'active' : ''} onClick={() => setMenuOpen(false)}>{t(link.key as TranslationKey)}</Link>
           ))}

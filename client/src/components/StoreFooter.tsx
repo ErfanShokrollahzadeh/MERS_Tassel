@@ -7,12 +7,13 @@ import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { useSiteSettings } from '@/lib/useSiteSettings';
 
 export function StoreFooter() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { data: settings } = useSiteSettings();
 
   const siteName = settings?.siteName ?? 'MERS Tassel';
   const instagram = settings?.instagramUrl;
   const location = settings?.contactAddress;
+  const localizedLocation = locale === 'tr' ? location?.replace('Istanbul', 'İstanbul') : location;
 
   return (
     <footer className="store-footer">
@@ -26,7 +27,7 @@ export function StoreFooter() {
         <div className="footer-newsletter"><span className="footer-label">{t('footer.notes')}</span><p>{t('footer.notesCopy')}</p><form onSubmit={(event) => event.preventDefault()}><label className="sr-only" htmlFor="footer-email">{t('footer.email')}</label><input id="footer-email" type="email" placeholder={t('footer.email')} required /><button aria-label={t('footer.subscribe')}><ArrowUpRight size={18} /></button></form></div>
       </div>
       <div className="container-wide footer-bottom">
-        <span>© {new Date().getFullYear()} {siteName}{location ? ` · ${location}` : ''}</span>
+        <span>© {new Date().getFullYear()} {siteName}{localizedLocation ? ` · ${localizedLocation}` : ''}</span>
         <LanguageSwitch />
         {instagram && <a href={instagram} aria-label="Instagram" target="_blank" rel="noreferrer noopener"><Camera size={17} /></a>}
       </div>
