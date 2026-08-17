@@ -629,6 +629,8 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         body!.Success.Should().BeTrue();
         body.Data!.GetProperty("siteName").GetString().Should().Be("MERS Tassel");
         body.Data.GetProperty("contactEmail").GetString().Should().NotBeNullOrWhiteSpace();
+        body.Data.GetProperty("whatsappPhone").GetString().Should().NotBeNullOrWhiteSpace();
+        body.Data.GetProperty("tiktokUrl").GetString().Should().StartWith("https://");
         body.Data.GetProperty("heroImagePath").GetString().Should().StartWith("/uploads/");
     }
 

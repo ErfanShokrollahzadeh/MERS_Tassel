@@ -108,6 +108,9 @@ public class SiteSettingsDtoValidator : AbstractValidator<SiteSettingsDto>
         RuleFor(x => x.HeroHeadline).MaximumLength(200);
         RuleFor(x => x.InstagramUrl).Must(BeAUrl).When(x => !string.IsNullOrWhiteSpace(x.InstagramUrl))
             .WithMessage("Instagram URL must be a valid absolute URL.");
+        RuleFor(x => x.TiktokUrl).Must(BeAUrl).When(x => !string.IsNullOrWhiteSpace(x.TiktokUrl))
+            .WithMessage("TikTok URL must be a valid absolute URL.");
+        RuleFor(x => x.WhatsappPhone).MaximumLength(60);
         RuleFor(x => x.PinterestUrl).Must(BeAUrl).When(x => !string.IsNullOrWhiteSpace(x.PinterestUrl))
             .WithMessage("Pinterest URL must be a valid absolute URL.");
     }

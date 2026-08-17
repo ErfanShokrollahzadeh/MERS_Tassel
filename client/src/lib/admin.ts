@@ -223,6 +223,8 @@ export function updateSettings(draft: SiteSettings, logo?: File | null, hero?: F
     ['ContactPhone', draft.contactPhone],
     ['ContactAddress', draft.contactAddress],
     ['InstagramUrl', draft.instagramUrl],
+    ['TiktokUrl', draft.tiktokUrl],
+    ['WhatsappPhone', draft.whatsappPhone],
     ['PinterestUrl', draft.pinterestUrl],
     ['AboutHeadline', draft.aboutHeadline],
     ['AboutHeadlineTr', draft.aboutHeadlineTr],

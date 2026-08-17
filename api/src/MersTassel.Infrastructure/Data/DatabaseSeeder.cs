@@ -131,6 +131,8 @@ public class DatabaseSeeder(
             ContactPhone = "+90 212 000 00 00",
             ContactAddress = "Karaköy, Istanbul, Türkiye",
             InstagramUrl = "https://instagram.com",
+            TiktokUrl = "https://www.tiktok.com",
+            WhatsappPhone = "+90 212 000 00 00",
             PinterestUrl = "https://pinterest.com",
             AboutHeadline = "Slow work, kept close",
             AboutHeadlineTr = "Yavaş işçilik, hep yakında",

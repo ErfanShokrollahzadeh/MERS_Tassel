@@ -238,6 +238,8 @@ public class SiteSettingsConfiguration : IEntityTypeConfiguration<SiteSettings>
         b.Property(x => x.ContactPhone).HasMaxLength(60);
         b.Property(x => x.ContactAddress).HasMaxLength(400);
         b.Property(x => x.InstagramUrl).HasMaxLength(300);
+        b.Property(x => x.TiktokUrl).HasMaxLength(300);
+        b.Property(x => x.WhatsappPhone).HasMaxLength(60);
         b.Property(x => x.PinterestUrl).HasMaxLength(300);
         b.Property(x => x.AboutHeadline).HasMaxLength(200);
         b.Property(x => x.AboutBody).HasMaxLength(4000);

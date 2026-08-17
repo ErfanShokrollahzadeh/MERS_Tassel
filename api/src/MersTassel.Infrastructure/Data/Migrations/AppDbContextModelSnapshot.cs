@@ -881,8 +881,16 @@ namespace MersTassel.Infrastructure.Data.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("TiktokUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("TEXT");
+
                     b.Property<long>("UpdatedAt")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("WhatsappPhone")
+                        .HasMaxLength(60)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 

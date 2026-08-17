@@ -147,6 +147,8 @@ export type SiteSettings = {
   contactPhone: string;
   contactAddress: string;
   instagramUrl?: string | null;
+  tiktokUrl?: string | null;
+  whatsappPhone?: string | null;
   pinterestUrl?: string | null;
   aboutHeadline: string;
   aboutHeadlineTr?: string | null;
