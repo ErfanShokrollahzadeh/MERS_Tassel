@@ -15,12 +15,14 @@ const PAGE_SIZE = 12;
 function Catalog() {
   const { t, locale } = useI18n();
   const searchParams = useSearchParams();
+  const urlSearch = searchParams.get('search') || '';
+  const shouldFocusSearch = searchParams.get('focus') === 'search';
 
   const [category, setCategory] = useState(searchParams.get('category') || '');
-  const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [query, setQuery] = useState(urlSearch);
+  const [debouncedQuery, setDebouncedQuery] = useState(urlSearch);
   const [sort, setSort] = useState<CatalogSort>(searchParams.get('sort') === 'new' ? 'newest' : 'featured');
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(Boolean(urlSearch) || shouldFocusSearch);
   const [page, setPage] = useState(1);
 
   // Debounce so typing does not fire a request per keystroke.
@@ -28,6 +30,13 @@ function Catalog() {
     const timer = setTimeout(() => setDebouncedQuery(query), 300);
     return () => clearTimeout(timer);
   }, [query]);
+
+  // Navbar searches can target this route while it is already mounted.
+  useEffect(() => {
+    setQuery(urlSearch);
+    setDebouncedQuery(urlSearch);
+    if (urlSearch || shouldFocusSearch) setFiltersOpen(true);
+  }, [urlSearch, shouldFocusSearch]);
 
   // Any change to the filters invalidates the current page number.
   useEffect(() => setPage(1), [category, debouncedQuery, sort]);

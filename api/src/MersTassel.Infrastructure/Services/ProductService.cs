@@ -34,7 +34,10 @@ public class ProductService(AppDbContext db, IFileStorageService storage) : IPro
                 EF.Functions.Like(p.Name, $"%{term}%") ||
                 EF.Functions.Like(p.Description, $"%{term}%") ||
                 EF.Functions.Like(p.Category.Name, $"%{term}%") ||
-                (p.NameTr != null && EF.Functions.Like(p.NameTr, $"%{term}%")));
+                (p.NameTr != null && EF.Functions.Like(p.NameTr, $"%{term}%")) ||
+                (p.DescriptionTr != null && EF.Functions.Like(p.DescriptionTr, $"%{term}%")) ||
+                (p.MaterialTr != null && EF.Functions.Like(p.MaterialTr, $"%{term}%")) ||
+                (p.Category.NameTr != null && EF.Functions.Like(p.Category.NameTr, $"%{term}%")));
         }
 
         q = query.Sort switch
