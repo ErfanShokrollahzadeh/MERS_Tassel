@@ -29,6 +29,19 @@ export function MediaImage({
     return <span className={`media-image media-image--empty${className ? ` ${className}` : ''}`} aria-hidden="true" />;
   }
 
+  // Seeded editorial photographs can be remote while admin uploads remain local. Rendering
+  // remote sources as a native image keeps the catalog open to any approved content host
+  // without maintaining a growing Next.js domain allowlist; local uploads still use the
+  // optimizer and same-origin API proxy below.
+  if (/^https?:\/\//i.test(resolved)) {
+    return (
+      <span className={`media-image${loaded ? ' media-image--loaded' : ''}${className ? ` ${className}` : ''}`}>
+        <span className="media-image__skeleton" aria-hidden="true" />
+        <img src={resolved} alt={alt} className="media-image__asset" loading={priority ? 'eager' : 'lazy'} referrerPolicy="no-referrer" onLoad={() => setLoaded(true)} />
+      </span>
+    );
+  }
+
   return (
     <span className={`media-image${loaded ? ' media-image--loaded' : ''}${className ? ` ${className}` : ''}`}>
       <span className="media-image__skeleton" aria-hidden="true" />

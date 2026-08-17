@@ -8,9 +8,9 @@ using Microsoft.Extensions.Logging;
 namespace MersTassel.Infrastructure.Data;
 
 /// <summary>
-/// Applies migrations then fills an empty database with the launch catalog, an administrator
-/// and the storefront's default copy. Idempotent: every step checks before it writes, so a
-/// restart never duplicates rows.
+/// Applies migrations, provisions the administrator and synchronizes the storefront's default
+/// catalog/copy. Idempotent: every step checks stable slugs before it writes, so a restart can
+/// add a newly released seed category without duplicating existing rows.
 /// </summary>
 public class DatabaseSeeder(
     AppDbContext db,
@@ -143,33 +143,98 @@ public class DatabaseSeeder(
 
     private async Task SeedCatalogAsync(string webRootPath, string seedAssetsPath, CancellationToken ct)
     {
-        if (await db.Products.AnyAsync(ct)) return;
+        logger.LogInformation("Synchronizing the storefront catalog…");
 
-        logger.LogInformation("Seeding the launch catalog…");
+        // Categories are synchronized by slug so this expands an already-used database as
+        // safely as it creates a new one. Existing rows keep their ids, which preserves every
+        // product, cart and order relationship that may already refer to them.
+        var allCategories = await db.Categories.IgnoreQueryFilters().ToListAsync(ct);
+        var activeBySlug = allCategories
+            .Where(c => !c.IsDelete)
+            .ToDictionary(c => c.Slug, StringComparer.OrdinalIgnoreCase);
+        var isLegacyTaxonomy = activeBySlug.ContainsKey("pendants") || activeBySlug.ContainsKey("bag-charms");
 
-        var categories = new[]
+        foreach (var seed in CatalogSeedData.Categories)
         {
-            new Category { Name = "Necklaces", NameTr = "Kolyeler", Slug = "necklaces", SortOrder = 0, Description = "Hand-knotted necklaces built around pearls, silk and vermeil.", DescriptionTr = "İnci, ipek ve vermeil çevresinde elde düğümlenmiş kolyeler." },
-            new Category { Name = "Pendants", NameTr = "Kolye uçları", Slug = "pendants", SortOrder = 1, Description = "Sculptural pendants cut to gather the light.", DescriptionTr = "Işığı toplamak için kesilmiş heykelsi kolye uçları." },
-            new Category { Name = "Earrings", NameTr = "Küpeler", Slug = "earrings", SortOrder = 2, Description = "Light-catching earrings balanced for all-day wear.", DescriptionTr = "Gün boyu rahat kullanım için dengelenmiş, ışığı yakalayan küpeler." },
-            new Category { Name = "Rings", NameTr = "Yüzükler", Slug = "rings", SortOrder = 3, Description = "Softly sculpted rings finished by hand.", DescriptionTr = "Elde tamamlanan, yumuşak hatlı yüzükler." },
-            new Category { Name = "Bracelets", NameTr = "Bileklikler", Slug = "bracelets", SortOrder = 4, Description = "Fluid chains and modern talismans.", DescriptionTr = "Akışkan zincirler ve modern tılsımlar." },
-            new Category { Name = "Bag charms", NameTr = "Çanta aksesuarları", Slug = "bag-charms", SortOrder = 5, Description = "Small tactile objects for bags and keys.", DescriptionTr = "Çantalar ve anahtarlar için küçük dokunsal nesneler." },
-        };
+            if (activeBySlug.TryGetValue(seed.Slug, out var category))
+            {
+                var isDefaultKeychainRevision = seed.Slug == "keychains" &&
+                    category.Description == "Tactile leather and tassel keychains made for daily rituals." &&
+                    category.ImagePath == "https://i.etsystatic.com/10946465/r/il/f811da/4955973558/il_fullxfull.4955973558_qsp8.jpg";
 
-        db.Categories.AddRange(categories);
+                // Apply the one-time taxonomy upgrade to launch rows, then leave subsequent
+                // admin edits alone on ordinary restarts.
+                if (isLegacyTaxonomy || isDefaultKeychainRevision)
+                {
+                    category.Name = seed.Name;
+                    category.NameTr = seed.NameTr;
+                    category.Description = seed.Description;
+                    category.DescriptionTr = seed.DescriptionTr;
+                    category.SortOrder = seed.SortOrder;
+                }
+
+                // Preserve a photograph uploaded through admin; only fill a missing image.
+                if (isDefaultKeychainRevision)
+                    category.ImagePath = ResolveSeedImage(seed.Image, "categories", webRootPath, seedAssetsPath);
+                else
+                    category.ImagePath ??= ResolveSeedImage(seed.Image, "categories", webRootPath, seedAssetsPath);
+                continue;
+            }
+
+            // A category deliberately soft-deleted through admin stays deleted. Recreating it
+            // would both violate the unique slug and undo the administrator's decision.
+            if (allCategories.Any(c => c.IsDelete && c.Slug.Equals(seed.Slug, StringComparison.OrdinalIgnoreCase)))
+            {
+                logger.LogInformation("Leaving soft-deleted seeded category {Slug} deleted.", seed.Slug);
+                continue;
+            }
+
+            category = new Category
+            {
+                Name = seed.Name,
+                NameTr = seed.NameTr,
+                Slug = seed.Slug,
+                Description = seed.Description,
+                DescriptionTr = seed.DescriptionTr,
+                SortOrder = seed.SortOrder,
+                ImagePath = ResolveSeedImage(seed.Image, "categories", webRootPath, seedAssetsPath),
+            };
+
+            db.Categories.Add(category);
+            activeBySlug[seed.Slug] = category;
+        }
+
         await db.SaveChangesAsync(ct);
 
-        var bySlug = categories.ToDictionary(c => c.Slug);
+        // The former launch taxonomy split pendants out from necklaces and called keychains
+        // “bag charms”. Fold those rows into the requested taxonomy without losing products.
+        await FoldLegacyCategoryAsync("pendants", "necklaces", activeBySlug, ct);
+        await FoldLegacyCategoryAsync("bag-charms", "keychains", activeBySlug, ct);
+        await db.SaveChangesAsync(ct);
 
+        var existingProductSlugs = await db.Products.IgnoreQueryFilters()
+            .Select(p => p.Slug)
+            .ToHashSetAsync(StringComparer.OrdinalIgnoreCase, ct);
+
+        var addedProducts = 0;
         foreach (var seed in CatalogSeedData.Products)
         {
+            if (existingProductSlugs.Contains(seed.Slug)) continue;
+
+            if (!activeBySlug.TryGetValue(seed.CategorySlug, out var category) || category.IsDelete)
+            {
+                logger.LogInformation(
+                    "Skipping seed product {Product}; its category {Category} is not active.",
+                    seed.Slug, seed.CategorySlug);
+                continue;
+            }
+
             var product = new Product
             {
                 Name = seed.Name,
                 NameTr = seed.NameTr,
                 Slug = seed.Slug,
-                CategoryId = bySlug[seed.CategorySlug].Id,
+                CategoryId = category.Id,
                 Description = seed.Description,
                 DescriptionTr = seed.DescriptionTr,
                 Story = seed.Story,
@@ -210,9 +275,9 @@ public class DatabaseSeeder(
             }
 
             var sortOrder = 0;
-            foreach (var asset in seed.Images)
+            foreach (var image in seed.Images)
             {
-                var path = CopySeedImage(asset, "products", webRootPath, seedAssetsPath);
+                var path = ResolveSeedImage(image, "products", webRootPath, seedAssetsPath);
                 if (path is null) continue;
 
                 product.Media.Add(new ProductMedia
@@ -226,24 +291,50 @@ public class DatabaseSeeder(
             }
 
             db.Products.Add(product);
+            existingProductSlugs.Add(seed.Slug);
+            addedProducts++;
         }
 
         await db.SaveChangesAsync(ct);
+        logger.LogInformation(
+            "Catalog ready: {Categories} active categories, {AddedProducts} new seed products ({SeedProducts} defined).",
+            activeBySlug.Values.Count(c => !c.IsDelete), addedProducts, CatalogSeedData.Products.Count);
+    }
 
-        // Give each category the hero image of one of its own products.
-        foreach (var category in categories)
+    private async Task FoldLegacyCategoryAsync(
+        string legacySlug,
+        string targetSlug,
+        IReadOnlyDictionary<string, Category> activeBySlug,
+        CancellationToken ct)
+    {
+        var legacy = await db.Categories.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Slug == legacySlug && !c.IsDelete, ct);
+
+        if (legacy is null || !activeBySlug.TryGetValue(targetSlug, out var target)) return;
+
+        var products = await db.Products.IgnoreQueryFilters()
+            .Where(p => p.CategoryId == legacy.Id)
+            .ToListAsync(ct);
+
+        foreach (var product in products) product.CategoryId = target.Id;
+
+        legacy.IsDelete = true;
+        legacy.DeletedAt = DateTimeOffset.UtcNow;
+
+        logger.LogInformation(
+            "Folded legacy category {Legacy} into {Target}; moved {Products} products.",
+            legacySlug, targetSlug, products.Count);
+    }
+
+    private string? ResolveSeedImage(string image, string entity, string webRootPath, string seedAssetsPath)
+    {
+        if (Uri.TryCreate(image, UriKind.Absolute, out var uri) &&
+            (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
         {
-            var image = await db.ProductMedia
-                .Where(m => m.Product.CategoryId == category.Id && m.IsPrimary)
-                .Select(m => m.ImagePath)
-                .FirstOrDefaultAsync(ct);
-
-            if (image is not null) category.ImagePath = image;
+            return image;
         }
 
-        await db.SaveChangesAsync(ct);
-        logger.LogInformation("Seeded {Products} products across {Categories} categories.",
-            CatalogSeedData.Products.Count, categories.Length);
+        return CopySeedImage(image, entity, webRootPath, seedAssetsPath);
     }
 
     /// <summary>

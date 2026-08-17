@@ -1,12 +1,20 @@
 namespace MersTassel.Infrastructure.Data;
 
 /// <summary>
-/// The launch catalog. This carries over the eight pieces and their Turkish copy that used
-/// to live in the frontend's <c>data/store.ts</c> — the difference is that these are now
-/// seed rows an admin can edit or delete, not literals compiled into the UI.
+/// The launch catalog and its English/Turkish copy. These are seed rows an administrator can
+/// extend or deactivate, not literals compiled into the storefront UI.
 /// </summary>
 internal static class CatalogSeedData
 {
+    internal record SeedCategory(
+        string Name,
+        string NameTr,
+        string Slug,
+        string Description,
+        string DescriptionTr,
+        int SortOrder,
+        string Image);
+
     internal record SeedProduct(
         string Name,
         string NameTr,
@@ -30,6 +38,59 @@ internal static class CatalogSeedData
         IReadOnlyList<(string Color, string ColorTr, string Hex)> Colors,
         IReadOnlyList<string> Images);
 
+    /// <summary>
+    /// The public storefront taxonomy. Images are either committed seed-asset names or stable
+    /// remote editorial photographs. Keeping the image with the category makes a newly seeded
+    /// category useful immediately, before an administrator uploads campaign photography.
+    /// </summary>
+    public static readonly IReadOnlyList<SeedCategory> Categories =
+    [
+        new("Rings", "Yüzükler", "rings",
+            "Softly sculpted rings finished by hand.",
+            "Elde tamamlanan, yumuşak hatlı yüzükler.",
+            0, "ring"),
+        new("Necklaces", "Kolyeler", "necklaces",
+            "Hand-finished necklaces, pendants, pearls and layered chains.",
+            "Elde tamamlanan kolyeler, kolye uçları, inciler ve katmanlı zincirler.",
+            1, "pearl"),
+        new("Bracelets", "Bileklikler", "bracelets",
+            "Fluid chains and modern talismans for the wrist.",
+            "Bilek için akışkan zincirler ve modern tılsımlar.",
+            2, "bracelet"),
+        new("Anklets", "Halhallar", "anklets",
+            "Fine, adjustable chains designed to move with you.",
+            "Sizinle hareket etmek için tasarlanmış ince, ayarlanabilir zincirler.",
+            3, "https://choicebychoi.com/cdn/shop/products/IMG_2505.jpg?v=1621068275&width=1946"),
+        new("Women's Handbags", "Kadın Çantaları", "womens-handbags",
+            "Considered leather handbags for work, evenings and everyday carry.",
+            "İş, akşam ve günlük kullanım için özenle tasarlanmış deri çantalar.",
+            4, "https://www.claridgess.com/assets/uploads/product_photos/246.jpeg"),
+        new("Men's Wallets", "Erkek Cüzdanları", "mens-wallets",
+            "Slim leather wallets with practical, quietly refined details.",
+            "Pratik ve zarif ayrıntılara sahip ince deri cüzdanlar.",
+            5, "https://realleathergarments.co.uk/wp-content/uploads/2022/01/Black-Leathers-Wallet-For-Mens.jpg"),
+        new("Keychains", "Anahtarlıklar", "keychains",
+            "Playful plush, crochet, beaded, resin and leather charms for keys and bags.",
+            "Anahtarlar ve çantalar için eğlenceli pelüş, örgü, boncuk, reçine ve deri aksesuarlar.",
+            6, "https://thedurumi.com/cdn/shop/files/06636244-36C5-41DC-9C6E-31E5AC37F38B.jpg?v=1748464637"),
+        new("Prayer Beads", "Tesbihler", "prayer-beads",
+            "Hand-finished prayer beads in warm stone, wood and resin.",
+            "Sıcak taş, ahşap ve reçineden elde tamamlanan tesbihler.",
+            7, "https://ihsanfrance.com/cdn/shop/files/12_f77f97cd-ba50-45ad-a7be-1d166808d672.png?v=1741697642&width=1082"),
+        new("Earrings", "Küpeler", "earrings",
+            "Light-catching earrings balanced for all-day wear.",
+            "Gün boyu rahat kullanım için dengelenmiş, ışığı yakalayan küpeler.",
+            8, "earrings"),
+        new("Kids' Mini Bags", "Çocuk Mini Çantaları", "kids-mini-bags",
+            "Playful small bags sized for girls and boys.",
+            "Kız ve erkek çocuklar için boyutlandırılmış eğlenceli mini çantalar.",
+            9, "https://s.alicdn.com/%40sc04/kf/H6ef169859a65480a88230ec8c3540293o/2023-Fashion-Mini-Bolso-Designer-Bags-for-Kids-Toddler-Handbags-for-Girls-Kids-Purse-Designer-Inspired-Bags-for-Little-Girls.jpg"),
+        new("Card Holders", "Kartlıklar", "card-holders",
+            "Compact leather card wallets with a clean, pocket-friendly profile.",
+            "Temiz ve cep dostu forma sahip kompakt deri kartlıklar.",
+            10, "https://www.leatherology.com/cdn/shop/files/Slim-Card-Case-Tan-105-229-1.jpg?v=1766532135"),
+    ];
+
     public static readonly IReadOnlyList<SeedProduct> Products =
     [
         new("Lâle Pearl Tassel", "Lâle İnci Püskül", "lale-pearl-tassel", "necklaces",
@@ -43,7 +104,7 @@ internal static class CatalogSeedData
             [("Rose", "Gül", "#81435c"), ("Ivory", "Fildişi", "#d8d5cf"), ("Midnight", "Gece mavisi", "#244760")],
             ["pearl", "gold", "studio"]),
 
-        new("Sedef Moon Pendant", "Sedef Ay Kolye Ucu", "sedef-moon-pendant", "pendants",
+        new("Sedef Moon Pendant", "Sedef Ay Kolye Ucu", "sedef-moon-pendant", "necklaces",
             "Mother-of-pearl catches the light in a sculptural crescent setting.",
             "Sedef, heykelsi hilal yuvasında ışığı yakalar.",
             "Sedef pairs nacre selected for its natural glow with a compact form inspired by moonlight on the Bosphorus.",
@@ -87,7 +148,7 @@ internal static class CatalogSeedData
             [("Lapis", "Lapis", "#244760"), ("Pearl", "İnci", "#d8d5cf")],
             ["bracelet", "silver"]),
 
-        new("Haliç Crystal Pendant", "Haliç Kristal Kolye Ucu", "halic-crystal-pendant", "pendants",
+        new("Haliç Crystal Pendant", "Haliç Kristal Kolye Ucu", "halic-crystal-pendant", "necklaces",
             "A faceted smoky crystal suspended from a whisper-fine chain.",
             "İncecik zincirde asılı, fasetli dumanlı kristal.",
             "Cut to gather low evening light, Haliç is an understated centerpiece inspired by the Golden Horn at dusk.",
@@ -109,7 +170,7 @@ internal static class CatalogSeedData
             [("Silver", "Gümüş", "#d8d5cf"), ("Gold", "Altın", "#bd9057")],
             ["silver", "pearl"]),
 
-        new("Atelier Charm No. 7", "Atölye Charm No. 7", "atelier-charm-no-7", "bag-charms",
+        new("Atelier Charm No. 7", "Atölye Charm No. 7", "atelier-charm-no-7", "keychains",
             "Knotted silk, polished stone and a clip made for daily ritual.",
             "Düğümlü ipek, cilalı taş ve günlük ritüeller için bir klips.",
             "A playful assemblage of atelier remnants turns precious materials into a small object of joy.",
@@ -119,5 +180,126 @@ internal static class CatalogSeedData
             46m, null, 4.7, 38, 31, false, true,
             [("Mulberry", "Dut", "#81435c"), ("Sage", "Adaçayı", "#8c8186"), ("Saffron", "Safran", "#bd9057")],
             ["studio", "earrings"]),
+
+        new("İnce Gold Anklet", "İnce Altın Halhal", "ince-gold-anklet", "anklets",
+            "A delicate Figaro chain that catches the light with every step.",
+            "Her adımda ışığı yakalayan narin Figaro zincir.",
+            "İnce is adjusted and polished by hand, creating an easy summer layer that feels nearly weightless on the ankle.",
+            "İnce, elde ayarlanıp parlatılır; ayak bileğinde neredeyse ağırlıksız hissedilen zarif bir yaz katmanı oluşturur.",
+            "14k gold vermeil · sterling silver", "14 ayar altın vermeil · 925 ayar gümüş",
+            "22–27 cm adjustable", "22–27 cm ayarlanabilir",
+            72m, null, 4.8, 42, 18, true, true,
+            [("Gold", "Altın", "#bd9057"), ("Silver", "Gümüş", "#d8d5cf")],
+            ["https://choicebychoi.com/cdn/shop/products/IMG_2505.jpg?v=1621068275&width=1946"]),
+
+        new("Mina Leather Tote", "Mina Deri El Çantası", "mina-leather-tote", "womens-handbags",
+            "A structured everyday tote with softened edges and discreet hardware.",
+            "Yumuşatılmış kenarlara ve sade aksesuarlara sahip yapılı günlük çanta.",
+            "Mina is cut for a balanced silhouette and finished with reinforced handles, a secure inner pocket and room for the everyday essentials.",
+            "Mina, dengeli bir siluet için kesilir; güçlendirilmiş saplar, güvenli iç cep ve günlük ihtiyaçlara ayrılan hacimle tamamlanır.",
+            "Full-grain leather · cotton lining", "Tam tahıllı deri · pamuk astar",
+            "32 × 24 × 13 cm", "32 × 24 × 13 cm",
+            248m, null, 4.9, 36, 9, true, true,
+            [("Sand", "Kum", "#c4a889"), ("Midnight", "Gece", "#242326")],
+            ["https://www.claridgess.com/assets/uploads/product_photos/246.jpeg"]),
+
+        new("Galata Bifold Wallet", "Galata Katlanır Cüzdan", "galata-bifold-wallet", "mens-wallets",
+            "A slim leather bifold with six card slots and a full-length note sleeve.",
+            "Altı kart gözü ve tam boy banknot bölmesi bulunan ince deri cüzdan.",
+            "Galata keeps its profile clean through skived edges, fine stitching and a lining chosen to reduce bulk without losing structure.",
+            "Galata; inceltilmiş kenarlar, ince dikişler ve yapıyı korurken hacmi azaltan astarıyla temiz formunu sürdürür.",
+            "Full-grain leather · cotton twill", "Tam tahıllı deri · pamuk dimi",
+            "11 × 9 cm closed", "Kapalı hâlde 11 × 9 cm",
+            84m, null, 4.8, 58, 22, false, true,
+            [("Black", "Siyah", "#242326"), ("Cognac", "Konyak", "#8a5537")],
+            ["https://realleathergarments.co.uk/wp-content/uploads/2022/01/Black-Leathers-Wallet-For-Mens.jpg"]),
+
+        new("Karaköy Leather Keyring", "Karaköy Deri Anahtarlık", "karakoy-leather-keyring", "keychains",
+            "A hand-riveted leather loop with solid brass hardware.",
+            "Masif pirinç aksesuarlı, elde perçinlenmiş deri halka.",
+            "A small offcut from our leather table becomes a durable daily object, burnished at the edges and assembled one rivet at a time.",
+            "Deri masamızdan kalan küçük bir parça; kenarları parlatılıp tek tek perçinlenerek dayanıklı bir günlük nesneye dönüşür.",
+            "Vegetable-tanned leather · brass", "Bitkisel tabaklanmış deri · pirinç",
+            "9 × 2 cm", "9 × 2 cm",
+            28m, null, 4.7, 31, 35, false, false,
+            [("Natural", "Doğal", "#b8875b"), ("Black", "Siyah", "#242326")],
+            ["https://i.etsystatic.com/10946465/r/il/f811da/4955973558/il_fullxfull.4955973558_qsp8.jpg"]),
+
+        new("Sükûn Amber Prayer Beads", "Sükûn Kehribar Tesbih", "sukun-amber-prayer-beads", "prayer-beads",
+            "Warm polished beads, hand-strung and finished with a soft tassel.",
+            "Elde dizilmiş, yumuşak püskülle tamamlanan sıcak tonlu cilalı taneler.",
+            "Sükûn is paced and knotted bead by bead for a smooth rhythm in the hand, then finished with a combed atelier tassel.",
+            "Sükûn, elde akıcı bir ritim için tane tane dizilip düğümlenir ve taranmış atölye püskülüyle tamamlanır.",
+            "Amber resin · silk cord", "Kehribar reçine · ipek kordon",
+            "33 beads · 8 mm", "33 tane · 8 mm",
+            96m, null, 4.9, 74, 14, true, false,
+            [("Amber", "Kehribar", "#9a643c"), ("Espresso", "Espresso", "#4a3027")],
+            ["https://ihsanfrance.com/cdn/shop/files/12_f77f97cd-ba50-45ad-a7be-1d166808d672.png?v=1741697642&width=1082"]),
+
+        new("Mini Rota Crossbody", "Mini Rota Çapraz Çanta", "mini-rota-crossbody", "kids-mini-bags",
+            "A light, adjustable mini bag designed for little explorers.",
+            "Küçük kaşifler için tasarlanmış hafif, ayarlanabilir mini çanta.",
+            "Mini Rota has a soft strap, rounded corners and one easy compartment for treasures collected along the way.",
+            "Mini Rota; yumuşak askısı, yuvarlatılmış köşeleri ve yol boyunca bulunan hazineler için kolay açılan tek bölmesiyle tasarlandı.",
+            "Recycled canvas · soft vegan trim", "Geri dönüştürülmüş kanvas · yumuşak vegan biye",
+            "16 × 13 × 5 cm", "16 × 13 × 5 cm",
+            42m, null, 4.8, 27, 24, false, true,
+            [("Rose", "Gül", "#d79bad"), ("Navy", "Lacivert", "#244760"), ("Sand", "Kum", "#c4a889")],
+            ["https://s.alicdn.com/%40sc04/kf/H6ef169859a65480a88230ec8c3540293o/2023-Fashion-Mini-Bolso-Designer-Bags-for-Kids-Toddler-Handbags-for-Girls-Kids-Purse-Designer-Inspired-Bags-for-Little-Girls.jpg"]),
+
+        new("İskele Slim Card Holder", "İskele İnce Kartlık", "iskele-slim-card-holder", "card-holders",
+            "A minimal leather card wallet with four quick-access slots.",
+            "Dört hızlı erişim gözü bulunan minimal deri kartlık.",
+            "İskele is cut thin enough for a front pocket, with folded edges and a central compartment for the cards you reach for most.",
+            "İskele, ön cebe sığacak incelikte kesilir; kıvrılmış kenarlar ve en sık kullanılan kartlar için orta bölmeyle tamamlanır.",
+            "Full-grain leather", "Tam tahıllı deri",
+            "10 × 7 cm", "10 × 7 cm",
+            48m, null, 4.8, 49, 29, false, false,
+            [("Cognac", "Konyak", "#9b633f"), ("Black", "Siyah", "#242326"), ("Sand", "Kum", "#c4a889")],
+            ["https://www.leatherology.com/cdn/shop/files/Slim-Card-Case-Tan-105-229-1.jpg?v=1766532135"]),
+
+        new("Pofuduk Teddy Charm", "Pofuduk Ayıcık Anahtarlık", "pofuduk-teddy-charm", "keychains",
+            "A palm-sized pastel teddy with a soft loop and polished gold-tone clasp.",
+            "Yumuşak halkalı ve parlak altın tonlu klipsli, avuç içi boyutunda pastel ayıcık.",
+            "Pofuduk brings a small moment of softness to keys, totes and backpacks. Embroidered details keep the expression gentle and the finish durable.",
+            "Pofuduk; anahtarlara, çantalara ve sırt çantalarına küçük bir yumuşaklık anı katar. Nakışlı detaylar sevimli ifadeyi ve dayanıklı bitişi korur.",
+            "Soft plush · recycled fill · alloy clasp", "Yumuşak pelüş · geri dönüştürülmüş dolgu · alaşım klips",
+            "11 cm charm", "11 cm aksesuar",
+            34m, null, 4.9, 67, 28, true, true,
+            [("Blush", "Pudra", "#e4a9bb"), ("Lavender", "Lavanta", "#b9acd5"), ("Cream", "Krem", "#e6d9c7")],
+            ["https://kawaiistore.in/cdn/shop/files/ChatGPTImageJan12_2026_10_25_49PM.png?v=1768278549&width=2400"]),
+
+        new("Fiyonk Crochet Keychain", "Fiyonk Örgü Anahtarlık", "fiyonk-crochet-keychain", "keychains",
+            "A hand-crocheted bow in soft yarn with a neat silver ring.",
+            "Yumuşak iplikten elde örülmüş, zarif gümüş halkalı fiyonk.",
+            "Each Fiyonk is crocheted in a small run, shaped by hand and lightly steamed so its loops and tails stay crisp without losing their softness.",
+            "Her Fiyonk küçük partiler hâlinde örülür, elde şekillendirilir ve yumuşaklığını kaybetmeden formunu koruması için hafifçe buharlanır.",
+            "Cotton yarn · nickel-free alloy", "Pamuk iplik · nikel içermeyen alaşım",
+            "9 × 8 cm", "9 × 8 cm",
+            26m, null, 4.8, 44, 36, false, true,
+            [("Pink", "Pembe", "#dda6b8"), ("Sky", "Gökyüzü", "#a9c9dc"), ("Lilac", "Lila", "#c3afd4")],
+            ["https://advaitabharat.com/cdn/shop/files/ChatGPTImageJan16_2026_11_38_58PM.png?v=1768587342"]),
+
+        new("Jelly Bloom Beaded Charm", "Jelly Bloom Boncuklu Aksesuar", "jelly-bloom-beaded-charm", "keychains",
+            "Pastel flowers, pearls and translucent beads on an easy clip.",
+            "Kolay klips üzerinde pastel çiçekler, inciler ve şeffaf boncuklar.",
+            "Jelly Bloom mixes glossy and matte beads for a playful rhythm, finished with both a keyring and lobster clasp for bags, keys or phone loops.",
+            "Jelly Bloom, eğlenceli bir ritim için parlak ve mat boncukları karıştırır; çanta, anahtar veya telefon askıları için halka ve karabina klipsle tamamlanır.",
+            "Acrylic beads · faux pearl · alloy", "Akrilik boncuk · suni inci · alaşım",
+            "15 cm drop", "15 cm uzunluk",
+            31m, null, 4.9, 53, 42, true, false,
+            [("Sorbet", "Şerbet", "#e7b4c5"), ("Ocean", "Okyanus", "#9fc9cf"), ("Butter", "Tereyağı", "#e7d49b")],
+            ["https://thedurumi.com/cdn/shop/files/06636244-36C5-41DC-9C6E-31E5AC37F38B.jpg?v=1748464637"]),
+
+        new("Çiçekli Bunny Resin Charm", "Çiçekli Tavşan Reçine Aksesuar", "cicekli-bunny-resin-charm", "keychains",
+            "A translucent pink bunny holding tiny dried flowers and a cloud-soft pom-pom.",
+            "Minik kuru çiçekler ve bulut yumuşaklığında ponpon taşıyan şeffaf pembe tavşan.",
+            "Tiny botanicals are arranged inside the bunny silhouette before the resin is poured. A pearl and pom-pom add movement without making the charm heavy.",
+            "Reçine dökülmeden önce minik bitkiler tavşan siluetinin içine yerleştirilir. İnci ve ponpon, aksesuarı ağırlaştırmadan hareket katar.",
+            "Clear resin · dried flowers · faux fur", "Şeffaf reçine · kuru çiçek · suni kürk",
+            "12 cm total · 4 cm charm", "Toplam 12 cm · 4 cm aksesuar",
+            38m, null, 4.8, 39, 20, false, true,
+            [("Petal pink", "Yaprak pembesi", "#e6acbb"), ("Lilac", "Lila", "#c2afd2")],
+            ["https://c.p02.c4a.im/images/item/19944474/0428926d08a479d29d1d9561af3541b5fa2ab84fc7ba5f2898f5d803b82fd440?d=583x585"]),
     ];
 }

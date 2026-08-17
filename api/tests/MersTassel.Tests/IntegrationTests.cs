@@ -94,7 +94,7 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var body = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/products?pageSize=100", Json);
 
         body!.Success.Should().BeTrue();
-        body.Data!.GetProperty("total").GetInt32().Should().BeGreaterThanOrEqualTo(8);
+        body.Data!.GetProperty("total").GetInt32().Should().BeGreaterThanOrEqualTo(19);
 
         var slugs = body.Data.GetProperty("items").EnumerateArray()
             .Select(i => i.GetProperty("slug").GetString()).ToList();
@@ -113,10 +113,10 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
     {
         var client = factory.CreateClient();
 
-        var pendants = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/products?category=pendants", Json);
-        pendants!.Data!.GetProperty("items").EnumerateArray()
+        var necklaces = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/products?category=necklaces", Json);
+        necklaces!.Data!.GetProperty("items").EnumerateArray()
             .Select(i => i.GetProperty("slug").GetString())
-            .Should().BeEquivalentTo(["sedef-moon-pendant", "halic-crystal-pendant"]);
+            .Should().Contain(["lale-pearl-tassel", "sedef-moon-pendant", "halic-crystal-pendant", "ada-layered-chain"]);
 
         var cheapest = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/products?sort=price-low&pageSize=5", Json);
         var prices = cheapest!.Data!.GetProperty("items").EnumerateArray()
@@ -146,6 +146,58 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         searched!.Data!.GetProperty("items").EnumerateArray()
             .Select(i => i.GetProperty("slug").GetString())
             .Should().BeEquivalentTo(["nazar-chain-bracelet"]);
+    }
+
+    [Fact]
+    public async Task Requested_categories_are_localized_illustrated_and_shoppable()
+    {
+        var client = factory.CreateClient();
+        var body = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/categories", Json);
+
+        var categories = body!.Data!.EnumerateArray().ToDictionary(
+            category => category.GetProperty("slug").GetString()!,
+            category => category);
+
+        string[] requested =
+        [
+            "rings", "necklaces", "bracelets", "anklets", "womens-handbags",
+            "mens-wallets", "keychains", "prayer-beads", "earrings", "kids-mini-bags",
+            "card-holders",
+        ];
+
+        categories.Keys.Should().BeEquivalentTo(requested);
+        foreach (var slug in requested)
+        {
+            categories[slug].GetProperty("nameTr").GetString().Should().NotBeNullOrWhiteSpace();
+            categories[slug].GetProperty("image").GetString().Should().NotBeNullOrWhiteSpace();
+            categories[slug].GetProperty("count").GetInt32().Should().BeGreaterThan(0);
+        }
+    }
+
+    [Fact]
+    public async Task Cute_keychain_collection_is_available_with_media_and_stock()
+    {
+        var client = factory.CreateClient();
+        var body = await client.GetFromJsonAsync<Envelope<JsonElement>>(
+            "/api/v1/products?category=keychains&pageSize=100", Json);
+
+        var products = body!.Data!.GetProperty("items").EnumerateArray().ToDictionary(
+            product => product.GetProperty("slug").GetString()!,
+            product => product);
+
+        string[] cuteKeychains =
+        [
+            "pofuduk-teddy-charm", "fiyonk-crochet-keychain",
+            "jelly-bloom-beaded-charm", "cicekli-bunny-resin-charm",
+        ];
+
+        products.Keys.Should().Contain(cuteKeychains);
+        foreach (var slug in cuteKeychains)
+        {
+            products[slug].GetProperty("nameTr").GetString().Should().NotBeNullOrWhiteSpace();
+            products[slug].GetProperty("image").GetString().Should().StartWith("http");
+            products[slug].GetProperty("stock").GetInt32().Should().BeGreaterThan(0);
+        }
     }
 
     [Fact]
@@ -618,8 +670,8 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var body = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/categories", Json);
 
         var categories = body!.Data!.EnumerateArray().ToList();
-        categories.Should().HaveCount(6);
-        categories.Sum(c => c.GetProperty("count").GetInt32()).Should().BeGreaterThanOrEqualTo(8);
+        categories.Should().HaveCount(11);
+        categories.Sum(c => c.GetProperty("count").GetInt32()).Should().BeGreaterThanOrEqualTo(19);
         categories.Should().OnlyContain(c => c.GetProperty("nameTr").GetString() != null);
     }
 

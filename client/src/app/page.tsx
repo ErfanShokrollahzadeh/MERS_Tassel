@@ -82,12 +82,12 @@ export default function HomePage() {
           {categories.isError && <ErrorState error={categories.error} onRetry={() => categories.refetch()} />}
           {categories.isSuccess && (
             <div className="category-grid">
-              {categories.data.filter((category) => category.count > 0).slice(0, 4).map((category, index) => (
+              {categories.data.filter((category) => category.count > 0).map((category, index) => (
                 <motion.div key={category.slug} {...reveal} transition={{ ...reveal.transition, delay: index * .08 }}>
                   <Link href={`/products?category=${category.slug}`} className="category-card">
                     {category.image ? <MediaImage src={category.image} alt="" sizes="(max-width: 720px) 50vw, 25vw" /> : <span className="skeleton-block" />}
                     <div className="category-card__veil" />
-                    <div className="category-card__copy"><span>0{index + 1}</span><h3>{categoryName(category, locale)}</h3><p>{t('home.pieces', { count: category.count })}</p><i><ArrowUpRight /></i></div>
+                    <div className="category-card__copy"><span>{String(index + 1).padStart(2, '0')}</span><h3>{categoryName(category, locale)}</h3><p>{t('home.pieces', { count: category.count })}</p><i><ArrowUpRight /></i></div>
                   </Link>
                 </motion.div>
               ))}
