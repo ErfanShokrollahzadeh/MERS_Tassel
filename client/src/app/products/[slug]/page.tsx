@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { ProductDetail } from '@/components/ProductDetail';
 import { fetchProduct, fetchRelatedProducts } from '@/lib/catalog';
 import { absoluteMediaUrl } from '@/lib/apiClient';
@@ -30,8 +30,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const locale = cookieStore.get('mers-locale')?.value === 'tr' ? 'tr' : 'en';
   const display = productCopy(product, locale);
 
-  // Open Graph needs absolute URLs; stored paths are relative to the API host.
-  const image = absoluteMediaUrl(product.image);
+  // Open Graph needs an absolute URL, and it must be one a crawler can actually reach. The
+  // frontend's own request host works — /uploads is proxied to the API from there — while the
+  // API's origin might be a private host the frontend can reach but the public internet can't.
+  const requestHeaders = await headers();
+  const host = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host') ?? 'localhost:3000';
+  const proto = requestHeaders.get('x-forwarded-proto') ?? (host.startsWith('localhost') ? 'http' : 'https');
+  const image = absoluteMediaUrl(product.image, `${proto}://${host}`);
 
   return {
     title: product.seoTitle || display.name,

@@ -28,7 +28,9 @@ export function fetchRelatedProducts(slug: string, take = 4, signal?: AbortSigna
 }
 
 export function fetchCategories(signal?: AbortSignal) {
-  return api.get<Category[]>('/products/categories', { signal });
+  // The API mounts this at /api/v1/categories, not nested under /products — see
+  // CategoriesController in api/src/MersTassel.Api/Controllers/CatalogController.cs.
+  return api.get<Category[]>('/categories', { signal });
 }
 
 export function fetchSiteSettings(signal?: AbortSignal) {

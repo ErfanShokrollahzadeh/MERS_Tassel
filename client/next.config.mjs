@@ -1,16 +1,19 @@
 /** @type {import('next').NextConfig} */
 
 /**
- * Origin of the API. Mirrors resolveApiBase() in src/lib/apiClient.ts: callers should supply
- * an origin, but a legacy value carrying a `/api` path suffix is tolerated rather than
- * silently producing broken URLs.
+ * Origin of the API. Mirrors resolveApiBase() in src/lib/apiClient.ts: NEXT_PUBLIC_API_URL
+ * should be an origin, but a value carrying a path or missing scheme is tolerated by parsing
+ * with URL and taking `.origin`, rather than stripping only specific known suffixes.
  */
 function resolveApiOrigin() {
-  const configured = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5080')
-    .trim()
-    .replace(/\/+$/, '');
+  const fallback = 'http://localhost:5080';
+  const configured = (process.env.NEXT_PUBLIC_API_URL || fallback).trim();
 
-  return configured.replace(/\/api(\/v\d+)?$/i, '') || 'http://localhost:5080';
+  try {
+    return new URL(configured).origin;
+  } catch {
+    return fallback;
+  }
 }
 
 const API_ORIGIN = resolveApiOrigin();
@@ -23,8 +26,11 @@ const nextConfig = {
       // avoids three separate ways images used to break in development: remotePatterns having
       // to match the API's exact host and port, Next 16 refusing to optimize any upstream that
       // resolves to a private IP, and the browser needing cross-origin access to the API.
+      //
+      // The current backend (api/, .NET) serves everything under /uploads/**. There is no
+      // /media/** route on it — that path belonged to the Django backend in server/, which this
+      // client no longer talks to — so no rewrite is registered for it.
       { source: '/uploads/:path*', destination: `${API_ORIGIN}/uploads/:path*` },
-      { source: '/media/:path*', destination: `${API_ORIGIN}/media/:path*` },
     ];
   },
 };

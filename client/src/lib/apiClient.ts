@@ -10,24 +10,30 @@
 /**
  * Origin of the API, e.g. `http://localhost:5080`.
  *
- * This project previously pointed at Django using a path suffix
- * (`NEXT_PUBLIC_API_URL=http://localhost:8000/api`). A carried-over value of that shape would
- * otherwise build `…/api/api/v1/products` and 404 every request — including every image, since
- * media resolves against the same base. Trim the known suffixes so an upgraded checkout keeps
- * working, and say so once in development rather than fixing it silently.
+ * NEXT_PUBLIC_API_URL should be an origin, but a value copied from an older setup can carry
+ * a path (`http://localhost:8000/api`) or a missing scheme. Either would otherwise build
+ * broken request URLs — including every image, since media resolves against the same base —
+ * so this parses with URL and takes `.origin`, which strips any path reliably rather than
+ * only the specific suffixes seen so far.
  */
 function resolveApiBase(): string {
-  const configured = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5080').trim().replace(/\/+$/, '');
-  const normalized = configured.replace(/\/api(\/v\d+)?$/i, '');
+  const fallback = 'http://localhost:5080';
+  const configured = (process.env.NEXT_PUBLIC_API_URL || fallback).trim();
 
-  if (normalized !== configured && process.env.NODE_ENV !== 'production' && typeof window !== 'undefined') {
-    console.warn(
-      `[api] NEXT_PUBLIC_API_URL should be the API origin, not a path. ` +
-        `Using "${normalized}" instead of "${configured}".`,
-    );
+  try {
+    const origin = new URL(configured).origin;
+
+    if (origin !== configured.replace(/\/+$/, '') && process.env.NODE_ENV !== 'production' && typeof window !== 'undefined') {
+      console.warn(`[api] NEXT_PUBLIC_API_URL should be the API origin, not a path. Using "${origin}" instead of "${configured}".`);
+    }
+
+    return origin;
+  } catch {
+    if (process.env.NODE_ENV !== 'production' && typeof window !== 'undefined') {
+      console.warn(`[api] NEXT_PUBLIC_API_URL="${configured}" is not a valid URL. Falling back to ${fallback}.`);
+    }
+    return fallback;
   }
-
-  return normalized || 'http://localhost:5080';
 }
 
 export const API_BASE_URL = resolveApiBase();
@@ -49,12 +55,17 @@ export function mediaUrl(path?: string | null): string {
 
 /**
  * Absolute URL for places a relative path cannot work — Open Graph and other metadata read by
- * external crawlers, which have no notion of this site's origin.
+ * external crawlers.
+ *
+ * Built from the frontend's own origin, not the API's: `/uploads/...` is proxied to the API
+ * by the rewrite in next.config.mjs, so the frontend origin resolves it. The API origin often
+ * won't — it can be a private/internal host the frontend reaches but the public internet does
+ * not — so a crawler-facing URL must go through the same proxy every browser uses.
  */
-export function absoluteMediaUrl(path?: string | null): string {
+export function absoluteMediaUrl(path: string | null | undefined, frontendOrigin: string): string {
   if (!path) return '';
   if (/^https?:\/\//i.test(path)) return path;
-  return `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  return `${frontendOrigin.replace(/\/+$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
 export type ApiEnvelope<T> = {
