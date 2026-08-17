@@ -24,6 +24,16 @@ def stop_children(*_args):
                 pass
 
 
+REQUIRED_SDK_MAJOR = 10
+
+INSTALL_HINT = (
+    '  macOS/Linux:  curl -fsSL https://builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.sh'
+    ' | bash -s -- --channel 10.0\n'
+    '                then add it to PATH:  export PATH="$HOME/.dotnet:$PATH"\n'
+    '  or download:  https://dotnet.microsoft.com/download/dotnet/10.0'
+)
+
+
 def resolve_dotnet() -> str | None:
     """dotnet-install.sh drops the SDK in ~/.dotnet without touching PATH."""
     found = shutil.which('dotnet')
@@ -34,6 +44,47 @@ def resolve_dotnet() -> str | None:
     return str(local) if local.exists() else None
 
 
+def installed_sdk_majors(dotnet: str) -> list[int]:
+    """Major versions from `dotnet --list-sdks`, e.g. [6, 10]."""
+    try:
+        listing = subprocess.run(
+            [dotnet, '--list-sdks'], capture_output=True, text=True, timeout=30,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        return []
+
+    majors = []
+    for line in listing.splitlines():
+        version = line.split(' ', 1)[0].strip()
+        head = version.split('.', 1)[0]
+        if head.isdigit():
+            majors.append(int(head))
+
+    return majors
+
+
+def check_sdk(dotnet: str) -> bool:
+    """
+    The API targets net10.0 and depends on EF Core 10, which has no build for older
+    frameworks. Checking here turns an obscure downstream symptom — the API silently failing
+    to start, so every image and API call 404s against a dead port — into one clear message
+    before anything starts.
+    """
+    majors = installed_sdk_majors(dotnet)
+    if not majors or max(majors) >= REQUIRED_SDK_MAJOR:
+        return True
+
+    print(
+        f'\nThe .NET {REQUIRED_SDK_MAJOR} SDK is required, but the newest one found is '
+        f'{max(majors)}.x (via {dotnet}).\n\n'
+        'The API targets net10.0 and uses EF Core 10, which cannot be built by an older SDK,\n'
+        'so it would fail to start and the storefront would load with no images.\n\n'
+        f'Install it:\n{INSTALL_HINT}\n',
+        file=sys.stderr,
+    )
+    return False
+
+
 def main():
     signal.signal(signal.SIGINT, stop_children)
     signal.signal(signal.SIGTERM, stop_children)
@@ -41,11 +92,12 @@ def main():
     dotnet = resolve_dotnet()
     if dotnet is None:
         print(
-            'dotnet was not found. Install the .NET 10 SDK, for example:\n'
-            '  curl -fsSL https://builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.sh '
-            '| bash -s -- --channel 10.0',
+            f'\ndotnet was not found. Install the .NET {REQUIRED_SDK_MAJOR} SDK:\n{INSTALL_HINT}\n',
             file=sys.stderr,
         )
+        return 1
+
+    if not check_sdk(dotnet):
         return 1
 
     api_env = {

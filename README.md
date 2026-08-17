@@ -40,12 +40,19 @@ placeholder numbers.
 
 ### API
 
-Install the .NET 10 SDK if you do not have it:
+**Requires the .NET 10 SDK.** The projects target `net10.0` and use EF Core 10, so an older
+SDK cannot build them — `dotnet run` fails with `NETSDK1045`, the API never starts, and the
+storefront then loads with no images because nothing is serving `/uploads`. Check what you
+have with `dotnet --list-sdks`; install it if 10.x is missing:
 
 ```bash
 curl -fsSL https://builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.sh | bash -s -- --channel 10.0
 export PATH="$HOME/.dotnet:$PATH"
 ```
+
+macOS users can instead grab the installer from
+[dotnet.microsoft.com/download/dotnet/10.0](https://dotnet.microsoft.com/download/dotnet/10.0).
+Several SDK versions coexist happily; `api/global.json` selects 10.x for this solution.
 
 Then run it:
 
