@@ -40,25 +40,36 @@ placeholder numbers.
 
 ### API
 
-**Requires the .NET 10 SDK.** The projects target `net10.0` and use EF Core 10, so an older
-SDK cannot build them — `dotnet run` fails with `NETSDK1045`, the API never starts, and the
-storefront then loads with no images because nothing is serving `/uploads`. Check what you
-have with `dotnet --list-sdks`; install it if 10.x is missing:
-
 ```bash
-curl -fsSL https://builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.sh | bash -s -- --channel 10.0
-export PATH="$HOME/.dotnet:$PATH"
+./api/run.sh
 ```
 
-macOS users can instead grab the installer from
-[dotnet.microsoft.com/download/dotnet/10.0](https://dotnet.microsoft.com/download/dotnet/10.0).
-Several SDK versions coexist happily; `api/global.json` selects 10.x for this solution.
+That is the whole thing. It picks a .NET SDK that can build the project and starts the API
+with it — and if the machine has none, it installs one under `~/.dotnet` first (per-user, no
+`sudo`, nothing else on the machine touched). `npm run dev` in `client/` does the same before
+starting either server.
 
-Then run it:
+Both matter because the projects target `net10.0` and use EF Core 10, which no earlier SDK
+can build, and because the .NET host only sees SDKs installed next to the `dotnet` binary you
+invoked. So a plain `dotnet run` on a machine carrying 6.0 on `PATH` and 10.0 in `~/.dotnet`
+still fails, with either `NETSDK1045` or *"a compatible installed .NET SDK for global.json
+version [10.0.100] ... was not found"*. When that happens the API never starts, and the only
+thing you see is a storefront with no images — nothing is serving `/uploads`.
+
+To install the SDK without starting anything, or to see what is currently found:
 
 ```bash
-cd api/src/MersTassel.Api
-dotnet run
+python3 scripts/dotnet_sdk.py           # installs if needed, prints the dotnet it will use
+python3 scripts/dotnet_sdk.py --check   # look only, never install
+```
+
+Set `MERS_SKIP_DOTNET_INSTALL=1` to keep it from installing anything, or install manually
+from [dotnet.microsoft.com/download/dotnet/10.0](https://dotnet.microsoft.com/download/dotnet/10.0).
+Several SDK versions coexist happily; `api/global.json` selects 10.x for this solution. To use
+`dotnet` directly in a shell, put the resolved SDK first on `PATH`:
+
+```bash
+export PATH="$HOME/.dotnet:$PATH"   # then: cd api/src/MersTassel.Api && dotnet run
 ```
 
 The API listens on `http://localhost:5080`, with Swagger at `/swagger` in development.
@@ -143,6 +154,8 @@ product hides it from the storefront while order history keeps its reference.
 ## Verification
 
 ```bash
+export PATH="$(dirname "$(python3 scripts/dotnet_sdk.py)"):$PATH"
+
 cd api
 dotnet build
 dotnet test          # 47 unit and integration tests
