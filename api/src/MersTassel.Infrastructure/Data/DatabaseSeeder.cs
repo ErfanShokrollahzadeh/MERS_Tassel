@@ -41,10 +41,84 @@ public class DatabaseSeeder(
     private async Task SeedAdminAsync()
     {
         var email = configuration["Seed:AdminEmail"] ?? "admin@merstassel.local";
-        if (await userManager.FindByEmailAsync(email) is not null) return;
+        var configured = configuration["Seed:AdminPassword"];
+        var resetRequested = bool.TryParse(configuration["Seed:ResetAdminPassword"], out var reset) && reset;
+        var existing = await userManager.FindByEmailAsync(email);
+
+        if (existing is not null)
+        {
+            // The configured address is the operator's recovery anchor. It can safely reclaim
+            // workspace access without deleting the database or recreating customer records.
+            existing.EmailConfirmed = true;
+            existing.IsDelete = false;
+            await userManager.UpdateAsync(existing);
+
+            if (!await userManager.IsInRoleAsync(existing, RoleNames.Admin))
+            {
+                var promoted = await userManager.AddToRoleAsync(existing, RoleNames.Admin);
+                if (!promoted.Succeeded)
+                {
+                    logger.LogError("Could not restore administrator role for {Email}: {Errors}", email,
+                        string.Join("; ", promoted.Errors.Select(e => e.Description)));
+                }
+            }
+
+            if (resetRequested)
+            {
+                if (string.IsNullOrWhiteSpace(configured))
+                {
+                    logger.LogError("Seed:ResetAdminPassword is enabled, but Seed:AdminPassword is empty.");
+                }
+                else
+                {
+                    var validationErrors = new List<IdentityError>();
+                    foreach (var validator in userManager.PasswordValidators)
+                    {
+                        var validation = await validator.ValidateAsync(userManager, existing, configured);
+                        if (!validation.Succeeded) validationErrors.AddRange(validation.Errors);
+                    }
+
+                    IdentityResult passwordReset;
+                    if (validationErrors.Count > 0)
+                    {
+                        passwordReset = IdentityResult.Failed(validationErrors.ToArray());
+                    }
+                    else
+                    {
+                        // This is an operator-only startup recovery path. Hash directly after
+                        // applying every configured password validator, then rotate the security
+                        // stamp and revoke existing refresh sessions. No email token provider is
+                        // required by the normal sign-in system.
+                        existing.PasswordHash = userManager.PasswordHasher.HashPassword(existing, configured);
+                        existing.SecurityStamp = Guid.NewGuid().ToString();
+                        existing.ConcurrencyStamp = Guid.NewGuid().ToString();
+                        existing.AccessFailedCount = 0;
+                        existing.LockoutEnd = null;
+                        passwordReset = await userManager.UpdateAsync(existing);
+                    }
+
+                    if (!passwordReset.Succeeded)
+                    {
+                        logger.LogError("Could not reset administrator password for {Email}: {Errors}", email,
+                            string.Join("; ", passwordReset.Errors.Select(e => e.Description)));
+                    }
+                    else
+                    {
+                        var activeSessions = await db.RefreshTokens
+                            .Where(token => token.UserId == existing.Id && token.RevokedAt == null)
+                            .ToListAsync();
+                        var now = DateTimeOffset.UtcNow;
+                        foreach (var session in activeSessions) session.RevokedAt = now;
+                        await db.SaveChangesAsync();
+                        logger.LogWarning("Administrator access for {Email} was recovered. Disable Seed:ResetAdminPassword now.", email);
+                    }
+                }
+            }
+
+            return;
+        }
 
         // A configured password is honoured; otherwise generate one and print it exactly once.
-        var configured = configuration["Seed:AdminPassword"];
         var password = string.IsNullOrWhiteSpace(configured) ? GeneratePassword() : configured;
 
         var admin = new AppUser

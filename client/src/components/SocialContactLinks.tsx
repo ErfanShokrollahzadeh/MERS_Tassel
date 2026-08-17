@@ -4,7 +4,7 @@ import { Camera, Mail, MessageCircle, Music2 } from 'lucide-react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useSiteSettings } from '@/lib/useSiteSettings';
 
-export function SocialContactLinks({ detailed = false }: { detailed?: boolean }) {
+export function SocialContactLinks() {
   const { t } = useI18n();
   const { data: settings } = useSiteSettings();
   const whatsappPhone = settings?.whatsappPhone || settings?.contactPhone;
@@ -22,11 +22,11 @@ export function SocialContactLinks({ detailed = false }: { detailed?: boolean })
   ];
 
   return (
-    <div className={`social-contact-links${detailed ? ' social-contact-links--detailed' : ''}`}>
+    <div className="social-contact-links social-contact-links--detailed">
       {links.map(({ label, value, href, icon: Icon, external }) => (
         <a key={label} href={href} aria-label={label} {...(external ? { target: '_blank', rel: 'noreferrer noopener' } : {})}>
           <Icon aria-hidden="true" />
-          <span><strong>{label}</strong>{detailed && <small>{value}</small>}</span>
+          <span><strong>{label}</strong><small>{value}</small></span>
         </a>
       ))}
     </div>

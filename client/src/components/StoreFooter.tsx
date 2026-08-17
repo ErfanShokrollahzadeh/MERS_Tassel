@@ -22,7 +22,7 @@ export function StoreFooter() {
           <Link href="/" className="wordmark wordmark--footer"><span className="wordmark__seal">M</span><span>MERS <i>Tassel</i></span></Link>
           <p>{t('footer.tagline')}</p>
           <span className="footer-label footer-social-label">{t('footer.follow')}</span>
-          <SocialContactLinks detailed />
+          <SocialContactLinks />
         </div>
         <div><span className="footer-label">{t('footer.explore')}</span><Link href="/products">{t('footer.shopAll')}</Link><Link href="/products?sort=new">{t('footer.new')}</Link><Link href="/about">{t('footer.atelier')}</Link></div>
         <div><span className="footer-label">{t('footer.care')}</span><Link href="/contact">{t('footer.contact')}</Link><Link href="/shipping">{t('footer.shipping')}</Link><Link href="/care">{t('footer.jewelryCare')}</Link></div>

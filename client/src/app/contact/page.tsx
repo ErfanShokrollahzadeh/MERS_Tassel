@@ -23,7 +23,7 @@ export default function ContactPage() {
         <aside>
           <div><Mail /><span><strong>{t('contact.write')}</strong>{email ? <a href={`mailto:${email}`}>{email}</a> : <span className="skeleton-block skeleton-block--inline" />}</span></div>
           <div><MapPin /><span><strong>{t('contact.visit')}</strong><p>{localizedAddress || <span className="skeleton-block skeleton-block--inline" />}<br />{t('contact.appointment')}</p></span></div>
-          <section className="contact-socials"><strong>{t('contact.connect')}</strong><p>{t('contact.connectCopy')}</p><SocialContactLinks detailed /></section>
+          <section className="contact-socials"><strong>{t('contact.connect')}</strong><p>{t('contact.connectCopy')}</p><SocialContactLinks /></section>
           <blockquote>{t('contact.quote')}</blockquote>
         </aside>
 

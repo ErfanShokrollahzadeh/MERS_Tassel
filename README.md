@@ -96,6 +96,22 @@ The storefront runs at `http://localhost:3000` and the workspace at `/admin`.
 
 `npm run dev` starts the API and the client together. To run only the client, use `npm run dev:next`.
 
+### Recover or reset the administrator
+
+Use the recovery flag for one startup when an existing account needs administrator access or
+the administrator password has been lost. From the repository root:
+
+```bash
+Seed__AdminEmail='you@example.com' \
+Seed__AdminPassword='choose-a-new-strong-password' \
+Seed__ResetAdminPassword='true' \
+npm --prefix client run dev
+```
+
+After the API reports that administrator access was recovered, stop it and start normally again.
+Do not leave `Seed__ResetAdminPassword` enabled. This recovery promotes the configured account,
+clears its lockout, and changes its password without deleting orders, customers, or catalog data.
+
 ## Configuration
 
 Set through `appsettings.json`, environment variables or user-secrets. Nested keys use `__` in
@@ -110,6 +126,7 @@ environment variables (`Jwt__SigningKey`).
 | `Storage:MaxBytes` | Upload size limit (default 10 MB) |
 | `Stripe:SecretKey` / `Stripe:WebhookSecret` | Enables payments; without both, checkout returns a `payments_not_configured` 503 |
 | `Seed:AdminEmail` / `Seed:AdminPassword` | Administrator seeded on first run |
+| `Seed:ResetAdminPassword` | One-time recovery flag: promotes the configured email to Admin and resets its password; disable immediately after a successful start |
 
 Never expose `Stripe:SecretKey` or `Jwt:SigningKey` through a `NEXT_PUBLIC_` variable.
 
