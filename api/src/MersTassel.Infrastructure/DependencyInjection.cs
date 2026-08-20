@@ -19,10 +19,14 @@ public static class DependencyInjection
         IConfiguration configuration,
         string webRootPath)
     {
-        var connectionString = configuration.GetConnectionString("Default")
-            ?? "Data Source=merstassel.db";
-
-        services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
+        // Resolved when the context is first built rather than here. Reading it now would
+        // capture configuration as it stands while Program is still running, which silently
+        // ignores any source added afterwards — WebApplicationFactory adds its overrides at
+        // exactly that point, so the integration tests were pointed at their throwaway SQLite
+        // file and ran against the checked-out database instead, carrying state between runs.
+        services.AddDbContext<AppDbContext>((provider, options) => options.UseSqlite(
+            provider.GetRequiredService<IConfiguration>().GetConnectionString("Default")
+                ?? "Data Source=merstassel.db"));
 
         services.AddIdentityCore<AppUser>(options =>
             {
