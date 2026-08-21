@@ -630,8 +630,15 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         body.Data!.GetProperty("siteName").GetString().Should().Be("MERS Tassel");
         body.Data.GetProperty("contactEmail").GetString().Should().NotBeNullOrWhiteSpace();
         body.Data.GetProperty("whatsappPhone").GetString().Should().NotBeNullOrWhiteSpace();
-        body.Data.GetProperty("tiktokUrl").GetString().Should().StartWith("https://");
+        body.Data.GetProperty("instagramUrl").GetString().Should().StartWith("https://");
         body.Data.GetProperty("heroImagePath").GetString().Should().StartWith("/uploads/");
+
+        // Networks the atelier does not use are left unset, and a null member is omitted from
+        // the payload rather than sent as null, so every social link is optional to the
+        // storefront. Assert the shape when one is present instead of pinning a value the
+        // owner edits from the settings screen.
+        if (body.Data.TryGetProperty("tiktokUrl", out var tiktok) && tiktok.ValueKind is not JsonValueKind.Null)
+            tiktok.GetString().Should().StartWith("https://");
     }
 
     [Fact]
