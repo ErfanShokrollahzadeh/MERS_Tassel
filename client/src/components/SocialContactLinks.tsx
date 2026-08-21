@@ -3,6 +3,7 @@
 import { Camera, Mail, MessageCircle, Music2 } from 'lucide-react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useSiteSettings } from '@/lib/useSiteSettings';
+import { gmailComposeUrl } from '@/lib/contactLinks';
 
 export function SocialContactLinks() {
   const { t } = useI18n();
@@ -17,7 +18,7 @@ export function SocialContactLinks() {
   const links = [
     ...(settings?.instagramUrl ? [{ label: t('social.instagram'), value: accountName(settings.instagramUrl, 'Instagram'), href: settings.instagramUrl, icon: Camera, external: true }] : []),
     ...(settings?.tiktokUrl ? [{ label: t('social.tiktok'), value: accountName(settings.tiktokUrl, 'TikTok'), href: settings.tiktokUrl, icon: Music2, external: true }] : []),
-    ...(settings?.contactEmail ? [{ label: t('social.email'), value: settings.contactEmail, href: `mailto:${settings.contactEmail}`, icon: Mail, external: false }] : []),
+    ...(settings?.contactEmail ? [{ label: t('social.email'), value: settings.contactEmail, href: gmailComposeUrl(settings.contactEmail), icon: Mail, external: true }] : []),
     ...(whatsappNumber ? [{ label: t('social.whatsapp'), value: whatsappPhone, href: `https://wa.me/${whatsappNumber}`, icon: MessageCircle, external: true }] : []),
   ];
 

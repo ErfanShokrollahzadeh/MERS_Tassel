@@ -5,6 +5,7 @@ import { Building2, Check, Clock3, Mail, MapPin, Phone, Send } from 'lucide-reac
 import { useI18n } from '@/i18n/I18nProvider';
 import { SocialContactLinks } from '@/components/SocialContactLinks';
 import { useSiteSettings } from '@/lib/useSiteSettings';
+import { gmailComposeUrl } from '@/lib/contactLinks';
 
 export default function ContactPage() {
   const [sent, setSent] = useState(false);
@@ -12,6 +13,7 @@ export default function ContactPage() {
   const { data: settings } = useSiteSettings();
 
   const email = settings?.contactEmail;
+  const emailHref = gmailComposeUrl(email || 'merstassel@gmail.com');
   const address = settings?.contactAddress;
   const localizedAddress = locale === 'tr' ? address?.replace('Istanbul', 'İstanbul') : address;
   const businessCopy = locale === 'tr' ? {
@@ -28,7 +30,7 @@ export default function ContactPage() {
 
       <section className="contact-layout container-wide">
         <aside>
-          <div><Mail /><span><strong>{t('contact.write')}</strong>{email ? <a href={`mailto:${email}`}>{email}</a> : <span className="skeleton-block skeleton-block--inline" />}</span></div>
+          <div><Mail /><span><strong>{t('contact.write')}</strong>{email ? <a href={emailHref} target="_blank" rel="noreferrer noopener">{email}</a> : <span className="skeleton-block skeleton-block--inline" />}</span></div>
           <div><MapPin /><span><strong>{t('contact.visit')}</strong><p>{localizedAddress || <span className="skeleton-block skeleton-block--inline" />}<br />{t('contact.appointment')}</p></span></div>
           <section className="contact-socials"><strong>{t('contact.connect')}</strong><p>{t('contact.connectCopy')}</p><SocialContactLinks /></section>
           <blockquote>{t('contact.quote')}</blockquote>
@@ -60,7 +62,7 @@ export default function ContactPage() {
         <div className="contact-business__details">
           <article><Building2 aria-hidden="true" /><div><span>{businessCopy.tradeName}</span><strong>{settings?.siteName || 'MERSTassel'}</strong><small>{businessCopy.legalStatus}: {businessCopy.status}</small></div></article>
           <article><MapPin aria-hidden="true" /><div><span>{businessCopy.address}</span><strong>{localizedAddress || 'Eskişehir, Türkiye'}</strong></div></article>
-          <article><Phone aria-hidden="true" /><div><span>{businessCopy.phone}</span><strong><a href={`tel:${settings?.contactPhone || '+900000000000'}`}>{settings?.contactPhone || '+90 000 000 0000'}</a></strong><small><a href={`mailto:${email || 'merstassel@gmail.com'}`}>{email || 'merstassel@gmail.com'}</a></small></div></article>
+          <article><Phone aria-hidden="true" /><div><span>{businessCopy.phone}</span><strong><a href={`tel:${settings?.contactPhone || '+900000000000'}`}>{settings?.contactPhone || '+90 000 000 0000'}</a></strong><small><a href={emailHref} target="_blank" rel="noreferrer noopener">{email || 'merstassel@gmail.com'}</a></small></div></article>
           <article><Clock3 aria-hidden="true" /><div><span>{businessCopy.hours}</span><strong>{businessCopy.always}</strong><small>{businessCopy.response}</small></div></article>
         </div>
       </section>

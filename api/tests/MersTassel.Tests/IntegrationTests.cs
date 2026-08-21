@@ -229,6 +229,45 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
     // ── Auth ───────────────────────────────────────────────────────────────
 
     [Fact]
+    public async Task Newsletter_subscription_is_validated_persisted_and_idempotent()
+    {
+        var client = factory.CreateClient();
+        var email = $"notes-{Guid.NewGuid():N}@example.com";
+
+        var created = await client.PostAsJsonAsync("/api/v1/newsletter/subscribe",
+            new { email, locale = "tr", source = "home" });
+        created.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var first = await created.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
+        first!.Data!.GetProperty("email").GetString().Should().Be(email);
+        first.Data.GetProperty("alreadySubscribed").GetBoolean().Should().BeFalse();
+
+        var duplicate = await client.PostAsJsonAsync("/api/v1/newsletter/subscribe",
+            new { email = email.ToUpperInvariant(), locale = "en", source = "footer" });
+        duplicate.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var second = await duplicate.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
+        second!.Data!.GetProperty("alreadySubscribed").GetBoolean().Should().BeTrue();
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        (await db.NewsletterSubscribers.CountAsync()).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Newsletter_rejects_invalid_email_and_untrusted_source()
+    {
+        var client = factory.CreateClient();
+        var response = await client.PostAsJsonAsync("/api/v1/newsletter/subscribe",
+            new { email = "not-an-email", locale = "en", source = "unknown" });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
+        body!.Code.Should().Be("validation_failed");
+        body.Errors.Should().ContainKeys("email", "source");
+    }
+
+    [Fact]
     public async Task Register_login_refresh_and_profile_round_trip()
     {
         var client = factory.CreateClient();

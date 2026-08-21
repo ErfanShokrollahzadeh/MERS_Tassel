@@ -28,6 +28,16 @@ public class LoginRequestValidator : AbstractValidator<LoginRequest>
     }
 }
 
+public class NewsletterSubscribeRequestValidator : AbstractValidator<NewsletterSubscribeRequest>
+{
+    public NewsletterSubscribeRequestValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(254);
+        RuleFor(x => x.Locale).Must(value => value is "en" or "tr").WithMessage("Locale must be 'en' or 'tr'.");
+        RuleFor(x => x.Source).Must(value => value is "home" or "footer").WithMessage("Source must be 'home' or 'footer'.");
+    }
+}
+
 public class UpdateProfileRequestValidator : AbstractValidator<UpdateProfileRequest>
 {
     public UpdateProfileRequestValidator()

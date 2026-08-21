@@ -11,6 +11,7 @@ import { MagneticLink } from '@/components/MagneticLink';
 import { EmptyState, ErrorState, ProductGridSkeleton } from '@/components/DataStates';
 import { useI18n } from '@/i18n/I18nProvider';
 import { categoryName } from '@/i18n/catalog';
+import { NewsletterForm } from '@/components/NewsletterForm';
 
 const reveal = { initial: { opacity: 0, y: 24 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: '-80px' }, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as const } };
 
@@ -109,7 +110,7 @@ export default function HomePage() {
 
       <section className="section quote-section"><motion.div className="container-narrow" {...reveal}><div className="quote-mark">“</div><blockquote>{t('home.review')}</blockquote><div className="quote-author"><span>AK</span><div><strong>Ayşe K.</strong><small>{t('home.verified')}</small></div></div></motion.div></section>
 
-      <section className="newsletter-band"><div className="ambient ambient--three" /><div className="container-wide newsletter-grid"><div><span className="eyebrow">{t('home.letters')}</span><h2>{t('home.inbox')}</h2><p>{t('home.inboxCopy')}</p></div><form onSubmit={(event) => event.preventDefault()}><label className="sr-only" htmlFor="newsletter-email">{t('footer.email')}</label><input id="newsletter-email" type="email" placeholder="you@example.com" required /><button className="button button--light">{t('home.join')} <ArrowRight size={17} /></button><small>{t('home.privacy')}</small></form></div></section>
+      <section className="newsletter-band"><div className="ambient ambient--three" /><div className="container-wide newsletter-grid"><div><span className="eyebrow">{t('home.letters')}</span><h2>{t('home.inbox')}</h2><p>{t('home.inboxCopy')}</p></div><NewsletterForm source="home" /></div></section>
     </>
   );
 }

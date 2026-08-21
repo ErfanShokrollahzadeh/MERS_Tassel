@@ -72,6 +72,11 @@ public interface ISiteSettingsService
     Task<SiteSettingsDto> UpdateAsync(SiteSettingsDto request, UploadedFile? logo, UploadedFile? hero, CancellationToken ct = default);
 }
 
+public interface INewsletterService
+{
+    Task<NewsletterSubscriptionDto> SubscribeAsync(NewsletterSubscribeRequest request, CancellationToken ct = default);
+}
+
 public interface IDashboardService
 {
     Task<DashboardDto> GetAsync(CancellationToken ct = default);

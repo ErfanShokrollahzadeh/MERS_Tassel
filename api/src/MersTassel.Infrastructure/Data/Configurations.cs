@@ -20,6 +20,24 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
     }
 }
 
+public class NewsletterSubscriberConfiguration : IEntityTypeConfiguration<NewsletterSubscriber>
+{
+    public void Configure(EntityTypeBuilder<NewsletterSubscriber> b)
+    {
+        b.ToTable("NewsletterSubscribers");
+        b.Property(x => x.Email).HasMaxLength(254).IsRequired();
+        b.Property(x => x.NormalizedEmail).HasMaxLength(254).IsRequired();
+        b.Property(x => x.Locale).HasMaxLength(5).IsRequired();
+        b.Property(x => x.Source).HasMaxLength(20).IsRequired();
+
+        b.HasIndex(x => x.NormalizedEmail)
+            .IsUnique()
+            .HasFilter("\"isDelete\" = 0");
+        b.HasIndex(x => x.IsDelete);
+        b.HasIndex(x => x.CreatedAt);
+    }
+}
+
 public class ProductConfiguration : IEntityTypeConfiguration<Product>
 {
     public void Configure(EntityTypeBuilder<Product> b)
