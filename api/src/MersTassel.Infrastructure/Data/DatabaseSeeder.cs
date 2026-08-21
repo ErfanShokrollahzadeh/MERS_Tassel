@@ -189,7 +189,29 @@ public class DatabaseSeeder(
 
     private async Task SeedSettingsAsync(string webRootPath, string seedAssetsPath, CancellationToken ct)
     {
-        if (await db.SiteSettings.AnyAsync(ct)) return;
+        var current = await db.SiteSettings.OrderBy(settings => settings.Id).FirstOrDefaultAsync(ct);
+        if (current is not null)
+        {
+            // Upgrade only the launch placeholders. Values entered later through the admin
+            // settings screen remain authoritative on subsequent starts.
+            if (current.ContactEmail is "atelier@merstassel.com" or "hello@merstassel.com")
+                current.ContactEmail = "merstassel@gmail.com";
+            if (current.ContactPhone == "+90 212 000 00 00")
+                current.ContactPhone = "+90 552 848 2640";
+            if (current.WhatsappPhone == "+90 212 000 00 00")
+                current.WhatsappPhone = "+90 552 848 2640";
+            if (current.ContactAddress == "Karaköy, Istanbul, Türkiye")
+                current.ContactAddress = "Yenibağlar Mahallesi, Beraberlik Sokak, Tepebaşı, Eskişehir, Türkiye";
+            if (current.InstagramUrl == "https://instagram.com")
+                current.InstagramUrl = "https://www.instagram.com/merstassel?igsi=MWZtaWVtcDkyazc2aA%3D%3D&utm_source=qr";
+            if (current.TiktokUrl == "https://www.tiktok.com")
+                current.TiktokUrl = null;
+            if (current.PinterestUrl == "https://pinterest.com")
+                current.PinterestUrl = null;
+
+            await db.SaveChangesAsync(ct);
+            return;
+        }
 
         db.SiteSettings.Add(new SiteSettings
         {
@@ -201,13 +223,13 @@ public class DatabaseSeeder(
             HeroSubheadline = "Small-batch tassels, pearls and hand-knotted silk, finished one piece at a time in our atelier.",
             HeroSubheadlineTr = "Küçük partiler hâlinde püskül, inci ve elde düğümlenmiş ipek; atölyemizde tek tek tamamlanır.",
             HeroImagePath = CopySeedImage("pearl", "branding", webRootPath, seedAssetsPath),
-            ContactEmail = "atelier@merstassel.com",
-            ContactPhone = "+90 212 000 00 00",
-            ContactAddress = "Karaköy, Istanbul, Türkiye",
-            InstagramUrl = "https://instagram.com",
-            TiktokUrl = "https://www.tiktok.com",
-            WhatsappPhone = "+90 212 000 00 00",
-            PinterestUrl = "https://pinterest.com",
+            ContactEmail = "merstassel@gmail.com",
+            ContactPhone = "+90 552 848 2640",
+            ContactAddress = "Yenibağlar Mahallesi, Beraberlik Sokak, Tepebaşı, Eskişehir, Türkiye",
+            InstagramUrl = "https://www.instagram.com/merstassel?igsi=MWZtaWVtcDkyazc2aA%3D%3D&utm_source=qr",
+            TiktokUrl = null,
+            WhatsappPhone = "+90 552 848 2640",
+            PinterestUrl = null,
             AboutHeadline = "Slow work, kept close",
             AboutHeadlineTr = "Yavaş işçilik, hep yakında",
             AboutBody = "Every MERS Tassel piece begins on the same worktable in Karaköy. We choose materials that age well, knot them by hand, and finish each one only when it feels right to wear.",

@@ -15,8 +15,8 @@ export function SocialContactLinks() {
   };
 
   const links = [
-    { label: t('social.instagram'), value: accountName(settings?.instagramUrl, 'Instagram'), href: settings?.instagramUrl || 'https://www.instagram.com', icon: Camera, external: true },
-    { label: t('social.tiktok'), value: accountName(settings?.tiktokUrl, 'TikTok'), href: settings?.tiktokUrl || 'https://www.tiktok.com', icon: Music2, external: true },
+    ...(settings?.instagramUrl ? [{ label: t('social.instagram'), value: accountName(settings.instagramUrl, 'Instagram'), href: settings.instagramUrl, icon: Camera, external: true }] : []),
+    ...(settings?.tiktokUrl ? [{ label: t('social.tiktok'), value: accountName(settings.tiktokUrl, 'TikTok'), href: settings.tiktokUrl, icon: Music2, external: true }] : []),
     ...(settings?.contactEmail ? [{ label: t('social.email'), value: settings.contactEmail, href: `mailto:${settings.contactEmail}`, icon: Mail, external: false }] : []),
     ...(whatsappNumber ? [{ label: t('social.whatsapp'), value: whatsappPhone, href: `https://wa.me/${whatsappNumber}`, icon: MessageCircle, external: true }] : []),
   ];

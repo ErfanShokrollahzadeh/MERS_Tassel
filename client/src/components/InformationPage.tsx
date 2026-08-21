@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, Droplets, Eye, Gem, HandHeart, Handshake, LockKeyhole, PackageCheck, RotateCcw, Scale, ShieldCheck, Sparkles, Sprout, TrendingUp, Truck } from 'lucide-react';
+import { ArrowRight, CircleDollarSign, ClipboardCheck, Droplets, Eye, Gem, HandHeart, Handshake, LockKeyhole, PackageCheck, RotateCcw, Scale, ShieldCheck, Sparkles, Sprout, TrendingUp, Truck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useI18n } from '@/i18n/I18nProvider';
 import { informationPage, type InformationPageId } from '@/content/informationPages';
@@ -11,6 +11,7 @@ const visuals = {
   privacy: { hero: ShieldCheck, cards: [Eye, LockKeyhole, ShieldCheck] },
   invest: { hero: Sprout, cards: [HandHeart, TrendingUp, Handshake] },
   shipping: { hero: PackageCheck, cards: [Sparkles, Truck, RotateCcw] },
+  returns: { hero: RotateCcw, cards: [ClipboardCheck, Truck, CircleDollarSign] },
   care: { hero: Gem, cards: [Droplets, Sparkles, HandHeart] },
 } as const;
 

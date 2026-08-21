@@ -25,7 +25,7 @@ export function StoreFooter() {
           <SocialContactLinks />
         </div>
         <div><span className="footer-label">{t('footer.explore')}</span><Link href="/products">{t('footer.shopAll')}</Link><Link href="/products?sort=new">{t('footer.new')}</Link><Link href="/about">{t('footer.atelier')}</Link></div>
-        <div><span className="footer-label">{t('footer.care')}</span><Link href="/contact">{t('footer.contact')}</Link><Link href="/shipping">{t('footer.shipping')}</Link><Link href="/care">{t('footer.jewelryCare')}</Link></div>
+        <div><span className="footer-label">{t('footer.care')}</span><Link href="/contact">{t('footer.contact')}</Link><Link href="/shipping">{t('footer.shipping')}</Link><Link href="/returns">{t('footer.returns')}</Link><Link href="/care">{t('footer.jewelryCare')}</Link></div>
         <div><span className="footer-label">{t('footer.privacy')}</span><Link href="/privacy">{t('footer.security')}</Link><Link href="/invest">{t('footer.invest')}</Link></div>
         <div className="footer-newsletter"><span className="footer-label">{t('footer.notes')}</span><p>{t('footer.notesCopy')}</p><form onSubmit={(event) => event.preventDefault()}><label className="sr-only" htmlFor="footer-email">{t('footer.email')}</label><input id="footer-email" type="email" placeholder={t('footer.email')} required /><button aria-label={t('footer.subscribe')}><ArrowUpRight size={18} /></button></form></div>
       </div>
