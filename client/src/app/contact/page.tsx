@@ -58,9 +58,9 @@ export default function ContactPage() {
           <p>{businessCopy.intro}</p>
         </div>
         <div className="contact-business__details">
-          <article><Building2 aria-hidden="true" /><div><span>{businessCopy.tradeName}</span><strong>MERSTassel</strong><small>{businessCopy.legalStatus}: {businessCopy.status}</small></div></article>
+          <article><Building2 aria-hidden="true" /><div><span>{businessCopy.tradeName}</span><strong>{settings?.siteName || 'MERSTassel'}</strong><small>{businessCopy.legalStatus}: {businessCopy.status}</small></div></article>
           <article><MapPin aria-hidden="true" /><div><span>{businessCopy.address}</span><strong>{localizedAddress || 'Eskişehir, Türkiye'}</strong></div></article>
-          <article><Phone aria-hidden="true" /><div><span>{businessCopy.phone}</span><strong><a href={`tel:${settings?.contactPhone || '+900000000000'}`}>{settings?.contactPhone || '+90 000 000 0000'}</a></strong><small><a href="mailto:merstassel@gmail.com">merstassel@gmail.com</a></small></div></article>
+          <article><Phone aria-hidden="true" /><div><span>{businessCopy.phone}</span><strong><a href={`tel:${settings?.contactPhone || '+900000000000'}`}>{settings?.contactPhone || '+90 000 000 0000'}</a></strong><small><a href={`mailto:${email || 'merstassel@gmail.com'}`}>{email || 'merstassel@gmail.com'}</a></small></div></article>
           <article><Clock3 aria-hidden="true" /><div><span>{businessCopy.hours}</span><strong>{businessCopy.always}</strong><small>{businessCopy.response}</small></div></article>
         </div>
       </section>
