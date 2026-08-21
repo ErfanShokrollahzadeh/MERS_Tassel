@@ -7,10 +7,14 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
 
 CLIENT_DIR = Path(__file__).resolve().parent.parent
 REPO_ROOT = CLIENT_DIR.parent
 API_DIR = REPO_ROOT / 'api' / 'src' / 'MersTassel.Api'
+API_HEALTH_URL = 'http://localhost:5080/health'
+API_STARTUP_TIMEOUT_SECONDS = 60
 
 sys.path.insert(0, str(REPO_ROOT / 'scripts'))
 import dotnet_sdk  # noqa: E402
@@ -25,6 +29,39 @@ def stop_children(*_args):
                 os.killpg(os.getpgid(child.pid), signal.SIGTERM)
             except ProcessLookupError:
                 pass
+
+
+def wait_for_api(api: subprocess.Popen, timeout: int = API_STARTUP_TIMEOUT_SECONDS) -> bool:
+    """Wait until migrations, seeding, and the API listener are actually ready.
+
+    Starting Next.js before this point lets the browser render first and cache failed catalog
+    queries while the .NET process is still compiling or applying migrations. The resulting UI
+    looks like an image/database bug even though a refresh works once the API has caught up.
+    """
+    deadline = time.monotonic() + timeout
+    print(f'Waiting for the API at {API_HEALTH_URL} ...', flush=True)
+
+    while time.monotonic() < deadline:
+        if api.poll() is not None:
+            print(f'The API exited during startup (code {api.returncode}).', file=sys.stderr)
+            return False
+
+        try:
+            with urlopen(API_HEALTH_URL, timeout=0.75) as response:
+                if response.status == 200:
+                    print('API ready. Starting the storefront.', flush=True)
+                    return True
+        except (HTTPError, URLError, TimeoutError, OSError):
+            pass
+
+        time.sleep(0.25)
+
+    print(
+        f'The API did not become healthy within {timeout} seconds. '
+        'Review the .NET output above for a migration or startup error.',
+        file=sys.stderr,
+    )
+    return False
 
 
 def main():
@@ -44,15 +81,21 @@ def main():
         'ASPNETCORE_URLS': 'http://localhost:5080',
     })
 
-    children.extend([
-        subprocess.Popen(
-            [str(dotnet), 'run', '--no-launch-profile'],
-            cwd=API_DIR, env=api_env, start_new_session=True,
-        ),
-        subprocess.Popen(['npm', 'run', 'dev:next'], cwd=CLIENT_DIR, start_new_session=True),
-    ])
+    api = subprocess.Popen(
+        [str(dotnet), 'run', '--no-launch-profile'],
+        cwd=API_DIR, env=api_env, start_new_session=True,
+    )
+    children.append(api)
 
     try:
+        if not wait_for_api(api):
+            return api.returncode or 1
+
+        storefront = subprocess.Popen(
+            ['npm', 'run', 'dev:next'], cwd=CLIENT_DIR, start_new_session=True,
+        )
+        children.append(storefront)
+
         while all(child.poll() is None for child in children):
             time.sleep(0.25)
     finally:
