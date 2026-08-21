@@ -1,0 +1,37 @@
+{
+	email {$ACME_EMAIL}
+	admin off
+}
+
+{$API_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy dotnet-api:8080
+
+	header {
+		-Server
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+{$PYTHON_API_DOMAIN} {
+	encode zstd gzip
+
+	handle_path /media/* {
+		root * /srv/django-media
+		file_server
+		header Cache-Control "public, max-age=86400"
+	}
+
+	handle {
+		reverse_proxy python-api:8000
+	}
+
+	header {
+		-Server
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}

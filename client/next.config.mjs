@@ -7,7 +7,15 @@
  */
 function resolveApiOrigin() {
   const fallback = 'http://localhost:5080';
-  const configured = (process.env.NEXT_PUBLIC_API_URL || fallback).trim();
+  const configuredValue = process.env.NEXT_PUBLIC_API_URL;
+
+  if (!configuredValue && process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'NEXT_PUBLIC_API_URL is required for production builds. Set it to the public HTTPS API origin.',
+    );
+  }
+
+  const configured = (configuredValue || fallback).trim();
 
   try {
     return new URL(configured).origin;

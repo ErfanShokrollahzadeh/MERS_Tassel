@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MersTassel.Infrastructure\MersTassel.Infrastructure.csproj" />
+    <ProjectReference Include="..\MersTassel.PostgresMigrations\MersTassel.PostgresMigrations.csproj" />
   </ItemGroup>
 
 </Project>

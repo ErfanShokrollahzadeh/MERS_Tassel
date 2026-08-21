@@ -10,13 +10,46 @@ using MersTassel.Infrastructure;
 using MersTassel.Infrastructure.Auth;
 using MersTassel.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
+// The runtime image uses the application itself as its healthcheck client. This avoids adding
+// curl (and an operating-system package manager layer) to the final production image.
+if (args.Length == 1 && args[0] == "--healthcheck")
+{
+    try
+    {
+        using var healthClient = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+        using var response = await healthClient.GetAsync("http://127.0.0.1:8080/health");
+        if (!response.IsSuccessStatusCode) Environment.ExitCode = 1;
+    }
+    catch
+    {
+        Environment.ExitCode = 1;
+    }
+
+    return;
+}
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Docker secrets are mounted as files. Key-per-file translates a double underscore in a
+// filename (for example Jwt__SigningKey) into the normal configuration path
+// (Jwt:SigningKey), keeping production credentials out of the image and compose metadata.
+builder.Configuration.AddKeyPerFile("/run/secrets", optional: true);
+
+var dataProtectionKeysPath = builder.Configuration["DataProtection:KeysPath"];
+if (!string.IsNullOrWhiteSpace(dataProtectionKeysPath))
+{
+    Directory.CreateDirectory(dataProtectionKeysPath);
+    builder.Services.AddDataProtection()
+        .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath))
+        .SetApplicationName("MersTassel.Api");
+}
 
 var webRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
 Directory.CreateDirectory(Path.Combine(webRootPath, "uploads"));
@@ -38,6 +71,17 @@ builder.Services.AddInfrastructure(builder.Configuration, webRootPath);
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+
+// The API is not published directly in production; only the Caddy container can reach it.
+// Trust one forwarding hop so HTTPS redirects, generated URLs and IP rate limits see the
+// original Vercel/browser request rather than Caddy's internal container address.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardLimit = 1;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // ── Authentication ──────────────────────────────────────────────────────────
 // Token issuance (TokenService) and token validation (JwtBearer) must never disagree about
@@ -133,10 +177,7 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-app.UseForwardedHeaders(new ForwardedHeadersOptions
-{
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
-});
+app.UseForwardedHeaders();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 

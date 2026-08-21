@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 
 namespace MersTassel.Infrastructure;
 
@@ -25,9 +26,54 @@ public static class DependencyInjection
         // ignores any source added afterwards — WebApplicationFactory adds its overrides at
         // exactly that point, so the integration tests were pointed at their throwaway SQLite
         // file and ran against the checked-out database instead, carrying state between runs.
-        services.AddDbContext<AppDbContext>((provider, options) => options.UseSqlite(
-            provider.GetRequiredService<IConfiguration>().GetConnectionString("Default")
-                ?? "Data Source=merstassel.db"));
+        services.AddDbContext<AppDbContext>((provider, options) =>
+        {
+            var currentConfiguration = provider.GetRequiredService<IConfiguration>();
+            var databaseProvider = currentConfiguration["Database:Provider"]?.Trim().ToLowerInvariant()
+                ?? "sqlite";
+
+            if (databaseProvider is "postgres" or "postgresql" or "npgsql")
+            {
+                // Keep the local SQLite connection under "Default" and use a provider-specific
+                // name for PostgreSQL. Otherwise the production provider would try to parse
+                // "Data Source=merstassel.db" as an Npgsql connection string.
+                var connectionString = currentConfiguration.GetConnectionString("PostgreSQL");
+                if (string.IsNullOrWhiteSpace(connectionString))
+                {
+                    var database = currentConfiguration.GetSection("Database");
+                    var password = database["Password"];
+                    if (string.IsNullOrWhiteSpace(password))
+                        throw new InvalidOperationException(
+                            "Database:Password is required when Database:Provider is PostgreSQL.");
+
+                    connectionString = new NpgsqlConnectionStringBuilder
+                    {
+                        Host = database["Host"] ?? "postgres",
+                        Port = database.GetValue("Port", 5432),
+                        Database = database["Name"] ?? "merstassel",
+                        Username = database["Username"] ?? "merstassel",
+                        Password = password,
+                        Pooling = true,
+                        MinPoolSize = 1,
+                        MaxPoolSize = database.GetValue("MaxPoolSize", 50),
+                        Timeout = 15,
+                        CommandTimeout = 30,
+                    }.ConnectionString;
+                }
+
+                options.UseNpgsql(connectionString, postgres => postgres
+                    .MigrationsAssembly("MersTassel.PostgresMigrations")
+                    .EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null));
+                return;
+            }
+
+            if (databaseProvider != "sqlite")
+                throw new InvalidOperationException(
+                    $"Unsupported Database:Provider '{databaseProvider}'. Use 'Sqlite' or 'PostgreSQL'.");
+
+            options.UseSqlite(currentConfiguration.GetConnectionString("Default")
+                ?? "Data Source=merstassel.db");
+        });
 
         services.AddIdentityCore<AppUser>(options =>
             {

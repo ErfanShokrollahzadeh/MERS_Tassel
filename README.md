@@ -5,11 +5,18 @@ workspace for managing the catalog, orders and site content.
 
 ## Stack
 
-- **API** — .NET 10, ASP.NET Core, EF Core with SQLite, ASP.NET Core Identity, Stripe.net
+- **API** — .NET 10, ASP.NET Core, EF Core, ASP.NET Core Identity, Stripe.net
 - **Client** — Next.js 16, React 19, strict TypeScript, TanStack Query, Zustand, Framer Motion, Recharts
+- **Production** — PostgreSQL 18, Caddy TLS ingress, Docker Compose; Next.js on Vercel
 
 The API lives in `api/` and the client in `client/`. The original Django backend is still in
 `server/` for reference; nothing in the client talks to it any more.
+
+## Production deployment
+
+Production Dockerfiles and the complete Compose stack are included. The active .NET API and the
+legacy Django service use separate PostgreSQL databases, only Caddy is internet-facing, and the
+Next.js storefront deploys independently to Vercel. Start with [the deployment runbook](docs/deployment.md).
 
 ## What works
 
@@ -119,7 +126,10 @@ environment variables (`Jwt__SigningKey`).
 
 | Key | Purpose |
 | --- | --- |
-| `ConnectionStrings:Default` | SQLite connection string |
+| `ConnectionStrings:Default` | Explicit SQLite connection string (optional locally) |
+| `ConnectionStrings:PostgreSQL` | Explicit PostgreSQL connection string (optional alternative to the individual Docker values) |
+| `Database:Provider` | `Sqlite` locally or `PostgreSQL` in production |
+| `Database:Host` / `Port` / `Name` / `Username` / `Password` | PostgreSQL connection values; the password is a Docker secret in production |
 | `Jwt:SigningKey` | Token signing key. **Required outside Development** — the API refuses to start without it |
 | `Jwt:AccessTokenMinutes` / `Jwt:RefreshTokenDays` | Token lifetimes (default 15 minutes / 7 days) |
 | `Cors:AllowedOrigins` | Origins allowed to call the API |

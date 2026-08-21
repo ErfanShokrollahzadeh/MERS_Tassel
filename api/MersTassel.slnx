@@ -4,6 +4,7 @@
     <Project Path="src/MersTassel.Application/MersTassel.Application.csproj" />
     <Project Path="src/MersTassel.Domain/MersTassel.Domain.csproj" />
     <Project Path="src/MersTassel.Infrastructure/MersTassel.Infrastructure.csproj" />
+    <Project Path="src/MersTassel.PostgresMigrations/MersTassel.PostgresMigrations.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/MersTassel.Tests/MersTassel.Tests.csproj" />
