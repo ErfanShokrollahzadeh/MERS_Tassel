@@ -2,6 +2,7 @@ using MersTassel.Application.Interfaces;
 using MersTassel.Domain.Entities;
 using MersTassel.Infrastructure.Auth;
 using MersTassel.Infrastructure.Data;
+using MersTassel.Infrastructure.Email;
 using MersTassel.Infrastructure.Payments;
 using MersTassel.Infrastructure.Services;
 using MersTassel.Infrastructure.Storage;
@@ -44,6 +45,7 @@ public static class DependencyInjection
 
         services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
         services.Configure<StripeOptions>(configuration.GetSection("Stripe"));
+        services.Configure<EmailOptions>(configuration.GetSection("Email"));
         services.Configure<FileStorageOptions>(options =>
         {
             options.WebRootPath = webRootPath;
@@ -58,6 +60,8 @@ public static class DependencyInjection
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<ISiteSettingsService, SiteSettingsService>();
         services.AddScoped<INewsletterService, NewsletterService>();
+        services.AddScoped<IContactEmailSender, SmtpContactEmailSender>();
+        services.AddScoped<IContactMessageService, ContactMessageService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IUserAdminService, UserAdminService>();
         services.AddScoped<DatabaseSeeder>();

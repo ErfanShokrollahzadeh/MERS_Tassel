@@ -60,6 +60,11 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
                 return (StatusCodes.Status503ServiceUnavailable,
                     ApiResponse<object?>.Fail(notConfigured.Message, code: notConfigured.Code));
 
+            case DeliveryException delivery:
+                logger.LogError(delivery, "External delivery failed at {Path}: {Code}", context.Request.Path, delivery.Code);
+                return (StatusCodes.Status502BadGateway,
+                    ApiResponse<object?>.Fail(delivery.Message, code: delivery.Code));
+
             // 499 "client closed request": the caller hung up, so nobody reads this body.
             case OperationCanceledException when context.RequestAborted.IsCancellationRequested:
                 return (499, ApiResponse<object?>.Fail("The request was cancelled.", code: "cancelled"));

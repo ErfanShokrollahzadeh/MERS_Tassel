@@ -1,6 +1,8 @@
 using System.Text;
 using FluentAssertions;
 using MersTassel.Application.Common;
+using MersTassel.Application.DTOs;
+using MersTassel.Infrastructure.Email;
 using MersTassel.Infrastructure.Data;
 using MersTassel.Infrastructure.Services;
 using MersTassel.Infrastructure.Storage;
@@ -8,6 +10,28 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
 namespace MersTassel.Tests;
+
+public class ContactEmailSenderTests
+{
+    [Fact]
+    public async Task Missing_smtp_credentials_fail_closed_before_any_delivery_attempt()
+    {
+        var sender = new SmtpContactEmailSender(Options.Create(new EmailOptions()));
+        var request = new ContactMessageRequest
+        {
+            Name = "Test Customer",
+            Email = "customer@example.com",
+            Topic = "product",
+            Message = "I have a question about this piece.",
+            Locale = "en",
+        };
+
+        var act = () => sender.SendAsync(request, 42);
+
+        await act.Should().ThrowAsync<NotConfiguredException>()
+            .WithMessage("*not configured*");
+    }
+}
 
 public class FileStorageTests : IDisposable
 {

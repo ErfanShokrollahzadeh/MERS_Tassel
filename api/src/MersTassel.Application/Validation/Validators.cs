@@ -38,6 +38,22 @@ public class NewsletterSubscribeRequestValidator : AbstractValidator<NewsletterS
     }
 }
 
+public class ContactMessageRequestValidator : AbstractValidator<ContactMessageRequest>
+{
+    private static readonly string[] Topics = ["product", "order", "repairs", "press"];
+
+    public ContactMessageRequestValidator()
+    {
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(120);
+        RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(254);
+        RuleFor(x => x.Topic).Must(value => Topics.Contains(value))
+            .WithMessage("Choose a valid contact topic.");
+        RuleFor(x => x.Message).NotEmpty().MinimumLength(10).MaximumLength(4000);
+        RuleFor(x => x.Locale).Must(value => value is "en" or "tr")
+            .WithMessage("Locale must be 'en' or 'tr'.");
+    }
+}
+
 public class UpdateProfileRequestValidator : AbstractValidator<UpdateProfileRequest>
 {
     public UpdateProfileRequestValidator()

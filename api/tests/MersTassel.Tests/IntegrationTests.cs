@@ -3,7 +3,11 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Collections.Concurrent;
 using FluentAssertions;
+using MersTassel.Application.Common;
+using MersTassel.Application.DTOs;
+using MersTassel.Application.Interfaces;
 using MersTassel.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace MersTassel.Tests;
 
@@ -40,6 +45,16 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
                 ["Stripe:SecretKey"] = "",
                 ["Stripe:WebhookSecret"] = "",
             });
+        });
+
+        // Contact integration tests must exercise the complete endpoint/database flow without
+        // sending real email. Production keeps the SMTP implementation registered by the app.
+        builder.ConfigureServices(services =>
+        {
+            services.RemoveAll<IContactEmailSender>();
+            services.AddSingleton<RecordingContactEmailSender>();
+            services.AddSingleton<IContactEmailSender>(provider =>
+                provider.GetRequiredService<RecordingContactEmailSender>());
         });
     }
 
@@ -227,6 +242,81 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     // ── Auth ───────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Contact_message_is_validated_stored_and_delivered_to_the_email_boundary()
+    {
+        var client = factory.CreateClient();
+        var customerEmail = $"contact-{Guid.NewGuid():N}@example.com";
+
+        var response = await client.PostAsJsonAsync("/api/v1/contact/messages", new
+        {
+            name = "Ada Customer",
+            email = customerEmail,
+            topic = "order",
+            message = "Could you tell me when my order will be dispatched?",
+            locale = "en",
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var body = await response.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
+        var reference = body!.Data!.GetProperty("reference").GetInt32();
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var stored = await db.ContactMessages.SingleAsync(message => message.Id == reference);
+        stored.Email.Should().Be(customerEmail);
+        stored.DeliveryStatus.Should().Be("Sent");
+        stored.SentAt.Should().NotBeNull();
+
+        var mailer = factory.Services.GetRequiredService<RecordingContactEmailSender>();
+        mailer.Deliveries.Should().Contain(delivery =>
+            delivery.Reference == reference && delivery.Request.Email == customerEmail);
+    }
+
+    [Fact]
+    public async Task Contact_message_rejects_invalid_fields_without_sending()
+    {
+        var client = factory.CreateClient();
+        var response = await client.PostAsJsonAsync("/api/v1/contact/messages", new
+        {
+            name = "",
+            email = "not-an-email",
+            topic = "unknown",
+            message = "short",
+            locale = "en",
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
+        body!.Code.Should().Be("validation_failed");
+        body.Errors.Should().ContainKeys("name", "email", "topic", "message");
+    }
+
+    [Fact]
+    public async Task Contact_delivery_failure_is_recorded_and_never_returns_false_success()
+    {
+        var client = factory.CreateClient();
+        var customerEmail = $"simulate-failure-{Guid.NewGuid():N}@example.com";
+        var response = await client.PostAsJsonAsync("/api/v1/contact/messages", new
+        {
+            name = "Delivery Test",
+            email = customerEmail,
+            topic = "product",
+            message = "This valid message simulates an unavailable email provider.",
+            locale = "en",
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadGateway);
+        var body = await response.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
+        body!.Code.Should().Be("email_delivery_failed");
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var stored = await db.ContactMessages.SingleAsync(message => message.Email == customerEmail);
+        stored.DeliveryStatus.Should().Be("Failed");
+        stored.SentAt.Should().BeNull();
+    }
 
     [Fact]
     public async Task Newsletter_subscription_is_validated_persisted_and_idempotent()
@@ -728,5 +818,23 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var client = factory.CreateClient();
         var body = await client.GetFromJsonAsync<Envelope<JsonElement>>($"/api/v1/products/{slug}", Json);
         return body!.Data!.GetProperty("stock").GetInt32();
+    }
+}
+
+public sealed class RecordingContactEmailSender : IContactEmailSender
+{
+    public ConcurrentBag<(ContactMessageRequest Request, int Reference)> Deliveries { get; } = [];
+
+    public Task SendAsync(ContactMessageRequest request, int reference, CancellationToken ct = default)
+    {
+        if (request.Email.StartsWith("simulate-failure-", StringComparison.Ordinal))
+        {
+            throw new DeliveryException(
+                "email_delivery_failed",
+                "The test email provider is unavailable.");
+        }
+
+        Deliveries.Add((request, reference));
+        return Task.CompletedTask;
     }
 }

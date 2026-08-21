@@ -35,3 +35,10 @@ public class NotConfiguredException(string code, string message) : Exception(mes
 {
     public string Code { get; } = code;
 }
+
+/// <summary>An external provider accepted configuration but could not complete delivery.</summary>
+public class DeliveryException(string code, string message, Exception? innerException = null)
+    : Exception(message, innerException)
+{
+    public string Code { get; } = code;
+}

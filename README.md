@@ -125,10 +125,31 @@ environment variables (`Jwt__SigningKey`).
 | `Cors:AllowedOrigins` | Origins allowed to call the API |
 | `Storage:MaxBytes` | Upload size limit (default 10 MB) |
 | `Stripe:SecretKey` / `Stripe:WebhookSecret` | Enables payments; without both, checkout returns a `payments_not_configured` 503 |
+| `Email:Username` / `Email:AppPassword` | Gmail SMTP account and app password used by the contact form |
+| `Email:Recipient` | Contact-form inbox (default `merstassel@gmail.com`) |
 | `Seed:AdminEmail` / `Seed:AdminPassword` | Administrator seeded on first run |
 | `Seed:ResetAdminPassword` | One-time recovery flag: promotes the configured email to Admin and resets its password; disable immediately after a successful start |
 
 Never expose `Stripe:SecretKey` or `Jwt:SigningKey` through a `NEXT_PUBLIC_` variable.
+
+### Contact-form email
+
+The contact form stores each attempt in `ContactMessages` and sends it to
+`merstassel@gmail.com` through authenticated Gmail SMTP. Gmail requires an **app password**;
+do not put the normal Gmail password in the project. Enable two-step verification on the sending
+Google account, create an app password, then store it with .NET user-secrets:
+
+```bash
+DOTNET="$(python3 scripts/dotnet_sdk.py)"
+"$DOTNET" user-secrets --project api/src/MersTassel.Api set "Email:Username" "merstassel@gmail.com"
+"$DOTNET" user-secrets --project api/src/MersTassel.Api set "Email:AppPassword" "your-16-character-app-password"
+```
+
+Restart the development stack after setting the secrets. Messages are authenticated as the
+configured Gmail account for reliable delivery, and the customer's address is placed in
+`Reply-To`, so replying from the inbox answers the customer directly. Production deployments
+should provide the same keys through secret environment variables such as `Email__Username`
+and `Email__AppPassword`.
 
 ### Payments
 

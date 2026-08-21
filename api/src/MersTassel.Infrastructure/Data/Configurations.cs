@@ -38,6 +38,24 @@ public class NewsletterSubscriberConfiguration : IEntityTypeConfiguration<Newsle
     }
 }
 
+public class ContactMessageConfiguration : IEntityTypeConfiguration<ContactMessage>
+{
+    public void Configure(EntityTypeBuilder<ContactMessage> b)
+    {
+        b.ToTable("ContactMessages");
+        b.Property(x => x.Name).HasMaxLength(120).IsRequired();
+        b.Property(x => x.Email).HasMaxLength(254).IsRequired();
+        b.Property(x => x.Topic).HasMaxLength(24).IsRequired();
+        b.Property(x => x.Message).HasMaxLength(4000).IsRequired();
+        b.Property(x => x.Locale).HasMaxLength(5).IsRequired();
+        b.Property(x => x.DeliveryStatus).HasMaxLength(16).IsRequired();
+
+        b.HasIndex(x => x.CreatedAt);
+        b.HasIndex(x => x.DeliveryStatus);
+        b.HasIndex(x => x.IsDelete);
+    }
+}
+
 public class ProductConfiguration : IEntityTypeConfiguration<Product>
 {
     public void Configure(EntityTypeBuilder<Product> b)

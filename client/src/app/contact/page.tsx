@@ -1,14 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { Building2, Check, Clock3, Mail, MapPin, Phone, Send } from 'lucide-react';
+import { AlertCircle, Building2, Check, Clock3, LoaderCircle, Mail, MapPin, Phone, Send } from 'lucide-react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { SocialContactLinks } from '@/components/SocialContactLinks';
 import { useSiteSettings } from '@/lib/useSiteSettings';
 import { gmailComposeUrl } from '@/lib/contactLinks';
+import { sendContactMessage, type ContactTopic } from '@/lib/contactMessages';
 
 export default function ContactPage() {
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [sendError, setSendError] = useState('');
+  const [form, setForm] = useState({ name: '', email: '', topic: 'product' as ContactTopic, message: '' });
   const { t, locale } = useI18n();
   const { data: settings } = useSiteSettings();
 
@@ -24,6 +28,28 @@ export default function ContactPage() {
     tradeName: 'Trade name', legalStatus: 'Legal status', status: 'Individual / sole-proprietor seller', address: 'Business and return address', phone: 'Telephone', hours: 'Working hours', always: 'Open for contact 24 hours, 7 days a week', response: 'Messages are answered as soon as reasonably possible.',
   };
 
+  const submitMessage = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (submitting) return;
+
+    setSubmitting(true);
+    setSendError('');
+    try {
+      await sendContactMessage({ ...form, locale });
+      setSent(true);
+    } catch {
+      setSendError(t('contact.sendError'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const startAnotherMessage = () => {
+    setForm({ name: '', email: '', topic: 'product', message: '' });
+    setSendError('');
+    setSent(false);
+  };
+
   return (
     <div className="contact-page">
       <section className="contact-hero"><div className="container-wide"><span className="eyebrow">{t('contact.eyebrow')}</span><h1>{t('contact.title1')}<br /><em>{t('contact.title2')}</em></h1><p>{t('contact.lede')}</p></div></section>
@@ -36,18 +62,19 @@ export default function ContactPage() {
           <blockquote>{t('contact.quote')}</blockquote>
         </aside>
 
-        <form onSubmit={(event) => { event.preventDefault(); setSent(true); }}>
+        <form onSubmit={submitMessage}>
           {sent ? (
-            <div className="form-success"><Check /><h2>{t('contact.sent')}</h2><p>{t('contact.sentCopy')}</p><button type="button" className="text-button" onClick={() => setSent(false)}>{t('contact.another')}</button></div>
+            <div className="form-success"><Check /><h2>{t('contact.sent')}</h2><p>{t('contact.sentCopy')}</p><button type="button" className="text-button" onClick={startAnotherMessage}>{t('contact.another')}</button></div>
           ) : (
             <>
               <div className="form-grid">
-                <label className="field">{t('contact.name')}<input required /></label>
-                <label className="field">{t('contact.email')}<input type="email" required /></label>
-                <label className="field field--wide">{t('contact.help')}<select><option>{t('contact.product')}</option><option>{t('contact.order')}</option><option>{t('contact.repairs')}</option><option>{t('contact.press')}</option></select></label>
-                <label className="field field--wide">{t('contact.message')}<textarea rows={7} required placeholder={t('contact.placeholder')} /></label>
+                <label className="field">{t('contact.name')}<input name="name" autoComplete="name" maxLength={120} value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} disabled={submitting} required /></label>
+                <label className="field">{t('contact.email')}<input name="email" type="email" autoComplete="email" maxLength={254} value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} disabled={submitting} required /></label>
+                <label className="field field--wide">{t('contact.help')}<select name="topic" value={form.topic} onChange={(event) => setForm((current) => ({ ...current, topic: event.target.value as ContactTopic }))} disabled={submitting}><option value="product">{t('contact.product')}</option><option value="order">{t('contact.order')}</option><option value="repairs">{t('contact.repairs')}</option><option value="press">{t('contact.press')}</option></select></label>
+                <label className="field field--wide">{t('contact.message')}<textarea name="message" rows={7} minLength={10} maxLength={4000} value={form.message} onChange={(event) => setForm((current) => ({ ...current, message: event.target.value }))} disabled={submitting} required placeholder={t('contact.placeholder')} /></label>
               </div>
-              <button className="button button--primary" type="submit">{t('contact.send')} <Send size={15} /></button>
+              {sendError && <div className="contact-form-error" role="alert"><AlertCircle aria-hidden="true" /><span>{sendError}</span></div>}
+              <button className="button button--primary" type="submit" disabled={submitting}>{submitting ? t('contact.sending') : t('contact.send')} {submitting ? <LoaderCircle className="contact-form-spinner" size={15} /> : <Send size={15} />}</button>
             </>
           )}
         </form>
