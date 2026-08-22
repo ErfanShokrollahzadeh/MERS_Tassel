@@ -185,9 +185,21 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.Property<long?>("DeletedAt")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("GiftBoxKey")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GiftMessage")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsDelete")
                         .HasColumnType("INTEGER")
                         .HasColumnName("isDelete");
+
+                    b.Property<string>("PackagingNotes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("ProductVariantId")
                         .HasColumnType("INTEGER");
@@ -201,6 +213,8 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CartId");
+
+                    b.HasIndex("GiftBoxKey");
 
                     b.HasIndex("ProductVariantId");
 
@@ -553,6 +567,14 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.Property<long?>("DeletedAt")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("GiftBoxKey")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GiftMessage")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ImagePath")
                         .HasMaxLength(400)
                         .HasColumnType("TEXT");
@@ -563,6 +585,10 @@ namespace MersTassel.Infrastructure.Data.Migrations
 
                     b.Property<int>("OrderId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("PackagingNotes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("ProductName")
                         .IsRequired()
@@ -592,6 +618,8 @@ namespace MersTassel.Infrastructure.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GiftBoxKey");
 
                     b.HasIndex("OrderId");
 

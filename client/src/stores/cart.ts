@@ -3,10 +3,12 @@
 import { create } from 'zustand';
 import {
   addCartItem,
+  addGiftBox,
   fetchCart,
   removeCartItem,
   updateCartItem,
 } from '@/lib/commerce';
+import type { GiftBoxPayload } from '@/lib/commerce';
 import { ApiError } from '@/lib/apiClient';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
@@ -20,6 +22,7 @@ type CartState = {
   isLoading: boolean;
   load: () => Promise<void>;
   add: (productSlug: string, color: string, quantity?: number) => Promise<void>;
+  addGiftBox: (payload: GiftBoxPayload) => Promise<boolean>;
   remove: (itemId: number) => Promise<void>;
   setQuantity: (itemId: number, quantity: number) => Promise<void>;
   clear: () => void;
@@ -73,6 +76,20 @@ export const useCartStore = create<CartState>()((set, get) => ({
     } catch (error) {
       set({ isLoading: false });
       reportError(error, 'cart.addFailed');
+    }
+  },
+
+  addGiftBox: async (payload) => {
+    if (!useAuthStore.getState().access) return false;
+
+    set({ isOpen: true, isLoading: true });
+    try {
+      set(apply(await addGiftBox(payload)));
+      return true;
+    } catch (error) {
+      set({ isLoading: false });
+      reportError(error, 'cart.addFailed');
+      return false;
     }
   },
 

@@ -24,6 +24,14 @@ public class CartItem : SoftDeletableEntity
     public ProductVariant Variant { get; set; } = null!;
 
     public int Quantity { get; set; } = 1;
+
+    /// <summary>
+    /// Items created by the Kavanoz builder share a key so they remain a coherent gift box
+    /// even when the shopper has ordinary products in the same cart.
+    /// </summary>
+    public string? GiftBoxKey { get; set; }
+    public string? GiftMessage { get; set; }
+    public string? PackagingNotes { get; set; }
 }
 
 public class Order : SoftDeletableEntity
@@ -78,6 +86,11 @@ public class OrderItem : SoftDeletableEntity
     public string? ImagePath { get; set; }
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
+
+    /// <summary>Immutable Kavanoz instructions copied from the cart at checkout.</summary>
+    public string? GiftBoxKey { get; set; }
+    public string? GiftMessage { get; set; }
+    public string? PackagingNotes { get; set; }
 }
 
 public class InventoryReservation : SoftDeletableEntity

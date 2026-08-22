@@ -13,6 +13,7 @@ import { useAuthStore } from '@/stores/auth';
 const links = [
   { href: '/', key: 'nav.home' },
   { href: '/products', key: 'nav.shop' },
+  { href: '/kavanoz', key: 'nav.kavanoz' },
   { href: '/about', key: 'nav.story' },
   { href: '/contact', key: 'nav.journal' },
 ];

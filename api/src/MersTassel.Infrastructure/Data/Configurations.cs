@@ -153,7 +153,11 @@ public class CartItemConfiguration : IEntityTypeConfiguration<CartItem>
     public void Configure(EntityTypeBuilder<CartItem> b)
     {
         b.ToTable("CartItems");
+        b.Property(x => x.GiftBoxKey).HasMaxLength(64);
+        b.Property(x => x.GiftMessage).HasMaxLength(500);
+        b.Property(x => x.PackagingNotes).HasMaxLength(500);
         b.HasIndex(x => x.CartId);
+        b.HasIndex(x => x.GiftBoxKey);
 
         b.HasOne(x => x.Cart)
             .WithMany(c => c.Items)
@@ -210,8 +214,12 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         b.Property(x => x.Sku).HasMaxLength(64);
         b.Property(x => x.Color).HasMaxLength(80);
         b.Property(x => x.ImagePath).HasMaxLength(400);
+        b.Property(x => x.GiftBoxKey).HasMaxLength(64);
+        b.Property(x => x.GiftMessage).HasMaxLength(500);
+        b.Property(x => x.PackagingNotes).HasMaxLength(500);
 
         b.HasIndex(x => x.OrderId);
+        b.HasIndex(x => x.GiftBoxKey);
 
         b.HasOne(x => x.Order)
             .WithMany(o => o.Items)

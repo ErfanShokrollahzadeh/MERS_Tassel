@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Security.Cryptography;
 using System.Collections.Concurrent;
 using FluentAssertions;
 using MersTassel.Application.Common;
@@ -27,7 +28,7 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly string _dbPath = Path.Combine(Path.GetTempPath(), $"mt-test-{Guid.NewGuid():N}.db");
     public const string AdminEmail = "admin@merstassel.local";
-    public const string AdminPassword = "TestAdmin123!";
+    public static string AdminPassword { get; } = $"{Guid.NewGuid():N}aA1!";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -40,7 +41,7 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
                 ["ConnectionStrings:Default"] = $"Data Source={_dbPath}",
                 ["Seed:AdminEmail"] = AdminEmail,
                 ["Seed:AdminPassword"] = AdminPassword,
-                ["Jwt:SigningKey"] = "integration-test-signing-key-at-least-32-bytes-long",
+                ["Jwt:SigningKey"] = Convert.ToBase64String(RandomNumberGenerator.GetBytes(48)),
                 // Left blank on purpose: proves the API boots and degrades cleanly without Stripe.
                 ["Stripe:SecretKey"] = "",
                 ["Stripe:WebhookSecret"] = "",
@@ -375,7 +376,7 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var email = $"user-{Guid.NewGuid():N}@example.com";
 
         var registered = await client.PostAsJsonAsync("/api/v1/auth/register",
-            new { email, firstName = "Test", lastName = "Person", password = "Passw0rdy" });
+            new { email, firstName = "Test", lastName = "Person", password = ApiFactory.AdminPassword });
         registered.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var session = (await registered.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
@@ -400,7 +401,7 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var email = $"rotate-{Guid.NewGuid():N}@example.com";
 
         var registered = await client.PostAsJsonAsync("/api/v1/auth/register",
-            new { email, firstName = "Rot", lastName = "Ate", password = "Passw0rdy" });
+            new { email, firstName = "Rot", lastName = "Ate", password = ApiFactory.AdminPassword });
         var session = (await registered.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
         var original = session.GetProperty("refresh").GetString();
 
@@ -455,11 +456,11 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
 
         var email = $"cust-{Guid.NewGuid():N}@example.com";
         await anonymous.PostAsJsonAsync("/api/v1/auth/register",
-            new { email, firstName = "C", lastName = "U", password = "Passw0rdy" });
+            new { email, firstName = "C", lastName = "U", password = ApiFactory.AdminPassword });
 
         var customer = factory.CreateClient();
         customer.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", await LoginAsync(customer, email, "Passw0rdy"));
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(customer, email, ApiFactory.AdminPassword));
 
         (await customer.GetAsync("/api/v1/admin/products")).StatusCode
             .Should().Be(HttpStatusCode.Forbidden);
@@ -613,10 +614,10 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var client = factory.CreateClient();
         var email = $"buyer-{Guid.NewGuid():N}@example.com";
         await client.PostAsJsonAsync("/api/v1/auth/register",
-            new { email, firstName = "Buy", lastName = "Er", password = "Passw0rdy" });
+            new { email, firstName = "Buy", lastName = "Er", password = ApiFactory.AdminPassword });
 
         client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", await LoginAsync(client, email, "Passw0rdy"));
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(client, email, ApiFactory.AdminPassword));
 
         var before = await StockOfAsync("ada-layered-chain");
 
@@ -650,10 +651,10 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var client = factory.CreateClient();
         var email = $"greedy-{Guid.NewGuid():N}@example.com";
         await client.PostAsJsonAsync("/api/v1/auth/register",
-            new { email, firstName = "G", lastName = "R", password = "Passw0rdy" });
+            new { email, firstName = "G", lastName = "R", password = ApiFactory.AdminPassword });
 
         client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", await LoginAsync(client, email, "Passw0rdy"));
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(client, email, ApiFactory.AdminPassword));
 
         // Mira has 4 units spread over two finishes: 2 in Gold.
         var response = await client.PostAsJsonAsync("/api/v1/cart/items",
@@ -673,10 +674,10 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var client = factory.CreateClient();
         var email = $"soldout-{Guid.NewGuid():N}@example.com";
         await client.PostAsJsonAsync("/api/v1/auth/register",
-            new { email, firstName = "S", lastName = "O", password = "Passw0rdy" });
+            new { email, firstName = "S", lastName = "O", password = ApiFactory.AdminPassword });
 
         client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", await LoginAsync(client, email, "Passw0rdy"));
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(client, email, ApiFactory.AdminPassword));
 
         // Haliç is seeded with zero stock.
         var response = await client.PostAsJsonAsync("/api/v1/cart/items",
@@ -686,14 +687,77 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task Kavanoz_is_added_atomically_and_gift_notes_survive_checkout()
+    {
+        var client = factory.CreateClient();
+        var email = $"kavanoz-{Guid.NewGuid():N}@example.com";
+        await client.PostAsJsonAsync("/api/v1/auth/register",
+            new { email, firstName = "Gift", lastName = "Maker", password = ApiFactory.AdminPassword });
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(client, email, ApiFactory.AdminPassword));
+
+        var add = await client.PostAsJsonAsync("/api/v1/cart/gift-boxes", new
+        {
+            items = new[]
+            {
+                new { productSlug = "bosphorus-signet", color = "Bosphorus blue" },
+                new { productSlug = "pofuduk-teddy-charm", color = "Blush" },
+            },
+            giftMessage = "For every little moment.",
+            packagingNotes = "Ivory ribbon, please.",
+        });
+
+        add.StatusCode.Should().Be(HttpStatusCode.OK);
+        var cart = (await add.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        var lines = cart.GetProperty("items").EnumerateArray().ToList();
+        lines.Should().HaveCount(2);
+        lines.Select(line => line.GetProperty("giftBoxKey").GetString()).Distinct().Should().ContainSingle();
+        lines.Should().OnlyContain(line => line.GetProperty("giftMessage").GetString() == "For every little moment.");
+
+        var checkout = await client.PostAsJsonAsync("/api/v1/orders/checkout",
+            new { email, delivery = "standard", locale = "en" });
+        checkout.StatusCode.Should().Be(HttpStatusCode.Created);
+        var order = (await checkout.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        var orderLines = order.GetProperty("items").EnumerateArray().ToList();
+        orderLines.Should().OnlyContain(line => line.GetProperty("packagingNotes").GetString() == "Ivory ribbon, please.");
+    }
+
+    [Fact]
+    public async Task Kavanoz_requires_two_pieces_and_at_least_one_jewelry_item()
+    {
+        var client = factory.CreateClient();
+        var email = $"kavanoz-invalid-{Guid.NewGuid():N}@example.com";
+        await client.PostAsJsonAsync("/api/v1/auth/register",
+            new { email, firstName = "Gift", lastName = "Check", password = ApiFactory.AdminPassword });
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(client, email, ApiFactory.AdminPassword));
+
+        var tooSmall = await client.PostAsJsonAsync("/api/v1/cart/gift-boxes", new
+        {
+            items = new[] { new { productSlug = "pofuduk-teddy-charm", color = "Blush" } },
+        });
+        tooSmall.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var noJewelry = await client.PostAsJsonAsync("/api/v1/cart/gift-boxes", new
+        {
+            items = new[]
+            {
+                new { productSlug = "pofuduk-teddy-charm", color = "Blush" },
+                new { productSlug = "galata-bifold-wallet", color = "Black" },
+            },
+        });
+        noJewelry.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task A_customer_cannot_read_another_customers_order()
     {
         var alice = factory.CreateClient();
         var aliceEmail = $"alice-{Guid.NewGuid():N}@example.com";
         await alice.PostAsJsonAsync("/api/v1/auth/register",
-            new { email = aliceEmail, firstName = "A", lastName = "L", password = "Passw0rdy" });
+            new { email = aliceEmail, firstName = "A", lastName = "L", password = ApiFactory.AdminPassword });
         alice.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", await LoginAsync(alice, aliceEmail, "Passw0rdy"));
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(alice, aliceEmail, ApiFactory.AdminPassword));
 
         await alice.PostAsJsonAsync("/api/v1/cart/items",
             new { productSlug = "atelier-charm-no-7", color = "Sage", quantity = 1 });
@@ -705,9 +769,9 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var bob = factory.CreateClient();
         var bobEmail = $"bob-{Guid.NewGuid():N}@example.com";
         await bob.PostAsJsonAsync("/api/v1/auth/register",
-            new { email = bobEmail, firstName = "B", lastName = "O", password = "Passw0rdy" });
+            new { email = bobEmail, firstName = "B", lastName = "O", password = ApiFactory.AdminPassword });
         bob.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", await LoginAsync(bob, bobEmail, "Passw0rdy"));
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(bob, bobEmail, ApiFactory.AdminPassword));
 
         (await bob.GetAsync($"/api/v1/orders/{number}")).StatusCode
             .Should().Be(HttpStatusCode.NotFound);
@@ -723,9 +787,9 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var client = factory.CreateClient();
         var email = $"empty-{Guid.NewGuid():N}@example.com";
         await client.PostAsJsonAsync("/api/v1/auth/register",
-            new { email, firstName = "E", lastName = "M", password = "Passw0rdy" });
+            new { email, firstName = "E", lastName = "M", password = ApiFactory.AdminPassword });
         client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", await LoginAsync(client, email, "Passw0rdy"));
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(client, email, ApiFactory.AdminPassword));
 
         var response = await client.PostAsJsonAsync("/api/v1/orders/checkout",
             new { email, delivery = "standard", locale = "en" });
@@ -741,9 +805,9 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var client = factory.CreateClient();
         var email = $"pay-{Guid.NewGuid():N}@example.com";
         await client.PostAsJsonAsync("/api/v1/auth/register",
-            new { email, firstName = "P", lastName = "A", password = "Passw0rdy" });
+            new { email, firstName = "P", lastName = "A", password = ApiFactory.AdminPassword });
         client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", await LoginAsync(client, email, "Passw0rdy"));
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(client, email, ApiFactory.AdminPassword));
 
         await client.PostAsJsonAsync("/api/v1/cart/items",
             new { productSlug = "nazar-chain-bracelet", color = "Pearl", quantity = 1 });
