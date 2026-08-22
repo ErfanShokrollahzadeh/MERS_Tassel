@@ -11,6 +11,16 @@ export function addCartItem(productSlug: string, color: string, quantity = 1) {
   return api.post<Cart>('/cart/items', { productSlug, color, quantity }, { auth: true });
 }
 
+export type GiftBoxPayload = {
+  items: Array<{ productSlug: string; color: string }>;
+  giftMessage?: string;
+  packagingNotes?: string;
+};
+
+export function addGiftBox(payload: GiftBoxPayload) {
+  return api.post<Cart>('/cart/gift-boxes', payload, { auth: true });
+}
+
 export function updateCartItem(itemId: number, quantity: number) {
   return api.patch<Cart>(`/cart/items/${itemId}`, { quantity }, { auth: true });
 }

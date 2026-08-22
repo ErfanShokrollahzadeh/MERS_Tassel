@@ -90,6 +90,9 @@ export type CartItem = {
   unitPrice: number;
   lineTotal: number;
   availableStock: number;
+  giftBoxKey?: string | null;
+  giftMessage?: string | null;
+  packagingNotes?: string | null;
 };
 
 export type Cart = {
@@ -113,6 +116,9 @@ export type OrderItem = {
   quantity: number;
   unitPrice: number;
   lineTotal: number;
+  giftBoxKey?: string | null;
+  giftMessage?: string | null;
+  packagingNotes?: string | null;
 };
 
 export type Order = {

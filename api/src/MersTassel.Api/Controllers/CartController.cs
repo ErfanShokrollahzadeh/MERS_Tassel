@@ -15,6 +15,7 @@ public class CartController(
     ICartService cart,
     ICurrentUser currentUser,
     IValidator<AddCartItemRequest> addValidator,
+    IValidator<AddGiftBoxRequest> giftBoxValidator,
     IValidator<UpdateCartItemRequest> updateValidator) : ApiControllerBase
 {
     private string UserId => currentUser.UserId ?? throw new ForbiddenException("Sign in to use your bag.");
@@ -28,6 +29,13 @@ public class CartController(
     {
         await ValidateAsync(addValidator, request, ct);
         return Ok(ApiResponse<CartDto>.Ok(await cart.AddItemAsync(UserId, request, ct)));
+    }
+
+    [HttpPost("gift-boxes")]
+    public async Task<ActionResult<ApiResponse<CartDto>>> AddGiftBox(AddGiftBoxRequest request, CancellationToken ct)
+    {
+        await ValidateAsync(giftBoxValidator, request, ct);
+        return Ok(ApiResponse<CartDto>.Ok(await cart.AddGiftBoxAsync(UserId, request, ct)));
     }
 
     [HttpPatch("items/{itemId:int}")]

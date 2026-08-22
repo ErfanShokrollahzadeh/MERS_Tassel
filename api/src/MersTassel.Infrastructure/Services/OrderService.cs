@@ -87,6 +87,9 @@ public class OrderService(AppDbContext db) : IOrderService
                     .Select(m => m.ImagePath).FirstOrDefault(),
                 Quantity = line.Quantity,
                 UnitPrice = unit,
+                GiftBoxKey = line.GiftBoxKey,
+                GiftMessage = line.GiftMessage,
+                PackagingNotes = line.PackagingNotes,
             });
 
             order.Reservations.Add(new InventoryReservation
@@ -280,6 +283,9 @@ public class OrderService(AppDbContext db) : IOrderService
             Quantity = i.Quantity,
             UnitPrice = i.UnitPrice,
             LineTotal = i.UnitPrice * i.Quantity,
+            GiftBoxKey = i.GiftBoxKey,
+            GiftMessage = i.GiftMessage,
+            PackagingNotes = i.PackagingNotes,
         }).ToList(),
     };
 }

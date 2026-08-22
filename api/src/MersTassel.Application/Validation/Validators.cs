@@ -107,6 +107,29 @@ public class AddCartItemRequestValidator : AbstractValidator<AddCartItemRequest>
     }
 }
 
+public class AddGiftBoxRequestValidator : AbstractValidator<AddGiftBoxRequest>
+{
+    public AddGiftBoxRequestValidator()
+    {
+        RuleFor(x => x.Items)
+            .Cascade(CascadeMode.Stop)
+            .NotNull()
+            .Must(items => items.Count is >= 2 and <= 6)
+            .WithMessage("Choose between 2 and 6 pieces for a Kavanoz box.")
+            .Must(items => items.Select(item => item.ProductSlug).Distinct(StringComparer.OrdinalIgnoreCase).Count() == items.Count)
+            .WithMessage("Each Kavanoz piece may only be selected once.");
+
+        RuleForEach(x => x.Items).ChildRules(item =>
+        {
+            item.RuleFor(x => x.ProductSlug).NotEmpty().MaximumLength(200);
+            item.RuleFor(x => x.Color).MaximumLength(80);
+        });
+
+        RuleFor(x => x.GiftMessage).MaximumLength(500);
+        RuleFor(x => x.PackagingNotes).MaximumLength(500);
+    }
+}
+
 public class UpdateCartItemRequestValidator : AbstractValidator<UpdateCartItemRequest>
 {
     public UpdateCartItemRequestValidator()

@@ -26,6 +26,9 @@ public class CartItemDto
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal LineTotal { get; set; }
+    public string? GiftBoxKey { get; set; }
+    public string? GiftMessage { get; set; }
+    public string? PackagingNotes { get; set; }
 
     /// <summary>Stock available for this variant, so the UI can cap the quantity stepper.</summary>
     public int AvailableStock { get; set; }
@@ -36,6 +39,19 @@ public class AddCartItemRequest
     public string ProductSlug { get; set; } = string.Empty;
     public string Color { get; set; } = string.Empty;
     public int Quantity { get; set; } = 1;
+}
+
+public class AddGiftBoxRequest
+{
+    public IReadOnlyList<GiftBoxItemRequest> Items { get; set; } = [];
+    public string? GiftMessage { get; set; }
+    public string? PackagingNotes { get; set; }
+}
+
+public class GiftBoxItemRequest
+{
+    public string ProductSlug { get; set; } = string.Empty;
+    public string Color { get; set; } = string.Empty;
 }
 
 public class UpdateCartItemRequest
@@ -96,6 +112,9 @@ public class OrderItemDto
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal LineTotal { get; set; }
+    public string? GiftBoxKey { get; set; }
+    public string? GiftMessage { get; set; }
+    public string? PackagingNotes { get; set; }
 }
 
 public class UpdateOrderStatusRequest

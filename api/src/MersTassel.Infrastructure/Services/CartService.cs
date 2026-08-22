@@ -11,6 +11,11 @@ namespace MersTassel.Infrastructure.Services;
 public class CartService(AppDbContext db) : ICartService
 {
     private const int MaxPerLine = 10;
+    private static readonly HashSet<string> JewelryCategories = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "rings", "earrings", "necklaces", "bracelets", "anklets",
+        "hand-harness-bracelets", "shahmaran-bracelets", "arm-cuffs",
+    };
 
     public async Task<CartDto> GetAsync(string userId, CancellationToken ct = default)
     {
@@ -40,7 +45,8 @@ public class CartService(AppDbContext db) : ICartService
             throw new ValidationException("quantity", "That option is sold out.");
 
         var cart = await LoadAsync(userId, ct) ?? await CreateAsync(userId, product.Currency, ct);
-        var line = cart.Items.FirstOrDefault(i => i.ProductVariantId == variant.Id && !i.IsDelete);
+        var line = cart.Items.FirstOrDefault(i =>
+            i.ProductVariantId == variant.Id && !i.IsDelete && i.GiftBoxKey == null);
 
         var desired = (line?.Quantity ?? 0) + request.Quantity;
         var capped = Math.Min(desired, Math.Min(variant.Stock, MaxPerLine));
@@ -58,6 +64,82 @@ public class CartService(AppDbContext db) : ICartService
         }
 
         await db.SaveChangesAsync(ct);
+        return ToDto((await LoadAsync(userId, ct))!);
+    }
+
+    public async Task<CartDto> AddGiftBoxAsync(
+        string userId,
+        AddGiftBoxRequest request,
+        CancellationToken ct = default)
+    {
+        var requestedSlugs = request.Items
+            .Select(item => item.ProductSlug.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var products = await db.Products
+            .Include(product => product.Category)
+            .Include(product => product.Variants)
+            .Include(product => product.Media)
+            .Where(product => requestedSlugs.Contains(product.Slug) && product.IsActive)
+            .AsSplitQuery()
+            .ToListAsync(ct);
+
+        if (products.Count != requestedSlugs.Count)
+            throw new ValidationException("items", "One or more selected Kavanoz pieces are no longer available.");
+
+        if (!products.Any(product => JewelryCategories.Contains(product.Category.Slug)))
+            throw new ValidationException("items", "Choose at least one jewelry piece for your Kavanoz box.");
+
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        var cart = await LoadAsync(userId, ct) ?? await CreateAsync(userId, products[0].Currency, ct);
+        var prepared = new List<ProductVariant>();
+
+        foreach (var item in request.Items)
+        {
+            var product = products.First(product =>
+                string.Equals(product.Slug, item.ProductSlug.Trim(), StringComparison.OrdinalIgnoreCase));
+            var active = product.Variants.Where(variant => !variant.IsDelete && variant.IsActive).ToList();
+
+            if (active.Count == 0)
+                throw new ValidationException("items", $"{product.Name} has no sellable options right now.");
+
+            var variant = string.IsNullOrWhiteSpace(item.Color)
+                ? active.FirstOrDefault(option => option.Stock > 0) ?? active[0]
+                : active.FirstOrDefault(option =>
+                    string.Equals(option.Color, item.Color.Trim(), StringComparison.OrdinalIgnoreCase))
+                  ?? throw new ValidationException("items", $"The selected finish for {product.Name} is unavailable.");
+
+            var alreadyInCart = cart.Items
+                .Where(line => !line.IsDelete && line.ProductVariantId == variant.Id)
+                .Sum(line => line.Quantity);
+            var alreadyPrepared = prepared.Count(entry => entry.Id == variant.Id);
+
+            if (variant.Stock <= alreadyInCart + alreadyPrepared)
+                throw new ValidationException("items", $"There is not enough stock left for {product.Name} ({variant.Color}).");
+
+            prepared.Add(variant);
+        }
+
+        var giftBoxKey = $"KAV-{Guid.NewGuid():N}";
+        var giftMessage = CleanOptional(request.GiftMessage);
+        var packagingNotes = CleanOptional(request.PackagingNotes);
+
+        foreach (var variant in prepared)
+        {
+            cart.Items.Add(new CartItem
+            {
+                CartId = cart.Id,
+                ProductVariantId = variant.Id,
+                Quantity = 1,
+                GiftBoxKey = giftBoxKey,
+                GiftMessage = giftMessage,
+                PackagingNotes = packagingNotes,
+            });
+        }
+
+        await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         return ToDto((await LoadAsync(userId, ct))!);
     }
 
@@ -167,6 +249,9 @@ public class CartService(AppDbContext db) : ICartService
                 UnitPrice = unit,
                 LineTotal = unit * i.Quantity,
                 AvailableStock = variant.Stock,
+                GiftBoxKey = i.GiftBoxKey,
+                GiftMessage = i.GiftMessage,
+                PackagingNotes = i.PackagingNotes,
             };
         }).ToList();
 
@@ -179,4 +264,7 @@ public class CartService(AppDbContext db) : ICartService
             Count = items.Sum(i => i.Quantity),
         };
     }
+
+    private static string? CleanOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
