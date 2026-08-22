@@ -58,7 +58,7 @@ export function NewsletterForm({ source, compact = false }: { source: Newsletter
         autoComplete="email"
         value={email}
         onChange={(event) => { setEmail(event.target.value); if (status !== 'idle') setStatus('idle'); }}
-        placeholder={compact ? t('footer.email') : 'you@example.com'}
+        placeholder={compact ? t('footer.email') : t('common.emailPlaceholder')}
         disabled={status === 'submitting'}
         required
       />

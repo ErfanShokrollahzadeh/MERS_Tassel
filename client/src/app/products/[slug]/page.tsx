@@ -24,11 +24,13 @@ async function loadProduct(slug: string): Promise<Product | null> {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const product = await loadProduct(slug);
-  if (!product) return { title: 'Piece not found' };
-
   const cookieStore = await cookies();
   const locale = cookieStore.get('mers-locale')?.value === 'tr' ? 'tr' : 'en';
+  if (!product) return { title: locale === 'tr' ? 'Ürün bulunamadı' : 'Piece not found' };
+
   const display = productCopy(product, locale);
+  const metadataTitle = locale === 'tr' ? display.name : product.seoTitle || display.name;
+  const metadataDescription = locale === 'tr' ? display.description : product.metaDescription || display.description;
 
   // Open Graph needs an absolute URL, and it must be one a crawler can actually reach. The
   // frontend's own request host works — /uploads is proxied to the API from there — while the
@@ -39,8 +41,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const image = absoluteMediaUrl(product.image, `${proto}://${host}`);
 
   return {
-    title: product.seoTitle || display.name,
-    description: product.metaDescription || display.description,
+    title: metadataTitle,
+    description: metadataDescription,
     openGraph: {
       title: `${display.name} · MERS Tassel`,
       description: display.description,

@@ -57,7 +57,7 @@ export function ProductDetail({ product, related }: { product: Product; related:
           <div className="pdp-main-image">
             <AnimatePresence mode="wait">
               <motion.div className="pdp-image-motion" key={images[activeImage]} initial={{ opacity: 0, scale: 1.02 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: .32 }}>
-                <MediaImage src={images[activeImage]} alt={`${display.name}, ${indexLabel(activeImage + 1, locale)}`} sizes="(max-width: 900px) 100vw, 55vw" priority={activeImage === 0} />
+                <MediaImage src={images[activeImage]} alt={`${display.name}, ${t('pdp.viewIndex', { index: activeImage + 1 })}`} sizes="(max-width: 900px) 100vw, 55vw" priority={activeImage === 0} />
               </motion.div>
             </AnimatePresence>
             <button className="pdp-save" aria-label={t('product.savePiece', { name: display.name })}><Heart size={18} /></button>
@@ -137,5 +137,3 @@ export function ProductDetail({ product, related }: { product: Product; related:
     </div>
   );
 }
-
-function indexLabel(index: number, locale: 'en' | 'tr') { return locale === 'tr' ? `${index}. görünüm` : `view ${index}`; }

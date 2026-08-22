@@ -13,7 +13,7 @@ export function CheckoutSuccess({ sessionId }: { sessionId: string }) {
   const clear = useCartStore((state) => state.clear);
   const cleared = useRef(false);
   const [order, setOrder] = useState<Order | null>(null);
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [error, setError] = useState('');
 
   useEffect(() => { if (!sessionId) setError(t('success.missing')); }, [sessionId, t]);
@@ -52,20 +52,13 @@ export function CheckoutSuccess({ sessionId }: { sessionId: string }) {
 
   const paid = order?.paymentStatus === 'paid';
   const failed = order?.paymentStatus === 'failed';
-  const paymentLabel = order
-    ? ({
-        unpaid: locale === 'tr' ? 'bekliyor' : 'pending',
-        paid: locale === 'tr' ? 'ödendi' : 'paid',
-        failed: locale === 'tr' ? 'başarısız' : 'failed',
-        refunded: locale === 'tr' ? 'iade edildi' : 'refunded',
-      }[order.paymentStatus])
-    : '';
+  const paymentLabel = order ? t(`success.status.${order.paymentStatus}`) : '';
 
   return (
     <div className="checkout-success">
       <div className="success-language"><LanguageSwitch /></div>
       <div className={`success-orbit${paid ? ' success-orbit--paid' : ''}`}>{paid ? <Check /> : failed ? <RefreshCw /> : <Clock3 />}</div>
-      <span className="eyebrow">{order ? `${locale === 'tr' ? 'Sipariş' : 'Order'} ${order.number}` : t('success.reference')}</span>
+      <span className="eyebrow">{order ? t('success.order', { number: order.number }) : t('success.reference')}</span>
       <h1>{paid ? t('success.paid') : failed ? t('success.failed') : t('success.confirming')}</h1>
       <p>{error || (paid ? t('success.paidCopy') : failed ? t('success.failedCopy') : t('success.confirmingCopy'))}</p>
 
