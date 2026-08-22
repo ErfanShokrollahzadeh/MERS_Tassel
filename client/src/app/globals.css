@@ -1,17 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Italiana&display=swap');
-
 :root {
   --canvas: #f7f3ef; --canvas-deep: #ece4de; --surface: #fffdfa; --surface-strong: #ffffff; --surface-muted: #eee7e2;
-  --ink: #1d171b; --ink-soft: #665b61; --ink-faint: #94888e; --plum: #69344f; --plum-strong: #4f233a; --rose: #b97586; --gold: #af7d45;
+  --ink: #1d171b; --ink-soft: #51484d; --ink-faint: #756a70; --plum: #69344f; --plum-strong: #4f233a; --rose: #b97586; --gold: #946430;
   --line: rgba(52,35,45,.13); --line-strong: rgba(52,35,45,.22); --glass: rgba(255,253,250,.58); --glass-strong: rgba(255,253,250,.78); --glass-border: rgba(255,255,255,.68);
-  --danger: #a44747; --success: #37765d; --warning: #9c6b2f; --font-display: 'Italiana','Times New Roman',serif; --font-sans: 'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+  --danger: #a44747; --success: #37765d; --warning: #85571f; --font-display: var(--font-lora),'Georgia','Times New Roman',serif; --font-sans: var(--font-inter),-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --shadow-sm: 0 12px 30px rgba(54,32,43,.08); --shadow-md: 0 24px 70px rgba(54,32,43,.13); --shadow-lg: 0 38px 120px rgba(42,22,32,.18);
   --radius-sm: 10px; --radius-md: 18px; --radius-lg: 28px; --radius-xl: 40px; --ease: cubic-bezier(.22,1,.36,1); --header-height: 76px;
 }
-[data-theme='dark'] { --canvas:#151116; --canvas-deep:#211920; --surface:#1c171c; --surface-strong:#261e25; --surface-muted:#2b2229; --ink:#fbf7f8; --ink-soft:#c6bac0; --ink-faint:#93878e; --plum:#d49bb7; --plum-strong:#edbfd3; --rose:#d29aaa; --gold:#ddb985; --line:rgba(255,255,255,.12); --line-strong:rgba(255,255,255,.2); --glass:rgba(28,23,28,.58); --glass-strong:rgba(28,23,28,.82); --glass-border:rgba(255,255,255,.12); --shadow-sm:0 12px 30px rgba(0,0,0,.2); --shadow-md:0 24px 70px rgba(0,0,0,.28); --shadow-lg:0 38px 120px rgba(0,0,0,.35); }
-* { box-sizing:border-box; } html { scroll-behavior:smooth; } body { margin:0; background:var(--canvas); color:var(--ink); font-family:var(--font-sans); font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+[data-theme='dark'] { --canvas:#151116; --canvas-deep:#211920; --surface:#1c171c; --surface-strong:#261e25; --surface-muted:#2b2229; --ink:#fbf7f8; --ink-soft:#d1c6cc; --ink-faint:#b8adb3; --plum:#d49bb7; --plum-strong:#edbfd3; --rose:#dcaabd; --gold:#e4c493; --line:rgba(255,255,255,.14); --line-strong:rgba(255,255,255,.23); --glass:rgba(28,23,28,.58); --glass-strong:rgba(28,23,28,.82); --glass-border:rgba(255,255,255,.14); --shadow-sm:0 12px 30px rgba(0,0,0,.2); --shadow-md:0 24px 70px rgba(0,0,0,.28); --shadow-lg:0 38px 120px rgba(0,0,0,.35); }
+* { box-sizing:border-box; } html { scroll-behavior:smooth; font-size:16px; } body { margin:0; background:var(--canvas); color:var(--ink); font-family:var(--font-sans); font-size:16px; line-height:1.65; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; overflow-x:hidden; }
 body::before { content:''; position:fixed; inset:0; pointer-events:none; opacity:.25; z-index:9999; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.055'/%3E%3C/svg%3E"); }
-a { color:inherit; text-decoration:none; } button,input,textarea,select { font:inherit; } button { color:inherit; } img { max-width:100%; display:block; } h1,h2,h3,p { margin-top:0; } h1,h2,h3 { font-family:var(--font-display); font-weight:400; line-height:1.05; } ::selection { background:var(--plum); color:white; } :focus-visible { outline:3px solid var(--gold); outline-offset:3px; }
+a { color:inherit; text-decoration:none; } button,input,textarea,select { font:inherit; } button { color:inherit; } img { max-width:100%; display:block; } h1,h2,h3,p { margin-top:0; } h1,h2,h3 { font-family:var(--font-display); font-weight:600; line-height:1.14; text-wrap:balance; } p { text-wrap:pretty; } ::selection { background:var(--plum); color:white; } :focus-visible { outline:3px solid var(--gold); outline-offset:3px; }
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 .skip-link { position:fixed; left:1rem; top:-5rem; z-index:10000; background:var(--ink); color:var(--canvas); padding:.75rem 1rem; border-radius:8px; transition:top .2s; } .skip-link:focus { top:1rem; }
 .container-wide { width:min(1380px,calc(100% - 64px)); margin-inline:auto; } .container-narrow { width:min(820px,calc(100% - 40px)); margin-inline:auto; } .section { padding:120px 0; }
@@ -400,3 +398,56 @@ kbd { display:inline-flex; align-items:center; gap:2px; padding:4px 6px; border:
 .not-connected{padding:52px 30px;display:grid;justify-items:center;gap:11px;text-align:center}.not-connected>svg{color:var(--plum)}.not-connected h2{margin:4px 0 0;font-family:var(--font-display);font-size:26px;font-weight:400}.not-connected>p{margin:0;max-width:56ch;color:var(--ink-faint);font-size:10px;line-height:1.75}.not-connected__list{margin-top:16px;padding:18px 24px;text-align:left;border:1px solid var(--line);border-radius:12px;background:var(--canvas)}.not-connected__list h3{margin:0 0 10px;color:var(--ink-faint);font-size:7px;letter-spacing:.1em;text-transform:uppercase}.not-connected__list ul{margin:0;padding-left:17px;display:grid;gap:6px;color:var(--ink-soft);font-size:9px}.not-connected__actions{margin-top:18px;display:flex;gap:8px}
 
 @media (max-width:900px){.settings-grid,.order-detail{grid-template-columns:1fr}.role-legend{grid-template-columns:1fr}}
+
+/* Readable storefront type scale -------------------------------------------------
+   The original editorial face was intentionally delicate, but its hairline strokes and
+   8–11px labels made everyday shopping copy difficult to read. These rules keep the
+   boutique hierarchy while establishing a practical 12px metadata / 14px control /
+   16px prose scale in both themes. */
+.site-shell main p { font-size:16px; line-height:1.72; }
+.site-shell main small { font-size:13px; line-height:1.55; }
+.site-shell main :is(label,label>span) { font-size:14px; line-height:1.5; }
+.site-shell :is(input,textarea,select) { font-size:16px; line-height:1.5; }
+.site-shell :is(.button,.text-button,.text-link,.store-nav a,.header-search-submit,.category-tabs button,.filter-trigger,.sort-control select,.pdp-accordions button,.back-link,.catalog-pagination button) { font-size:14px; }
+.site-shell :is(.eyebrow,.mini-label,.scroll-cue,.badge,.editorial-caption,.editorial-copy cite,.footer-label,.footer-bottom,.language-switch,.catalog-meta,.catalog-meta button,.breadcrumb,.pdp-main-image>span,.pdp-rating,.pdp-price span,.stock-note,.pdp-benefits strong,.pdp-benefits small,.checkout-legal,.summary-trust,.state-block p) { font-size:12px; line-height:1.55; }
+.site-shell :is(.hero-proof small,.hero-float-card>span:last-of-type,.trust-grid small,.newsletter-grid form small,.cart-line__copy p,.drawer-footer>p,.form-section__heading p,.delivery-options small,.payment-box__head small,.summary-line small,.promo-field>span,.contact-business__details span,.contact-business__details small,.auth-form>p,.auth-form form>label,.auth-name-row label,.auth-options,.auth-error,.auth-switch,.account-profile>p,.account-profile dt,.account-profile dd,.account-bag-lines article span,.account-orders article small,.account-empty p,.toast p) { font-size:13px; line-height:1.55; }
+.site-shell .product-tile__body p { font-size:12px; font-weight:600; line-height:1.45; }
+.site-shell .product-tile__body h3 { font-size:21px; font-weight:600; line-height:1.25; }
+.site-shell .product-price strong { font-size:15px; }
+.site-shell .product-price del { font-size:13px; }
+.site-shell .category-card__copy>span { font-size:12px; font-weight:600; opacity:.9; }
+.site-shell .category-card__copy p { font-size:13px; opacity:.92; }
+.site-shell .pdp-accordions p { font-size:15px; }
+.site-shell .contact-business__details strong { font-size:14px; }
+.site-shell .contact-socials .social-contact-links small { font-size:12px; }
+.site-shell .field>small { font-size:12px; }
+.site-shell .icon-button { width:44px; height:44px; }
+.site-shell .language-switch button { min-width:34px; min-height:34px; }
+
+.store-footer .footer-brand p,.store-footer .footer-newsletter p { color:rgba(255,255,255,.78); font-size:14px; line-height:1.7; }
+.store-footer .footer-grid a { color:rgba(255,255,255,.86); font-size:14px; }
+.store-footer .footer-label { color:rgba(255,255,255,.72); }
+.store-footer .footer-bottom { color:rgba(255,255,255,.66); }
+.store-footer .social-contact-links strong { font-size:13px; }
+.store-footer .social-contact-links small { color:rgba(255,255,255,.7); font-size:12px; }
+
+/* The workspace uses the same legible families and no longer relies on 6–10px copy. */
+.admin-app :is(p,label,input,textarea,select,td,li,dt,dd),
+.admin-login :is(p,label,input) { font-size:13px; line-height:1.5; }
+.admin-app small,.admin-login small { font-size:12px!important; line-height:1.45; }
+.admin-app :is(button,a),.admin-login :is(button,a) { font-size:13px; }
+.admin-app :is(.admin-kicker,.card-heading>div>span,.admin-table th,.status,.metric-card header,.metric-value>span,.growth-kpis b,.order-detail h4,.editor-hint,.editor-error,.editor-count,.toggle,.settings-image__label,.not-connected__list h3) { font-size:11px; line-height:1.45; }
+.admin-app .admin-nav a { font-size:13px; }
+.admin-app .admin-button { font-size:13px; }
+.admin-app .admin-table td { font-size:13px; }
+.admin-app .order-detail :is(li,dl div) { font-size:12px; }
+.admin-app .status-select select,.admin-app .filter-pill--select select { font-size:12px; }
+.admin-app .self-badge,.admin-app .media-thumb__badge { font-size:10px; }
+.admin-login__panel>p,.admin-login__panel label,.admin-login__note { font-size:13px; }
+.admin-profile button { font-size:12px; }
+
+@media (max-width:600px) {
+  .site-shell main p { font-size:15px; }
+  .site-shell :is(input,textarea,select) { font-size:16px; }
+  .site-shell .product-tile__body h3 { font-size:18px; }
+}
