@@ -8,9 +8,9 @@ using Microsoft.Extensions.Logging;
 namespace MersTassel.Infrastructure.Data;
 
 /// <summary>
-/// Applies migrations then fills an empty database with the launch catalog, an administrator
-/// and the storefront's default copy. Idempotent: every step checks before it writes, so a
-/// restart never duplicates rows.
+/// Applies migrations, provisions the administrator and synchronizes the storefront's default
+/// catalog/copy. Idempotent: every step checks stable slugs before it writes, so a restart can
+/// add a newly released seed category without duplicating existing rows.
 /// </summary>
 public class DatabaseSeeder(
     AppDbContext db,
@@ -41,10 +41,84 @@ public class DatabaseSeeder(
     private async Task SeedAdminAsync()
     {
         var email = configuration["Seed:AdminEmail"] ?? "admin@merstassel.local";
-        if (await userManager.FindByEmailAsync(email) is not null) return;
+        var configured = configuration["Seed:AdminPassword"];
+        var resetRequested = bool.TryParse(configuration["Seed:ResetAdminPassword"], out var reset) && reset;
+        var existing = await userManager.FindByEmailAsync(email);
+
+        if (existing is not null)
+        {
+            // The configured address is the operator's recovery anchor. It can safely reclaim
+            // workspace access without deleting the database or recreating customer records.
+            existing.EmailConfirmed = true;
+            existing.IsDelete = false;
+            await userManager.UpdateAsync(existing);
+
+            if (!await userManager.IsInRoleAsync(existing, RoleNames.Admin))
+            {
+                var promoted = await userManager.AddToRoleAsync(existing, RoleNames.Admin);
+                if (!promoted.Succeeded)
+                {
+                    logger.LogError("Could not restore administrator role for {Email}: {Errors}", email,
+                        string.Join("; ", promoted.Errors.Select(e => e.Description)));
+                }
+            }
+
+            if (resetRequested)
+            {
+                if (string.IsNullOrWhiteSpace(configured))
+                {
+                    logger.LogError("Seed:ResetAdminPassword is enabled, but Seed:AdminPassword is empty.");
+                }
+                else
+                {
+                    var validationErrors = new List<IdentityError>();
+                    foreach (var validator in userManager.PasswordValidators)
+                    {
+                        var validation = await validator.ValidateAsync(userManager, existing, configured);
+                        if (!validation.Succeeded) validationErrors.AddRange(validation.Errors);
+                    }
+
+                    IdentityResult passwordReset;
+                    if (validationErrors.Count > 0)
+                    {
+                        passwordReset = IdentityResult.Failed(validationErrors.ToArray());
+                    }
+                    else
+                    {
+                        // This is an operator-only startup recovery path. Hash directly after
+                        // applying every configured password validator, then rotate the security
+                        // stamp and revoke existing refresh sessions. No email token provider is
+                        // required by the normal sign-in system.
+                        existing.PasswordHash = userManager.PasswordHasher.HashPassword(existing, configured);
+                        existing.SecurityStamp = Guid.NewGuid().ToString();
+                        existing.ConcurrencyStamp = Guid.NewGuid().ToString();
+                        existing.AccessFailedCount = 0;
+                        existing.LockoutEnd = null;
+                        passwordReset = await userManager.UpdateAsync(existing);
+                    }
+
+                    if (!passwordReset.Succeeded)
+                    {
+                        logger.LogError("Could not reset administrator password for {Email}: {Errors}", email,
+                            string.Join("; ", passwordReset.Errors.Select(e => e.Description)));
+                    }
+                    else
+                    {
+                        var activeSessions = await db.RefreshTokens
+                            .Where(token => token.UserId == existing.Id && token.RevokedAt == null)
+                            .ToListAsync();
+                        var now = DateTimeOffset.UtcNow;
+                        foreach (var session in activeSessions) session.RevokedAt = now;
+                        await db.SaveChangesAsync();
+                        logger.LogWarning("Administrator access for {Email} was recovered. Disable Seed:ResetAdminPassword now.", email);
+                    }
+                }
+            }
+
+            return;
+        }
 
         // A configured password is honoured; otherwise generate one and print it exactly once.
-        var configured = configuration["Seed:AdminPassword"];
         var password = string.IsNullOrWhiteSpace(configured) ? GeneratePassword() : configured;
 
         var admin = new AppUser
@@ -115,7 +189,29 @@ public class DatabaseSeeder(
 
     private async Task SeedSettingsAsync(string webRootPath, string seedAssetsPath, CancellationToken ct)
     {
-        if (await db.SiteSettings.AnyAsync(ct)) return;
+        var current = await db.SiteSettings.OrderBy(settings => settings.Id).FirstOrDefaultAsync(ct);
+        if (current is not null)
+        {
+            // Upgrade only the launch placeholders. Values entered later through the admin
+            // settings screen remain authoritative on subsequent starts.
+            if (current.ContactEmail is "atelier@merstassel.com" or "hello@merstassel.com")
+                current.ContactEmail = "merstassel@gmail.com";
+            if (current.ContactPhone == "+90 212 000 00 00")
+                current.ContactPhone = "+90 552 848 2640";
+            if (current.WhatsappPhone == "+90 212 000 00 00")
+                current.WhatsappPhone = "+90 552 848 2640";
+            if (current.ContactAddress == "Karaköy, Istanbul, Türkiye")
+                current.ContactAddress = "Yenibağlar Mahallesi, Beraberlik Sokak, Tepebaşı, Eskişehir, Türkiye";
+            if (current.InstagramUrl == "https://instagram.com")
+                current.InstagramUrl = "https://www.instagram.com/merstassel?igsi=MWZtaWVtcDkyazc2aA%3D%3D&utm_source=qr";
+            if (current.TiktokUrl == "https://www.tiktok.com")
+                current.TiktokUrl = null;
+            if (current.PinterestUrl == "https://pinterest.com")
+                current.PinterestUrl = null;
+
+            await db.SaveChangesAsync(ct);
+            return;
+        }
 
         db.SiteSettings.Add(new SiteSettings
         {
@@ -127,11 +223,13 @@ public class DatabaseSeeder(
             HeroSubheadline = "Small-batch tassels, pearls and hand-knotted silk, finished one piece at a time in our atelier.",
             HeroSubheadlineTr = "Küçük partiler hâlinde püskül, inci ve elde düğümlenmiş ipek; atölyemizde tek tek tamamlanır.",
             HeroImagePath = CopySeedImage("pearl", "branding", webRootPath, seedAssetsPath),
-            ContactEmail = "atelier@merstassel.com",
-            ContactPhone = "+90 212 000 00 00",
-            ContactAddress = "Karaköy, Istanbul, Türkiye",
-            InstagramUrl = "https://instagram.com",
-            PinterestUrl = "https://pinterest.com",
+            ContactEmail = "merstassel@gmail.com",
+            ContactPhone = "+90 552 848 2640",
+            ContactAddress = "Yenibağlar Mahallesi, Beraberlik Sokak, Tepebaşı, Eskişehir, Türkiye",
+            InstagramUrl = "https://www.instagram.com/merstassel?igsi=MWZtaWVtcDkyazc2aA%3D%3D&utm_source=qr",
+            TiktokUrl = null,
+            WhatsappPhone = "+90 552 848 2640",
+            PinterestUrl = null,
             AboutHeadline = "Slow work, kept close",
             AboutHeadlineTr = "Yavaş işçilik, hep yakında",
             AboutBody = "Every MERS Tassel piece begins on the same worktable in Karaköy. We choose materials that age well, knot them by hand, and finish each one only when it feels right to wear.",
@@ -143,33 +241,98 @@ public class DatabaseSeeder(
 
     private async Task SeedCatalogAsync(string webRootPath, string seedAssetsPath, CancellationToken ct)
     {
-        if (await db.Products.AnyAsync(ct)) return;
+        logger.LogInformation("Synchronizing the storefront catalog…");
 
-        logger.LogInformation("Seeding the launch catalog…");
+        // Categories are synchronized by slug so this expands an already-used database as
+        // safely as it creates a new one. Existing rows keep their ids, which preserves every
+        // product, cart and order relationship that may already refer to them.
+        var allCategories = await db.Categories.IgnoreQueryFilters().ToListAsync(ct);
+        var activeBySlug = allCategories
+            .Where(c => !c.IsDelete)
+            .ToDictionary(c => c.Slug, StringComparer.OrdinalIgnoreCase);
+        var isLegacyTaxonomy = activeBySlug.ContainsKey("pendants") || activeBySlug.ContainsKey("bag-charms");
 
-        var categories = new[]
+        foreach (var seed in CatalogSeedData.Categories)
         {
-            new Category { Name = "Necklaces", NameTr = "Kolyeler", Slug = "necklaces", SortOrder = 0, Description = "Hand-knotted necklaces built around pearls, silk and vermeil.", DescriptionTr = "İnci, ipek ve vermeil çevresinde elde düğümlenmiş kolyeler." },
-            new Category { Name = "Pendants", NameTr = "Kolye uçları", Slug = "pendants", SortOrder = 1, Description = "Sculptural pendants cut to gather the light.", DescriptionTr = "Işığı toplamak için kesilmiş heykelsi kolye uçları." },
-            new Category { Name = "Earrings", NameTr = "Küpeler", Slug = "earrings", SortOrder = 2, Description = "Light-catching earrings balanced for all-day wear.", DescriptionTr = "Gün boyu rahat kullanım için dengelenmiş, ışığı yakalayan küpeler." },
-            new Category { Name = "Rings", NameTr = "Yüzükler", Slug = "rings", SortOrder = 3, Description = "Softly sculpted rings finished by hand.", DescriptionTr = "Elde tamamlanan, yumuşak hatlı yüzükler." },
-            new Category { Name = "Bracelets", NameTr = "Bileklikler", Slug = "bracelets", SortOrder = 4, Description = "Fluid chains and modern talismans.", DescriptionTr = "Akışkan zincirler ve modern tılsımlar." },
-            new Category { Name = "Bag charms", NameTr = "Çanta aksesuarları", Slug = "bag-charms", SortOrder = 5, Description = "Small tactile objects for bags and keys.", DescriptionTr = "Çantalar ve anahtarlar için küçük dokunsal nesneler." },
-        };
+            if (activeBySlug.TryGetValue(seed.Slug, out var category))
+            {
+                var isDefaultKeychainRevision = seed.Slug == "keychains" &&
+                    category.Description == "Tactile leather and tassel keychains made for daily rituals." &&
+                    category.ImagePath == "https://i.etsystatic.com/10946465/r/il/f811da/4955973558/il_fullxfull.4955973558_qsp8.jpg";
 
-        db.Categories.AddRange(categories);
+                // Apply the one-time taxonomy upgrade to launch rows, then leave subsequent
+                // admin edits alone on ordinary restarts.
+                if (isLegacyTaxonomy || isDefaultKeychainRevision)
+                {
+                    category.Name = seed.Name;
+                    category.NameTr = seed.NameTr;
+                    category.Description = seed.Description;
+                    category.DescriptionTr = seed.DescriptionTr;
+                    category.SortOrder = seed.SortOrder;
+                }
+
+                // Preserve a photograph uploaded through admin; only fill a missing image.
+                if (isDefaultKeychainRevision)
+                    category.ImagePath = ResolveSeedImage(seed.Image, "categories", webRootPath, seedAssetsPath);
+                else
+                    category.ImagePath ??= ResolveSeedImage(seed.Image, "categories", webRootPath, seedAssetsPath);
+                continue;
+            }
+
+            // A category deliberately soft-deleted through admin stays deleted. Recreating it
+            // would both violate the unique slug and undo the administrator's decision.
+            if (allCategories.Any(c => c.IsDelete && c.Slug.Equals(seed.Slug, StringComparison.OrdinalIgnoreCase)))
+            {
+                logger.LogInformation("Leaving soft-deleted seeded category {Slug} deleted.", seed.Slug);
+                continue;
+            }
+
+            category = new Category
+            {
+                Name = seed.Name,
+                NameTr = seed.NameTr,
+                Slug = seed.Slug,
+                Description = seed.Description,
+                DescriptionTr = seed.DescriptionTr,
+                SortOrder = seed.SortOrder,
+                ImagePath = ResolveSeedImage(seed.Image, "categories", webRootPath, seedAssetsPath),
+            };
+
+            db.Categories.Add(category);
+            activeBySlug[seed.Slug] = category;
+        }
+
         await db.SaveChangesAsync(ct);
 
-        var bySlug = categories.ToDictionary(c => c.Slug);
+        // The former launch taxonomy split pendants out from necklaces and called keychains
+        // “bag charms”. Fold those rows into the requested taxonomy without losing products.
+        await FoldLegacyCategoryAsync("pendants", "necklaces", activeBySlug, ct);
+        await FoldLegacyCategoryAsync("bag-charms", "keychains", activeBySlug, ct);
+        await db.SaveChangesAsync(ct);
 
+        var existingProductSlugs = await db.Products.IgnoreQueryFilters()
+            .Select(p => p.Slug)
+            .ToHashSetAsync(StringComparer.OrdinalIgnoreCase, ct);
+
+        var addedProducts = 0;
         foreach (var seed in CatalogSeedData.Products)
         {
+            if (existingProductSlugs.Contains(seed.Slug)) continue;
+
+            if (!activeBySlug.TryGetValue(seed.CategorySlug, out var category) || category.IsDelete)
+            {
+                logger.LogInformation(
+                    "Skipping seed product {Product}; its category {Category} is not active.",
+                    seed.Slug, seed.CategorySlug);
+                continue;
+            }
+
             var product = new Product
             {
                 Name = seed.Name,
                 NameTr = seed.NameTr,
                 Slug = seed.Slug,
-                CategoryId = bySlug[seed.CategorySlug].Id,
+                CategoryId = category.Id,
                 Description = seed.Description,
                 DescriptionTr = seed.DescriptionTr,
                 Story = seed.Story,
@@ -210,9 +373,9 @@ public class DatabaseSeeder(
             }
 
             var sortOrder = 0;
-            foreach (var asset in seed.Images)
+            foreach (var image in seed.Images)
             {
-                var path = CopySeedImage(asset, "products", webRootPath, seedAssetsPath);
+                var path = ResolveSeedImage(image, "products", webRootPath, seedAssetsPath);
                 if (path is null) continue;
 
                 product.Media.Add(new ProductMedia
@@ -226,24 +389,50 @@ public class DatabaseSeeder(
             }
 
             db.Products.Add(product);
+            existingProductSlugs.Add(seed.Slug);
+            addedProducts++;
         }
 
         await db.SaveChangesAsync(ct);
+        logger.LogInformation(
+            "Catalog ready: {Categories} active categories, {AddedProducts} new seed products ({SeedProducts} defined).",
+            activeBySlug.Values.Count(c => !c.IsDelete), addedProducts, CatalogSeedData.Products.Count);
+    }
 
-        // Give each category the hero image of one of its own products.
-        foreach (var category in categories)
+    private async Task FoldLegacyCategoryAsync(
+        string legacySlug,
+        string targetSlug,
+        IReadOnlyDictionary<string, Category> activeBySlug,
+        CancellationToken ct)
+    {
+        var legacy = await db.Categories.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Slug == legacySlug && !c.IsDelete, ct);
+
+        if (legacy is null || !activeBySlug.TryGetValue(targetSlug, out var target)) return;
+
+        var products = await db.Products.IgnoreQueryFilters()
+            .Where(p => p.CategoryId == legacy.Id)
+            .ToListAsync(ct);
+
+        foreach (var product in products) product.CategoryId = target.Id;
+
+        legacy.IsDelete = true;
+        legacy.DeletedAt = DateTimeOffset.UtcNow;
+
+        logger.LogInformation(
+            "Folded legacy category {Legacy} into {Target}; moved {Products} products.",
+            legacySlug, targetSlug, products.Count);
+    }
+
+    private string? ResolveSeedImage(string image, string entity, string webRootPath, string seedAssetsPath)
+    {
+        if (Uri.TryCreate(image, UriKind.Absolute, out var uri) &&
+            (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
         {
-            var image = await db.ProductMedia
-                .Where(m => m.Product.CategoryId == category.Id && m.IsPrimary)
-                .Select(m => m.ImagePath)
-                .FirstOrDefaultAsync(ct);
-
-            if (image is not null) category.ImagePath = image;
+            return image;
         }
 
-        await db.SaveChangesAsync(ct);
-        logger.LogInformation("Seeded {Products} products across {Categories} categories.",
-            CatalogSeedData.Products.Count, categories.Length);
+        return CopySeedImage(image, entity, webRootPath, seedAssetsPath);
     }
 
     /// <summary>

@@ -1,17 +1,54 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Mail, MapPin, Send } from 'lucide-react';
+import { AlertCircle, Building2, Check, Clock3, LoaderCircle, Mail, MapPin, Phone, Send } from 'lucide-react';
 import { useI18n } from '@/i18n/I18nProvider';
+import { SocialContactLinks } from '@/components/SocialContactLinks';
 import { useSiteSettings } from '@/lib/useSiteSettings';
+import { gmailComposeUrl } from '@/lib/contactLinks';
+import { sendContactMessage, type ContactTopic } from '@/lib/contactMessages';
 
 export default function ContactPage() {
   const [sent, setSent] = useState(false);
-  const { t } = useI18n();
+  const [submitting, setSubmitting] = useState(false);
+  const [sendError, setSendError] = useState('');
+  const [form, setForm] = useState({ name: '', email: '', topic: 'product' as ContactTopic, message: '' });
+  const { t, locale } = useI18n();
   const { data: settings } = useSiteSettings();
 
   const email = settings?.contactEmail;
+  const emailHref = gmailComposeUrl(email || 'merstassel@gmail.com');
   const address = settings?.contactAddress;
+  const localizedAddress = locale === 'tr' ? address?.replace('Istanbul', 'İstanbul') : address;
+  const businessCopy = locale === 'tr' ? {
+    title: 'İşletme bilgileri', intro: 'MERSTassel, Türkiye’de faaliyet gösteren bireysel / şahıs satıcıdır. Ürün, sipariş, teslimat, iptal ve iade talepleriniz için bize dilediğiniz zaman ulaşabilirsiniz.',
+    tradeName: 'Ticari ad', legalStatus: 'Hukuki statü', status: 'Bireysel / şahıs satıcı', address: 'İşletme ve iade adresi', phone: 'Telefon', hours: 'Çalışma saatleri', always: '7 gün 24 saat iletişime açık', response: 'Mesajlar mümkün olan en kısa sürede yanıtlanır.',
+  } : {
+    title: 'Business information', intro: 'MERSTassel operates in Türkiye as an individual / sole-proprietor seller. You may contact us at any time regarding products, orders, delivery, cancellations, and returns.',
+    tradeName: 'Trade name', legalStatus: 'Legal status', status: 'Individual / sole-proprietor seller', address: 'Business and return address', phone: 'Telephone', hours: 'Working hours', always: 'Open for contact 24 hours, 7 days a week', response: 'Messages are answered as soon as reasonably possible.',
+  };
+
+  const submitMessage = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (submitting) return;
+
+    setSubmitting(true);
+    setSendError('');
+    try {
+      await sendContactMessage({ ...form, locale });
+      setSent(true);
+    } catch {
+      setSendError(t('contact.sendError'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const startAnotherMessage = () => {
+    setForm({ name: '', email: '', topic: 'product', message: '' });
+    setSendError('');
+    setSent(false);
+  };
 
   return (
     <div className="contact-page">
@@ -19,26 +56,42 @@ export default function ContactPage() {
 
       <section className="contact-layout container-wide">
         <aside>
-          <div><Mail /><span><strong>{t('contact.write')}</strong>{email ? <a href={`mailto:${email}`}>{email}</a> : <span className="skeleton-block skeleton-block--inline" />}</span></div>
-          <div><MapPin /><span><strong>{t('contact.visit')}</strong><p>{address || <span className="skeleton-block skeleton-block--inline" />}<br />{t('contact.appointment')}</p></span></div>
+          <div><Mail /><span><strong>{t('contact.write')}</strong>{email ? <a href={emailHref} target="_blank" rel="noreferrer noopener">{email}</a> : <span className="skeleton-block skeleton-block--inline" />}</span></div>
+          <div><MapPin /><span><strong>{t('contact.visit')}</strong><p>{localizedAddress || <span className="skeleton-block skeleton-block--inline" />}<br />{t('contact.appointment')}</p></span></div>
+          <section className="contact-socials"><strong>{t('contact.connect')}</strong><p>{t('contact.connectCopy')}</p><SocialContactLinks /></section>
           <blockquote>{t('contact.quote')}</blockquote>
         </aside>
 
-        <form onSubmit={(event) => { event.preventDefault(); setSent(true); }}>
+        <form onSubmit={submitMessage}>
           {sent ? (
-            <div className="form-success"><Check /><h2>{t('contact.sent')}</h2><p>{t('contact.sentCopy')}</p><button type="button" className="text-button" onClick={() => setSent(false)}>{t('contact.another')}</button></div>
+            <div className="form-success"><Check /><h2>{t('contact.sent')}</h2><p>{t('contact.sentCopy')}</p><button type="button" className="text-button" onClick={startAnotherMessage}>{t('contact.another')}</button></div>
           ) : (
             <>
               <div className="form-grid">
-                <label className="field">{t('contact.name')}<input required /></label>
-                <label className="field">{t('contact.email')}<input type="email" required /></label>
-                <label className="field field--wide">{t('contact.help')}<select><option>{t('contact.product')}</option><option>{t('contact.order')}</option><option>{t('contact.repairs')}</option><option>{t('contact.press')}</option></select></label>
-                <label className="field field--wide">{t('contact.message')}<textarea rows={7} required placeholder={t('contact.placeholder')} /></label>
+                <label className="field">{t('contact.name')}<input name="name" autoComplete="name" maxLength={120} value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} disabled={submitting} required /></label>
+                <label className="field">{t('contact.email')}<input name="email" type="email" autoComplete="email" maxLength={254} value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} disabled={submitting} required /></label>
+                <label className="field field--wide">{t('contact.help')}<select name="topic" value={form.topic} onChange={(event) => setForm((current) => ({ ...current, topic: event.target.value as ContactTopic }))} disabled={submitting}><option value="product">{t('contact.product')}</option><option value="order">{t('contact.order')}</option><option value="repairs">{t('contact.repairs')}</option><option value="press">{t('contact.press')}</option></select></label>
+                <label className="field field--wide">{t('contact.message')}<textarea name="message" rows={7} minLength={10} maxLength={4000} value={form.message} onChange={(event) => setForm((current) => ({ ...current, message: event.target.value }))} disabled={submitting} required placeholder={t('contact.placeholder')} /></label>
               </div>
-              <button className="button button--primary" type="submit">{t('contact.send')} <Send size={15} /></button>
+              {sendError && <div className="contact-form-error" role="alert"><AlertCircle aria-hidden="true" /><span>{sendError}</span></div>}
+              <button className="button button--primary" type="submit" disabled={submitting}>{submitting ? t('contact.sending') : t('contact.send')} {submitting ? <LoaderCircle className="contact-form-spinner" size={15} /> : <Send size={15} />}</button>
             </>
           )}
         </form>
+      </section>
+
+      <section className="contact-business container-wide" aria-labelledby="business-information-title">
+        <div className="contact-business__intro">
+          <span className="eyebrow">MERSTassel · Türkiye</span>
+          <h2 id="business-information-title">{businessCopy.title}</h2>
+          <p>{businessCopy.intro}</p>
+        </div>
+        <div className="contact-business__details">
+          <article><Building2 aria-hidden="true" /><div><span>{businessCopy.tradeName}</span><strong>{settings?.siteName || 'MERSTassel'}</strong><small>{businessCopy.legalStatus}: {businessCopy.status}</small></div></article>
+          <article><MapPin aria-hidden="true" /><div><span>{businessCopy.address}</span><strong>{localizedAddress || 'Eskişehir, Türkiye'}</strong></div></article>
+          <article><Phone aria-hidden="true" /><div><span>{businessCopy.phone}</span><strong><a href={`tel:${settings?.contactPhone || '+900000000000'}`}>{settings?.contactPhone || '+90 000 000 0000'}</a></strong><small><a href={emailHref} target="_blank" rel="noreferrer noopener">{email || 'merstassel@gmail.com'}</a></small></div></article>
+          <article><Clock3 aria-hidden="true" /><div><span>{businessCopy.hours}</span><strong>{businessCopy.always}</strong><small>{businessCopy.response}</small></div></article>
+        </div>
       </section>
     </div>
   );

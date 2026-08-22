@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>MersTassel.Api-development</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,11 +14,12 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.9" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MersTassel.Infrastructure\MersTassel.Infrastructure.csproj" />
+    <ProjectReference Include="..\MersTassel.PostgresMigrations\MersTassel.PostgresMigrations.csproj" />
   </ItemGroup>
 
 </Project>

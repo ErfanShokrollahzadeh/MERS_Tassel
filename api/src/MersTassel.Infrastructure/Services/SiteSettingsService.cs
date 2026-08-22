@@ -29,6 +29,8 @@ public class SiteSettingsService(AppDbContext db, IFileStorageService storage) :
         settings.ContactPhone = request.ContactPhone ?? string.Empty;
         settings.ContactAddress = request.ContactAddress ?? string.Empty;
         settings.InstagramUrl = Trim(request.InstagramUrl);
+        settings.TiktokUrl = Trim(request.TiktokUrl);
+        settings.WhatsappPhone = Trim(request.WhatsappPhone);
         settings.PinterestUrl = Trim(request.PinterestUrl);
         settings.AboutHeadline = request.AboutHeadline ?? string.Empty;
         settings.AboutHeadlineTr = Trim(request.AboutHeadlineTr);
@@ -85,6 +87,8 @@ public class SiteSettingsService(AppDbContext db, IFileStorageService storage) :
         ContactPhone = s.ContactPhone,
         ContactAddress = s.ContactAddress,
         InstagramUrl = s.InstagramUrl,
+        TiktokUrl = s.TiktokUrl,
+        WhatsappPhone = s.WhatsappPhone,
         PinterestUrl = s.PinterestUrl,
         AboutHeadline = s.AboutHeadline,
         AboutHeadlineTr = s.AboutHeadlineTr,

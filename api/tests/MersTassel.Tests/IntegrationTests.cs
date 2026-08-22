@@ -3,7 +3,11 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Collections.Concurrent;
 using FluentAssertions;
+using MersTassel.Application.Common;
+using MersTassel.Application.DTOs;
+using MersTassel.Application.Interfaces;
 using MersTassel.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace MersTassel.Tests;
 
@@ -40,6 +45,16 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
                 ["Stripe:SecretKey"] = "",
                 ["Stripe:WebhookSecret"] = "",
             });
+        });
+
+        // Contact integration tests must exercise the complete endpoint/database flow without
+        // sending real email. Production keeps the SMTP implementation registered by the app.
+        builder.ConfigureServices(services =>
+        {
+            services.RemoveAll<IContactEmailSender>();
+            services.AddSingleton<RecordingContactEmailSender>();
+            services.AddSingleton<IContactEmailSender>(provider =>
+                provider.GetRequiredService<RecordingContactEmailSender>());
         });
     }
 
@@ -94,7 +109,7 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var body = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/products?pageSize=100", Json);
 
         body!.Success.Should().BeTrue();
-        body.Data!.GetProperty("total").GetInt32().Should().BeGreaterThanOrEqualTo(8);
+        body.Data!.GetProperty("total").GetInt32().Should().BeGreaterThanOrEqualTo(19);
 
         var slugs = body.Data.GetProperty("items").EnumerateArray()
             .Select(i => i.GetProperty("slug").GetString()).ToList();
@@ -113,10 +128,10 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
     {
         var client = factory.CreateClient();
 
-        var pendants = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/products?category=pendants", Json);
-        pendants!.Data!.GetProperty("items").EnumerateArray()
+        var necklaces = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/products?category=necklaces", Json);
+        necklaces!.Data!.GetProperty("items").EnumerateArray()
             .Select(i => i.GetProperty("slug").GetString())
-            .Should().BeEquivalentTo(["sedef-moon-pendant", "halic-crystal-pendant"]);
+            .Should().Contain(["lale-pearl-tassel", "sedef-moon-pendant", "halic-crystal-pendant", "ada-layered-chain"]);
 
         var cheapest = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/products?sort=price-low&pageSize=5", Json);
         var prices = cheapest!.Data!.GetProperty("items").EnumerateArray()
@@ -149,6 +164,58 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task Requested_categories_are_localized_illustrated_and_shoppable()
+    {
+        var client = factory.CreateClient();
+        var body = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/categories", Json);
+
+        var categories = body!.Data!.EnumerateArray().ToDictionary(
+            category => category.GetProperty("slug").GetString()!,
+            category => category);
+
+        string[] requested =
+        [
+            "rings", "necklaces", "bracelets", "anklets", "womens-handbags",
+            "mens-wallets", "keychains", "prayer-beads", "earrings", "kids-mini-bags",
+            "card-holders",
+        ];
+
+        categories.Keys.Should().BeEquivalentTo(requested);
+        foreach (var slug in requested)
+        {
+            categories[slug].GetProperty("nameTr").GetString().Should().NotBeNullOrWhiteSpace();
+            categories[slug].GetProperty("image").GetString().Should().NotBeNullOrWhiteSpace();
+            categories[slug].GetProperty("count").GetInt32().Should().BeGreaterThan(0);
+        }
+    }
+
+    [Fact]
+    public async Task Cute_keychain_collection_is_available_with_media_and_stock()
+    {
+        var client = factory.CreateClient();
+        var body = await client.GetFromJsonAsync<Envelope<JsonElement>>(
+            "/api/v1/products?category=keychains&pageSize=100", Json);
+
+        var products = body!.Data!.GetProperty("items").EnumerateArray().ToDictionary(
+            product => product.GetProperty("slug").GetString()!,
+            product => product);
+
+        string[] cuteKeychains =
+        [
+            "pofuduk-teddy-charm", "fiyonk-crochet-keychain",
+            "jelly-bloom-beaded-charm", "cicekli-bunny-resin-charm",
+        ];
+
+        products.Keys.Should().Contain(cuteKeychains);
+        foreach (var slug in cuteKeychains)
+        {
+            products[slug].GetProperty("nameTr").GetString().Should().NotBeNullOrWhiteSpace();
+            products[slug].GetProperty("image").GetString().Should().StartWith("http");
+            products[slug].GetProperty("stock").GetInt32().Should().BeGreaterThan(0);
+        }
+    }
+
+    [Fact]
     public async Task Product_detail_carries_variants_media_and_turkish_copy()
     {
         var client = factory.CreateClient();
@@ -175,6 +242,120 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     // ── Auth ───────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Contact_message_is_validated_stored_and_delivered_to_the_email_boundary()
+    {
+        var client = factory.CreateClient();
+        var customerEmail = $"contact-{Guid.NewGuid():N}@example.com";
+
+        var response = await client.PostAsJsonAsync("/api/v1/contact/messages", new
+        {
+            name = "Ada Customer",
+            email = customerEmail,
+            topic = "order",
+            message = "Could you tell me when my order will be dispatched?",
+            locale = "en",
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var body = await response.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
+        var reference = body!.Data!.GetProperty("reference").GetInt32();
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var stored = await db.ContactMessages.SingleAsync(message => message.Id == reference);
+        stored.Email.Should().Be(customerEmail);
+        stored.DeliveryStatus.Should().Be("Sent");
+        stored.SentAt.Should().NotBeNull();
+
+        var mailer = factory.Services.GetRequiredService<RecordingContactEmailSender>();
+        mailer.Deliveries.Should().Contain(delivery =>
+            delivery.Reference == reference && delivery.Request.Email == customerEmail);
+    }
+
+    [Fact]
+    public async Task Contact_message_rejects_invalid_fields_without_sending()
+    {
+        var client = factory.CreateClient();
+        var response = await client.PostAsJsonAsync("/api/v1/contact/messages", new
+        {
+            name = "",
+            email = "not-an-email",
+            topic = "unknown",
+            message = "short",
+            locale = "en",
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
+        body!.Code.Should().Be("validation_failed");
+        body.Errors.Should().ContainKeys("name", "email", "topic", "message");
+    }
+
+    [Fact]
+    public async Task Contact_delivery_failure_is_recorded_and_never_returns_false_success()
+    {
+        var client = factory.CreateClient();
+        var customerEmail = $"simulate-failure-{Guid.NewGuid():N}@example.com";
+        var response = await client.PostAsJsonAsync("/api/v1/contact/messages", new
+        {
+            name = "Delivery Test",
+            email = customerEmail,
+            topic = "product",
+            message = "This valid message simulates an unavailable email provider.",
+            locale = "en",
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadGateway);
+        var body = await response.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
+        body!.Code.Should().Be("email_delivery_failed");
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var stored = await db.ContactMessages.SingleAsync(message => message.Email == customerEmail);
+        stored.DeliveryStatus.Should().Be("Failed");
+        stored.SentAt.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Newsletter_subscription_is_validated_persisted_and_idempotent()
+    {
+        var client = factory.CreateClient();
+        var email = $"notes-{Guid.NewGuid():N}@example.com";
+
+        var created = await client.PostAsJsonAsync("/api/v1/newsletter/subscribe",
+            new { email, locale = "tr", source = "home" });
+        created.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var first = await created.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
+        first!.Data!.GetProperty("email").GetString().Should().Be(email);
+        first.Data.GetProperty("alreadySubscribed").GetBoolean().Should().BeFalse();
+
+        var duplicate = await client.PostAsJsonAsync("/api/v1/newsletter/subscribe",
+            new { email = email.ToUpperInvariant(), locale = "en", source = "footer" });
+        duplicate.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var second = await duplicate.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
+        second!.Data!.GetProperty("alreadySubscribed").GetBoolean().Should().BeTrue();
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        (await db.NewsletterSubscribers.CountAsync()).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Newsletter_rejects_invalid_email_and_untrusted_source()
+    {
+        var client = factory.CreateClient();
+        var response = await client.PostAsJsonAsync("/api/v1/newsletter/subscribe",
+            new { email = "not-an-email", locale = "en", source = "unknown" });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
+        body!.Code.Should().Be("validation_failed");
+        body.Errors.Should().ContainKeys("email", "source");
+    }
 
     [Fact]
     public async Task Register_login_refresh_and_profile_round_trip()
@@ -577,7 +758,16 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         body!.Success.Should().BeTrue();
         body.Data!.GetProperty("siteName").GetString().Should().Be("MERS Tassel");
         body.Data.GetProperty("contactEmail").GetString().Should().NotBeNullOrWhiteSpace();
+        body.Data.GetProperty("whatsappPhone").GetString().Should().NotBeNullOrWhiteSpace();
+        body.Data.GetProperty("instagramUrl").GetString().Should().StartWith("https://");
         body.Data.GetProperty("heroImagePath").GetString().Should().StartWith("/uploads/");
+
+        // Networks the atelier does not use are left unset, and a null member is omitted from
+        // the payload rather than sent as null, so every social link is optional to the
+        // storefront. Assert the shape when one is present instead of pinning a value the
+        // owner edits from the settings screen.
+        if (body.Data.TryGetProperty("tiktokUrl", out var tiktok) && tiktok.ValueKind is not JsonValueKind.Null)
+            tiktok.GetString().Should().StartWith("https://");
     }
 
     [Fact]
@@ -618,8 +808,8 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var body = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/categories", Json);
 
         var categories = body!.Data!.EnumerateArray().ToList();
-        categories.Should().HaveCount(6);
-        categories.Sum(c => c.GetProperty("count").GetInt32()).Should().BeGreaterThanOrEqualTo(8);
+        categories.Should().HaveCount(11);
+        categories.Sum(c => c.GetProperty("count").GetInt32()).Should().BeGreaterThanOrEqualTo(19);
         categories.Should().OnlyContain(c => c.GetProperty("nameTr").GetString() != null);
     }
 
@@ -628,5 +818,23 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var client = factory.CreateClient();
         var body = await client.GetFromJsonAsync<Envelope<JsonElement>>($"/api/v1/products/{slug}", Json);
         return body!.Data!.GetProperty("stock").GetInt32();
+    }
+}
+
+public sealed class RecordingContactEmailSender : IContactEmailSender
+{
+    public ConcurrentBag<(ContactMessageRequest Request, int Reference)> Deliveries { get; } = [];
+
+    public Task SendAsync(ContactMessageRequest request, int reference, CancellationToken ct = default)
+    {
+        if (request.Email.StartsWith("simulate-failure-", StringComparison.Ordinal))
+        {
+            throw new DeliveryException(
+                "email_delivery_failed",
+                "The test email provider is unavailable.");
+        }
+
+        Deliveries.Add((request, reference));
+        return Task.CompletedTask;
     }
 }

@@ -72,6 +72,22 @@ public interface ISiteSettingsService
     Task<SiteSettingsDto> UpdateAsync(SiteSettingsDto request, UploadedFile? logo, UploadedFile? hero, CancellationToken ct = default);
 }
 
+public interface INewsletterService
+{
+    Task<NewsletterSubscriptionDto> SubscribeAsync(NewsletterSubscribeRequest request, CancellationToken ct = default);
+}
+
+public interface IContactMessageService
+{
+    Task<ContactMessageReceiptDto> SendAsync(ContactMessageRequest request, CancellationToken ct = default);
+}
+
+/// <summary>Email delivery boundary; the infrastructure implementation authenticates with SMTP.</summary>
+public interface IContactEmailSender
+{
+    Task SendAsync(ContactMessageRequest request, int reference, CancellationToken ct = default);
+}
+
 public interface IDashboardService
 {
     Task<DashboardDto> GetAsync(CancellationToken ct = default);

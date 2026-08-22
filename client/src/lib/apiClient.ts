@@ -7,14 +7,65 @@
  * refreshes would invalidate each other and sign the user out.
  */
 
-export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5080').replace(/\/$/, '');
+/**
+ * Origin of the API, e.g. `http://localhost:5080`.
+ *
+ * NEXT_PUBLIC_API_URL should be an origin, but a value copied from an older setup can carry
+ * a path (`http://localhost:8000/api`) or a missing scheme. Either would otherwise build
+ * broken request URLs — including every image, since media resolves against the same base —
+ * so this parses with URL and takes `.origin`, which strips any path reliably rather than
+ * only the specific suffixes seen so far.
+ */
+function resolveApiBase(): string {
+  const fallback = 'http://localhost:5080';
+  const configured = (process.env.NEXT_PUBLIC_API_URL || fallback).trim();
+
+  try {
+    const origin = new URL(configured).origin;
+
+    if (origin !== configured.replace(/\/+$/, '') && process.env.NODE_ENV !== 'production' && typeof window !== 'undefined') {
+      console.warn(`[api] NEXT_PUBLIC_API_URL should be the API origin, not a path. Using "${origin}" instead of "${configured}".`);
+    }
+
+    return origin;
+  } catch {
+    if (process.env.NODE_ENV !== 'production' && typeof window !== 'undefined') {
+      console.warn(`[api] NEXT_PUBLIC_API_URL="${configured}" is not a valid URL. Falling back to ${fallback}.`);
+    }
+    return fallback;
+  }
+}
+
+export const API_BASE_URL = resolveApiBase();
 export const API_URL = `${API_BASE_URL}/api/v1`;
 
-/** Resolves a stored relative path (`/uploads/...`) to an absolute URL. */
+/**
+ * URL for rendering stored media.
+ *
+ * Deliberately relative: `/uploads/...` is proxied to the API by the rewrite in
+ * next.config.mjs, so images are same-origin. That keeps <Image> on its local-path code path
+ * and removes the need for the URL to survive remotePatterns matching, Next's private-IP
+ * optimizer check, and cross-origin access — each of which could independently break media.
+ */
 export function mediaUrl(path?: string | null): string {
   if (!path) return '';
   if (/^https?:\/\//i.test(path)) return path;
-  return `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  return path.startsWith('/') ? path : `/${path}`;
+}
+
+/**
+ * Absolute URL for places a relative path cannot work — Open Graph and other metadata read by
+ * external crawlers.
+ *
+ * Built from the frontend's own origin, not the API's: `/uploads/...` is proxied to the API
+ * by the rewrite in next.config.mjs, so the frontend origin resolves it. The API origin often
+ * won't — it can be a private/internal host the frontend reaches but the public internet does
+ * not — so a crawler-facing URL must go through the same proxy every browser uses.
+ */
+export function absoluteMediaUrl(path: string | null | undefined, frontendOrigin: string): string {
+  if (!path) return '';
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${frontendOrigin.replace(/\/+$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
 export type ApiEnvelope<T> = {
@@ -161,12 +212,16 @@ async function send<T>(path: string, options: RequestOptions, accessOverride?: s
   const envelope = (await response.json().catch(() => null)) as ApiEnvelope<T> | null;
 
   if (!response.ok || !envelope?.success) {
-    throw new ApiError(
-      envelope?.message || `Request failed (${response.status}).`,
-      response.status,
-      envelope?.code,
-      envelope?.errors,
-    );
+    // No envelope at all means the body was not this API's JSON — almost always a
+    // misconfigured base URL answering from some other server. Say that, rather than
+    // reporting a bare status code that gives the reader nothing to act on.
+    const message =
+      envelope?.message ||
+      (envelope === null
+        ? `Unexpected ${response.status} from ${API_URL}. Check NEXT_PUBLIC_API_URL points at the API origin.`
+        : `Request failed (${response.status}).`);
+
+    throw new ApiError(message, response.status, envelope?.code, envelope?.errors);
   }
 
   return envelope.data as T;

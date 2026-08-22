@@ -20,6 +20,42 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
     }
 }
 
+public class NewsletterSubscriberConfiguration : IEntityTypeConfiguration<NewsletterSubscriber>
+{
+    public void Configure(EntityTypeBuilder<NewsletterSubscriber> b)
+    {
+        b.ToTable("NewsletterSubscribers");
+        b.Property(x => x.Email).HasMaxLength(254).IsRequired();
+        b.Property(x => x.NormalizedEmail).HasMaxLength(254).IsRequired();
+        b.Property(x => x.Locale).HasMaxLength(5).IsRequired();
+        b.Property(x => x.Source).HasMaxLength(20).IsRequired();
+
+        b.HasIndex(x => x.NormalizedEmail)
+            .IsUnique()
+            .HasFilter("\"isDelete\" = 0");
+        b.HasIndex(x => x.IsDelete);
+        b.HasIndex(x => x.CreatedAt);
+    }
+}
+
+public class ContactMessageConfiguration : IEntityTypeConfiguration<ContactMessage>
+{
+    public void Configure(EntityTypeBuilder<ContactMessage> b)
+    {
+        b.ToTable("ContactMessages");
+        b.Property(x => x.Name).HasMaxLength(120).IsRequired();
+        b.Property(x => x.Email).HasMaxLength(254).IsRequired();
+        b.Property(x => x.Topic).HasMaxLength(24).IsRequired();
+        b.Property(x => x.Message).HasMaxLength(4000).IsRequired();
+        b.Property(x => x.Locale).HasMaxLength(5).IsRequired();
+        b.Property(x => x.DeliveryStatus).HasMaxLength(16).IsRequired();
+
+        b.HasIndex(x => x.CreatedAt);
+        b.HasIndex(x => x.DeliveryStatus);
+        b.HasIndex(x => x.IsDelete);
+    }
+}
+
 public class ProductConfiguration : IEntityTypeConfiguration<Product>
 {
     public void Configure(EntityTypeBuilder<Product> b)
@@ -238,6 +274,8 @@ public class SiteSettingsConfiguration : IEntityTypeConfiguration<SiteSettings>
         b.Property(x => x.ContactPhone).HasMaxLength(60);
         b.Property(x => x.ContactAddress).HasMaxLength(400);
         b.Property(x => x.InstagramUrl).HasMaxLength(300);
+        b.Property(x => x.TiktokUrl).HasMaxLength(300);
+        b.Property(x => x.WhatsappPhone).HasMaxLength(60);
         b.Property(x => x.PinterestUrl).HasMaxLength(300);
         b.Property(x => x.AboutHeadline).HasMaxLength(200);
         b.Property(x => x.AboutBody).HasMaxLength(4000);

@@ -1,55 +1,48 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#
+# MERS Tassel - one-shot local setup
+# Run from the project root:  bash setup.sh
+#
+# Installs a .NET SDK that can build api/ (under ~/.dotnet, no admin rights) if the machine
+# does not already have one, restores the API, and installs the client's npm packages.
+# The Django backend in server/ is kept for reference only — nothing in the client uses it.
 
-# ============================================
-# MERS Tassel - Quick Setup Script
-# Run this from the project root: bash setup.sh
-# ============================================
+set -euo pipefail
 
-echo "🌸 Setting up MERS Tassel..."
-echo ""
+REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
-# ---- SERVER SETUP ----
-echo "🐍 Setting up Django backend..."
-cd server
+echo "Setting up MERS Tassel..."
+echo
 
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate
+echo "==> .NET SDK"
+DOTNET="$(python3 "$REPO_ROOT/scripts/dotnet_sdk.py")"
+DOTNET_ROOT="$(dirname -- "$DOTNET")"
+export DOTNET_ROOT
+export PATH="$DOTNET_ROOT:$PATH"
+echo "    using $DOTNET"
 
-# Install Python dependencies
-pip install -r requirements.txt
+echo "==> API packages"
+"$DOTNET" restore "$REPO_ROOT/api/MersTassel.slnx"
 
-# Run migrations
-python manage.py makemigrations products contact analytics
-python manage.py migrate
+echo "==> Client packages"
+(cd "$REPO_ROOT/client" && npm install)
 
-# Seed sample data
-python manage.py seed_data
+if [ ! -f "$REPO_ROOT/client/.env.local" ] && [ -f "$REPO_ROOT/client/.env.example" ]; then
+  cp "$REPO_ROOT/client/.env.example" "$REPO_ROOT/client/.env.local"
+  echo "    wrote client/.env.local"
+fi
 
-echo ""
-echo "✅ Django backend is ready!"
-echo "   Run: cd server && source venv/bin/activate && python manage.py runserver"
-echo ""
+cat <<'DONE'
 
-# ---- CLIENT SETUP ----
-cd ../client
+Setup complete.
 
-echo "⚡ Setting up Next.js frontend..."
+  Start everything:   cd client && npm run dev
+  API only:           ./api/run.sh
 
-# Install Node dependencies
-npm install
+  Storefront:  http://localhost:3000
+  Workspace:   http://localhost:3000/admin
+  API:         http://localhost:5080  (Swagger at /swagger)
 
-echo ""
-echo "✅ Next.js frontend is ready!"
-echo "   Run: cd client && npm run dev"
-echo ""
-
-echo "🎉 Setup complete!"
-echo ""
-echo "📌 Quick Start:"
-echo "   Terminal 1: cd server && source venv/bin/activate && python manage.py runserver"
-echo "   Terminal 2: cd client && npm run dev"
-echo ""
-echo "   Frontend: http://localhost:3000"
-echo "   API:      http://localhost:8000/api/"
-echo "   Admin:    http://localhost:8000/admin/"
+On the API's first run it seeds the catalog and prints a generated administrator password
+once — copy it from the console, or set Seed__AdminEmail / Seed__AdminPassword beforehand.
+DONE

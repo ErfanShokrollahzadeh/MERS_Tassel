@@ -1,0 +1,243 @@
+name: mers-tassel
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: merstassel
+      POSTGRES_USER: merstassel
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    volumes:
+      # PostgreSQL 18 stores versioned clusters below /var/lib/postgresql. Mounting the
+      # parent is required for persistence and future pg_upgrade --link support.
+      - postgres_data:/var/lib/postgresql
+      - ./deploy/postgres/10-create-django-db.sql:/docker-entrypoint-initdb.d/10-create-django-db.sql:ro
+    networks:
+      - data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U merstassel -d merstassel"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    shm_size: 256mb
+    security_opt:
+      - no-new-privileges:true
+    logging: &default-logging
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+
+  dotnet-api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    image: mers-tassel/dotnet-api:latest
+    restart: unless-stopped
+    init: true
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      DataProtection__KeysPath: /app/keys
+      Database__Provider: PostgreSQL
+      Database__Host: postgres
+      Database__Port: "5432"
+      Database__Name: merstassel
+      Database__Username: merstassel
+      Database__MaxPoolSize: "50"
+      Cors__AllowedOrigins__0: https://${SITE_DOMAIN}
+      Cors__AllowedOrigins__1: https://www.${SITE_DOMAIN}
+      Cors__AllowedOrigins__2: https://${VERCEL_PROJECT_DOMAIN}
+      Stripe__FrontendUrl: https://${SITE_DOMAIN}
+      Stripe__Currency: ${STRIPE_CURRENCY:-try}
+      Email__SmtpHost: smtp.gmail.com
+      Email__SmtpPort: "587"
+      Email__UseSsl: "true"
+      Email__Username: ${CONTACT_EMAIL:-merstassel@gmail.com}
+      Email__Recipient: ${CONTACT_EMAIL:-merstassel@gmail.com}
+      Email__FromName: MERS Tassel Website
+      Seed__AdminEmail: ${ADMIN_EMAIL}
+      Seed__ResetAdminPassword: "false"
+    secrets:
+      - source: postgres_password
+        target: Database__Password
+      - source: jwt_signing_key
+        target: Jwt__SigningKey
+      - source: admin_password
+        target: Seed__AdminPassword
+      - source: gmail_app_password
+        target: Email__AppPassword
+      - source: stripe_secret_key
+        target: Stripe__SecretKey
+      - source: stripe_webhook_secret
+        target: Stripe__WebhookSecret
+    volumes:
+      - dotnet_uploads:/app/wwwroot/uploads
+      - dotnet_keys:/app/keys
+    networks:
+      - backend
+      - data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 768m
+    cpus: 1.5
+    logging: *default-logging
+
+  python-api:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    image: mers-tassel/python-api:latest
+    restart: unless-stopped
+    init: true
+    environment:
+      DJANGO_DEBUG: "false"
+      # Include loopback names because the container healthcheck connects directly to Gunicorn.
+      # Public traffic is still limited to the configured hostname by Caddy and Docker networks.
+      DJANGO_ALLOWED_HOSTS: ${PYTHON_API_DOMAIN},localhost,127.0.0.1
+      DJANGO_CORS_ALLOWED_ORIGINS: https://${SITE_DOMAIN},https://www.${SITE_DOMAIN},https://${VERCEL_PROJECT_DOMAIN}
+      DJANGO_CSRF_TRUSTED_ORIGINS: https://${PYTHON_API_DOMAIN},https://${SITE_DOMAIN},https://www.${SITE_DOMAIN}
+      DJANGO_SECURE_SSL_REDIRECT: "true"
+      DATABASE_ENGINE: postgresql
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: merstassel_django
+      POSTGRES_USER: merstassel
+      FRONTEND_URL: https://${SITE_DOMAIN}
+      STRIPE_CURRENCY: ${STRIPE_CURRENCY:-try}
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-2}
+      GUNICORN_THREADS: ${GUNICORN_THREADS:-4}
+    secrets:
+      - source: postgres_password
+        target: POSTGRES_PASSWORD
+      - source: django_secret_key
+        target: DJANGO_SECRET_KEY
+      - source: stripe_secret_key
+        target: STRIPE_SECRET_KEY
+      - source: stripe_webhook_secret
+        target: STRIPE_WEBHOOK_SECRET
+    volumes:
+      - django_media:/app/media
+      - django_static:/app/staticfiles
+    networks:
+      - backend
+      - data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 512m
+    cpus: 1.0
+    logging: *default-logging
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    environment:
+      API_DOMAIN: ${API_DOMAIN}
+      PYTHON_API_DOMAIN: ${PYTHON_API_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - django_media:/srv/django-media:ro
+    networks:
+      - edge
+      - backend
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 256m
+    cpus: 0.5
+    logging: *default-logging
+
+  backup:
+    image: postgres:18-alpine
+    profiles: ["tools"]
+    environment:
+      PGHOST: postgres
+      PGUSER: merstassel
+      RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    secrets:
+      - postgres_password
+    volumes:
+      - ./deploy/backup.sh:/usr/local/bin/backup:ro
+      - ./deploy/backups:/backups
+      - dotnet_uploads:/volumes/dotnet_uploads:ro
+      - dotnet_keys:/volumes/dotnet_keys:ro
+      - django_media:/volumes/django_media:ro
+    entrypoint: ["/bin/sh", "/usr/local/bin/backup"]
+    networks:
+      - data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  edge:
+  backend:
+    internal: true
+  data:
+    internal: true
+
+volumes:
+  postgres_data:
+  dotnet_uploads:
+  dotnet_keys:
+  django_media:
+  django_static:
+  caddy_data:
+  caddy_config:
+
+secrets:
+  postgres_password:
+    file: ./deploy/secrets/postgres_password.txt
+  jwt_signing_key:
+    file: ./deploy/secrets/jwt_signing_key.txt
+  admin_password:
+    file: ./deploy/secrets/admin_password.txt
+  django_secret_key:
+    file: ./deploy/secrets/django_secret_key.txt
+  gmail_app_password:
+    file: ./deploy/secrets/gmail_app_password.txt
+  stripe_secret_key:
+    file: ./deploy/secrets/stripe_secret_key.txt
+  stripe_webhook_secret:
+    file: ./deploy/secrets/stripe_webhook_secret.txt

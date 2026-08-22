@@ -11,6 +11,7 @@ import { MagneticLink } from '@/components/MagneticLink';
 import { EmptyState, ErrorState, ProductGridSkeleton } from '@/components/DataStates';
 import { useI18n } from '@/i18n/I18nProvider';
 import { categoryName } from '@/i18n/catalog';
+import { NewsletterForm } from '@/components/NewsletterForm';
 
 const reveal = { initial: { opacity: 0, y: 24 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: '-80px' }, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as const } };
 
@@ -23,6 +24,7 @@ export default function HomePage() {
 
   const hero = settings.data;
   const heroProduct = featured.data?.[0];
+  const heroProductName = locale === 'tr' && heroProduct?.nameTr ? heroProduct.nameTr : heroProduct?.name;
   // Hero art comes from site settings, falling back to the leading product's photograph.
   const heroImage = hero?.heroImagePath || heroProduct?.image || '';
 
@@ -44,12 +46,12 @@ export default function HomePage() {
           </motion.div>
           <motion.div className="hero-visual" initial={{ opacity: 0, scale: .96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: .9, delay: .1 }}>
             <div className="hero-image-wrap">
-              {heroImage ? <MediaImage src={heroImage} alt={heroProduct?.name || 'MERS Tassel'} sizes="(max-width: 720px) 92vw, 52vw" priority /> : <span className="skeleton-block hero-image-placeholder" />}
+              {heroImage ? <MediaImage src={heroImage} alt={heroProductName || 'MERS Tassel'} sizes="(max-width: 720px) 92vw, 52vw" priority /> : <span className="skeleton-block hero-image-placeholder" />}
             </div>
             {heroProduct && (
               <div className="hero-float-card glass-panel">
                 <span className="mini-label">{t('home.pick')}</span>
-                <strong>{locale === 'tr' && heroProduct.nameTr ? heroProduct.nameTr : heroProduct.name}</strong>
+                <strong>{heroProductName}</strong>
                 <span>{t('home.handknotted')}</span>
                 <Link href={`/products/${heroProduct.slug}`} aria-label={t('home.viewProduct')}><ArrowRight size={17} /></Link>
               </div>
@@ -82,12 +84,12 @@ export default function HomePage() {
           {categories.isError && <ErrorState error={categories.error} onRetry={() => categories.refetch()} />}
           {categories.isSuccess && (
             <div className="category-grid">
-              {categories.data.filter((category) => category.count > 0).slice(0, 4).map((category, index) => (
+              {categories.data.filter((category) => category.count > 0).map((category, index) => (
                 <motion.div key={category.slug} {...reveal} transition={{ ...reveal.transition, delay: index * .08 }}>
                   <Link href={`/products?category=${category.slug}`} className="category-card">
                     {category.image ? <MediaImage src={category.image} alt="" sizes="(max-width: 720px) 50vw, 25vw" /> : <span className="skeleton-block" />}
                     <div className="category-card__veil" />
-                    <div className="category-card__copy"><span>0{index + 1}</span><h3>{categoryName(category, locale)}</h3><p>{t('home.pieces', { count: category.count })}</p><i><ArrowUpRight /></i></div>
+                    <div className="category-card__copy"><span>{String(index + 1).padStart(2, '0')}</span><h3>{categoryName(category, locale)}</h3><p>{t('home.pieces', { count: category.count })}</p><i><ArrowUpRight /></i></div>
                   </Link>
                 </motion.div>
               ))}
@@ -99,7 +101,7 @@ export default function HomePage() {
       {heroProduct && (
         <section className="editorial-section">
           <div className="editorial-image">
-            <MediaImage src={featured.data?.at(-1)?.image || heroProduct.image} alt="Details from the MERS Tassel studio" sizes="(max-width: 720px) 100vw, 55vw" />
+            <MediaImage src={featured.data?.at(-1)?.image || heroProduct.image} alt={t('common.studioDetailAlt')} sizes="(max-width: 720px) 100vw, 55vw" />
             <span className="editorial-caption">{t('home.atelierCaption')}</span>
           </div>
           <motion.div className="editorial-copy" {...reveal}><span className="eyebrow">{t('home.hands')}</span><h2>{t('home.slowTitle')}</h2><p>{t('home.slowCopy')}</p><blockquote>{t('home.quote')}<cite>{t('home.quoteBy')}</cite></blockquote><Link className="text-link" href="/about">{t('home.stepInside')} <ArrowRight size={17} /></Link></motion.div>
@@ -108,7 +110,7 @@ export default function HomePage() {
 
       <section className="section quote-section"><motion.div className="container-narrow" {...reveal}><div className="quote-mark">“</div><blockquote>{t('home.review')}</blockquote><div className="quote-author"><span>AK</span><div><strong>Ayşe K.</strong><small>{t('home.verified')}</small></div></div></motion.div></section>
 
-      <section className="newsletter-band"><div className="ambient ambient--three" /><div className="container-wide newsletter-grid"><div><span className="eyebrow">{t('home.letters')}</span><h2>{t('home.inbox')}</h2><p>{t('home.inboxCopy')}</p></div><form onSubmit={(event) => event.preventDefault()}><label className="sr-only" htmlFor="newsletter-email">{t('footer.email')}</label><input id="newsletter-email" type="email" placeholder="you@example.com" required /><button className="button button--light">{t('home.join')} <ArrowRight size={17} /></button><small>{t('home.privacy')}</small></form></div></section>
+      <section className="newsletter-band"><div className="ambient ambient--three" /><div className="container-wide newsletter-grid"><div><span className="eyebrow">{t('home.letters')}</span><h2>{t('home.inbox')}</h2><p>{t('home.inboxCopy')}</p></div><NewsletterForm source="home" /></div></section>
     </>
   );
 }

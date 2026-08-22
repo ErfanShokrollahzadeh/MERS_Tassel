@@ -24,6 +24,8 @@ public class SiteSettings : SoftDeletableEntity
     public string ContactAddress { get; set; } = string.Empty;
 
     public string? InstagramUrl { get; set; }
+    public string? TiktokUrl { get; set; }
+    public string? WhatsappPhone { get; set; }
     public string? PinterestUrl { get; set; }
 
     public string AboutHeadline { get; set; } = string.Empty;

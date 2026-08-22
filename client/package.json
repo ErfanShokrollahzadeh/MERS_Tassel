@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "python3 scripts/dev.py",
     "dev:next": "next dev",
+    "dotnet": "python3 ../scripts/dotnet_sdk.py",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit"

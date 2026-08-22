@@ -28,6 +28,32 @@ public class LoginRequestValidator : AbstractValidator<LoginRequest>
     }
 }
 
+public class NewsletterSubscribeRequestValidator : AbstractValidator<NewsletterSubscribeRequest>
+{
+    public NewsletterSubscribeRequestValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(254);
+        RuleFor(x => x.Locale).Must(value => value is "en" or "tr").WithMessage("Locale must be 'en' or 'tr'.");
+        RuleFor(x => x.Source).Must(value => value is "home" or "footer").WithMessage("Source must be 'home' or 'footer'.");
+    }
+}
+
+public class ContactMessageRequestValidator : AbstractValidator<ContactMessageRequest>
+{
+    private static readonly string[] Topics = ["product", "order", "repairs", "press"];
+
+    public ContactMessageRequestValidator()
+    {
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(120);
+        RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(254);
+        RuleFor(x => x.Topic).Must(value => Topics.Contains(value))
+            .WithMessage("Choose a valid contact topic.");
+        RuleFor(x => x.Message).NotEmpty().MinimumLength(10).MaximumLength(4000);
+        RuleFor(x => x.Locale).Must(value => value is "en" or "tr")
+            .WithMessage("Locale must be 'en' or 'tr'.");
+    }
+}
+
 public class UpdateProfileRequestValidator : AbstractValidator<UpdateProfileRequest>
 {
     public UpdateProfileRequestValidator()
@@ -108,6 +134,9 @@ public class SiteSettingsDtoValidator : AbstractValidator<SiteSettingsDto>
         RuleFor(x => x.HeroHeadline).MaximumLength(200);
         RuleFor(x => x.InstagramUrl).Must(BeAUrl).When(x => !string.IsNullOrWhiteSpace(x.InstagramUrl))
             .WithMessage("Instagram URL must be a valid absolute URL.");
+        RuleFor(x => x.TiktokUrl).Must(BeAUrl).When(x => !string.IsNullOrWhiteSpace(x.TiktokUrl))
+            .WithMessage("TikTok URL must be a valid absolute URL.");
+        RuleFor(x => x.WhatsappPhone).MaximumLength(60);
         RuleFor(x => x.PinterestUrl).Must(BeAUrl).When(x => !string.IsNullOrWhiteSpace(x.PinterestUrl))
             .WithMessage("Pinterest URL must be a valid absolute URL.");
     }

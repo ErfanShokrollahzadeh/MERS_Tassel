@@ -24,6 +24,9 @@ Desktop.ini
 .env
 .env.local
 .env.*.local
+.env.production
+deploy/secrets/*.txt
+deploy/backups/
 
 # ==============================
 # Python / Django (server/)

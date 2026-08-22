@@ -5,11 +5,18 @@ workspace for managing the catalog, orders and site content.
 
 ## Stack
 
-- **API** — .NET 10, ASP.NET Core, EF Core with SQLite, ASP.NET Core Identity, Stripe.net
+- **API** — .NET 10, ASP.NET Core, EF Core, ASP.NET Core Identity, Stripe.net
 - **Client** — Next.js 16, React 19, strict TypeScript, TanStack Query, Zustand, Framer Motion, Recharts
+- **Production** — PostgreSQL 18, Caddy TLS ingress, Docker Compose; Next.js on Vercel
 
 The API lives in `api/` and the client in `client/`. The original Django backend is still in
 `server/` for reference; nothing in the client talks to it any more.
+
+## Production deployment
+
+Production Dockerfiles and the complete Compose stack are included. The active .NET API and the
+legacy Django service use separate PostgreSQL databases, only Caddy is internet-facing, and the
+Next.js storefront deploys independently to Vercel. Start with [the deployment runbook](docs/deployment.md).
 
 ## What works
 
@@ -40,18 +47,36 @@ placeholder numbers.
 
 ### API
 
-Install the .NET 10 SDK if you do not have it:
-
 ```bash
-curl -fsSL https://builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.sh | bash -s -- --channel 10.0
-export PATH="$HOME/.dotnet:$PATH"
+./api/run.sh
 ```
 
-Then run it:
+That is the whole thing. It picks a .NET SDK that can build the project and starts the API
+with it — and if the machine has none, it installs one under `~/.dotnet` first (per-user, no
+`sudo`, nothing else on the machine touched). `npm run dev` in `client/` does the same before
+starting either server.
+
+Both matter because the projects target `net10.0` and use EF Core 10, which no earlier SDK
+can build, and because the .NET host only sees SDKs installed next to the `dotnet` binary you
+invoked. So a plain `dotnet run` on a machine carrying 6.0 on `PATH` and 10.0 in `~/.dotnet`
+still fails, with either `NETSDK1045` or *"a compatible installed .NET SDK for global.json
+version [10.0.100] ... was not found"*. When that happens the API never starts, and the only
+thing you see is a storefront with no images — nothing is serving `/uploads`.
+
+To install the SDK without starting anything, or to see what is currently found:
 
 ```bash
-cd api/src/MersTassel.Api
-dotnet run
+python3 scripts/dotnet_sdk.py           # installs if needed, prints the dotnet it will use
+python3 scripts/dotnet_sdk.py --check   # look only, never install
+```
+
+Set `MERS_SKIP_DOTNET_INSTALL=1` to keep it from installing anything, or install manually
+from [dotnet.microsoft.com/download/dotnet/10.0](https://dotnet.microsoft.com/download/dotnet/10.0).
+Several SDK versions coexist happily; `api/global.json` selects 10.x for this solution. To use
+`dotnet` directly in a shell, put the resolved SDK first on `PATH`:
+
+```bash
+export PATH="$HOME/.dotnet:$PATH"   # then: cd api/src/MersTassel.Api && dotnet run
 ```
 
 The API listens on `http://localhost:5080`, with Swagger at `/swagger` in development.
@@ -78,6 +103,22 @@ The storefront runs at `http://localhost:3000` and the workspace at `/admin`.
 
 `npm run dev` starts the API and the client together. To run only the client, use `npm run dev:next`.
 
+### Recover or reset the administrator
+
+Use the recovery flag for one startup when an existing account needs administrator access or
+the administrator password has been lost. From the repository root:
+
+```bash
+Seed__AdminEmail='you@example.com' \
+Seed__AdminPassword='choose-a-new-strong-password' \
+Seed__ResetAdminPassword='true' \
+npm --prefix client run dev
+```
+
+After the API reports that administrator access was recovered, stop it and start normally again.
+Do not leave `Seed__ResetAdminPassword` enabled. This recovery promotes the configured account,
+clears its lockout, and changes its password without deleting orders, customers, or catalog data.
+
 ## Configuration
 
 Set through `appsettings.json`, environment variables or user-secrets. Nested keys use `__` in
@@ -85,15 +126,40 @@ environment variables (`Jwt__SigningKey`).
 
 | Key | Purpose |
 | --- | --- |
-| `ConnectionStrings:Default` | SQLite connection string |
+| `ConnectionStrings:Default` | Explicit SQLite connection string (optional locally) |
+| `ConnectionStrings:PostgreSQL` | Explicit PostgreSQL connection string (optional alternative to the individual Docker values) |
+| `Database:Provider` | `Sqlite` locally or `PostgreSQL` in production |
+| `Database:Host` / `Port` / `Name` / `Username` / `Password` | PostgreSQL connection values; the password is a Docker secret in production |
 | `Jwt:SigningKey` | Token signing key. **Required outside Development** — the API refuses to start without it |
 | `Jwt:AccessTokenMinutes` / `Jwt:RefreshTokenDays` | Token lifetimes (default 15 minutes / 7 days) |
 | `Cors:AllowedOrigins` | Origins allowed to call the API |
 | `Storage:MaxBytes` | Upload size limit (default 10 MB) |
 | `Stripe:SecretKey` / `Stripe:WebhookSecret` | Enables payments; without both, checkout returns a `payments_not_configured` 503 |
+| `Email:Username` / `Email:AppPassword` | Gmail SMTP account and app password used by the contact form |
+| `Email:Recipient` | Contact-form inbox (default `merstassel@gmail.com`) |
 | `Seed:AdminEmail` / `Seed:AdminPassword` | Administrator seeded on first run |
+| `Seed:ResetAdminPassword` | One-time recovery flag: promotes the configured email to Admin and resets its password; disable immediately after a successful start |
 
 Never expose `Stripe:SecretKey` or `Jwt:SigningKey` through a `NEXT_PUBLIC_` variable.
+
+### Contact-form email
+
+The contact form stores each attempt in `ContactMessages` and sends it to
+`merstassel@gmail.com` through authenticated Gmail SMTP. Gmail requires an **app password**;
+do not put the normal Gmail password in the project. Enable two-step verification on the sending
+Google account, create an app password, then store it with .NET user-secrets:
+
+```bash
+DOTNET="$(python3 scripts/dotnet_sdk.py)"
+"$DOTNET" user-secrets --project api/src/MersTassel.Api set "Email:Username" "merstassel@gmail.com"
+"$DOTNET" user-secrets --project api/src/MersTassel.Api set "Email:AppPassword" "your-16-character-app-password"
+```
+
+Restart the development stack after setting the secrets. Messages are authenticated as the
+configured Gmail account for reliable delivery, and the customer's address is placed in
+`Reply-To`, so replying from the inbox answers the customer directly. Production deployments
+should provide the same keys through secret environment variables such as `Email__Username`
+and `Email__AppPassword`.
 
 ### Payments
 
@@ -136,6 +202,8 @@ product hides it from the storefront while order history keeps its reference.
 ## Verification
 
 ```bash
+export PATH="$(dirname "$(python3 scripts/dotnet_sdk.py)"):$PATH"
+
 cd api
 dotnet build
 dotnet test          # 47 unit and integration tests

@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { Check, Clock3, PackageCheck, RefreshCw } from 'lucide-react';
 import { fetchOrderByStripeSession } from '@/lib/commerce';
-import { ApiError } from '@/lib/apiClient';
 import { useCartStore } from '@/stores/cart';
 import { useI18n } from '@/i18n/I18nProvider';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
@@ -41,9 +40,9 @@ export function CheckoutSuccess({ sessionId }: { sessionId: string }) {
           attempt += 1;
           timeout = window.setTimeout(load, 1800);
         }
-      } catch (loadError) {
+      } catch {
         if (controller.signal.aborted) return;
-        setError(loadError instanceof ApiError ? loadError.message : t('success.retrieve'));
+        setError(t('success.retrieve'));
       }
     };
 

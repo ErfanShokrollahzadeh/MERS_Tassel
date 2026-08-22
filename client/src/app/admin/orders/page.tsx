@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminKeys, fetchAdminOrders, updateOrderStatus } from '@/lib/admin';
@@ -84,7 +84,7 @@ export default function OrdersPage() {
                 <thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Payment</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
                 <tbody>
                   {result.items.map((order: Order) => (
-                    <>
+                    <Fragment key={order.id}>
                       <tr key={order.id} onClick={() => setExpanded(expanded === order.id ? null : order.id)} className="row-clickable">
                         <td><strong>{order.number}</strong></td>
                         <td>{dateFormat.format(new Date(order.createdAt))}</td>
@@ -133,7 +133,7 @@ export default function OrdersPage() {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
                   ))}
                 </tbody>
               </table>

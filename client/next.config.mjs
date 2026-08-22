@@ -1,23 +1,45 @@
 /** @type {import('next').NextConfig} */
-const apiUrl = new URL(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5080');
 
-// Next 16 refuses to optimize images whose host resolves to a private IP, which blocks the
-// local API during development. Allow it only when the configured host really is local, so
-// the SSRF protection stays on for any deployed origin.
-const isLocalApi = ['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(apiUrl.hostname);
+/**
+ * Origin of the API. Mirrors resolveApiBase() in src/lib/apiClient.ts: NEXT_PUBLIC_API_URL
+ * should be an origin, but a value carrying a path or missing scheme is tolerated by parsing
+ * with URL and taking `.origin`, rather than stripping only specific known suffixes.
+ */
+function resolveApiOrigin() {
+  const fallback = 'http://localhost:5080';
+  const configuredValue = process.env.NEXT_PUBLIC_API_URL;
+
+  if (!configuredValue && process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'NEXT_PUBLIC_API_URL is required for production builds. Set it to the public HTTPS API origin.',
+    );
+  }
+
+  const configured = (configuredValue || fallback).trim();
+
+  try {
+    return new URL(configured).origin;
+  } catch {
+    return fallback;
+  }
+}
+
+const API_ORIGIN = resolveApiOrigin();
 
 const nextConfig = {
-  images: {
-    // Product and branding media are served by Django from its MEDIA_ROOT.
-    remotePatterns: [
-      {
-        protocol: apiUrl.protocol.replace(':', ''),
-        hostname: apiUrl.hostname,
-        port: apiUrl.port || undefined,
-        pathname: '/media/**',
-      },
-    ],
-    dangerouslyAllowLocalIP: isLocalApi,
+  async rewrites() {
+    return [
+      // Uploaded media is proxied through this origin instead of being linked directly at the
+      // API. Keeping the URL relative means <Image> takes its local-path code path, which
+      // avoids three separate ways images used to break in development: remotePatterns having
+      // to match the API's exact host and port, Next 16 refusing to optimize any upstream that
+      // resolves to a private IP, and the browser needing cross-origin access to the API.
+      //
+      // The current backend (api/, .NET) serves everything under /uploads/**. There is no
+      // /media/** route on it — that path belonged to the Django backend in server/, which this
+      // client no longer talks to — so no rewrite is registered for it.
+      { source: '/uploads/:path*', destination: `${API_ORIGIN}/uploads/:path*` },
+    ];
   },
 };
 

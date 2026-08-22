@@ -134,6 +134,8 @@ export default function SettingsPage() {
           <label>Address<input value={draft.contactAddress} onChange={(e) => set({ contactAddress: e.target.value })} /></label>
           <div className="editor-grid">
             <label>Instagram URL<input value={draft.instagramUrl ?? ''} onChange={(e) => set({ instagramUrl: e.target.value })} placeholder="https://instagram.com/…" />{field('instagramUrl') && <small role="alert">{field('instagramUrl')}</small>}</label>
+            <label>TikTok URL<input value={draft.tiktokUrl ?? ''} onChange={(e) => set({ tiktokUrl: e.target.value })} placeholder="https://tiktok.com/@…" />{field('tiktokUrl') && <small role="alert">{field('tiktokUrl')}</small>}</label>
+            <label>WhatsApp number<input value={draft.whatsappPhone ?? ''} onChange={(e) => set({ whatsappPhone: e.target.value })} placeholder="+90 555 000 00 00" /></label>
             <label>Pinterest URL<input value={draft.pinterestUrl ?? ''} onChange={(e) => set({ pinterestUrl: e.target.value })} placeholder="https://pinterest.com/…" />{field('pinterestUrl') && <small role="alert">{field('pinterestUrl')}</small>}</label>
           </div>
         </article>

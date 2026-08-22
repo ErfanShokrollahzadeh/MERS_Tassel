@@ -22,6 +22,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<ProcessedStripeEvent> ProcessedStripeEvents => Set<ProcessedStripeEvent>();
     public DbSet<SiteSettings> SiteSettings => Set<SiteSettings>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<NewsletterSubscriber> NewsletterSubscribers => Set<NewsletterSubscriber>();
+    public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
 
     /// <summary>
     /// SQLite has no native date or decimal type, and EF refuses to translate ORDER BY or
@@ -44,6 +46,23 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         base.OnModelCreating(builder);
 
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+        // SQLite represents booleans as 0/1 while PostgreSQL uses native FALSE/TRUE values.
+        // Re-apply provider-specific filtered-index predicates after the shared entity
+        // configurations so each migrations assembly emits valid SQL for its database.
+        var activeRowPredicate = Database.IsNpgsql()
+            ? "\"isDelete\" = FALSE"
+            : "\"isDelete\" = 0";
+
+        builder.Entity<NewsletterSubscriber>()
+            .HasIndex(x => x.NormalizedEmail)
+            .IsUnique()
+            .HasFilter(activeRowPredicate);
+
+        builder.Entity<Cart>()
+            .HasIndex(x => new { x.UserId, x.Status })
+            .IsUnique()
+            .HasFilter($"\"Status\" = 'Open' AND {activeRowPredicate}");
 
         // Every soft-deletable entity gets `isDelete` as its column name and a global filter,
         // so ordinary queries never see deleted rows without each call site remembering to ask.

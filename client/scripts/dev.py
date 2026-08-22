@@ -2,16 +2,23 @@
 """Run the .NET API and the Next.js storefront together for local development."""
 
 import os
-import shutil
 import signal
 import subprocess
 import sys
 import time
 from pathlib import Path
-
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
 
 CLIENT_DIR = Path(__file__).resolve().parent.parent
-API_DIR = CLIENT_DIR.parent / 'api' / 'src' / 'MersTassel.Api'
+REPO_ROOT = CLIENT_DIR.parent
+API_DIR = REPO_ROOT / 'api' / 'src' / 'MersTassel.Api'
+API_HEALTH_URL = 'http://localhost:5080/health'
+API_STARTUP_TIMEOUT_SECONDS = 60
+
+sys.path.insert(0, str(REPO_ROOT / 'scripts'))
+import dotnet_sdk  # noqa: E402
+
 children: list[subprocess.Popen] = []
 
 
@@ -24,46 +31,71 @@ def stop_children(*_args):
                 pass
 
 
-def resolve_dotnet() -> str | None:
-    """dotnet-install.sh drops the SDK in ~/.dotnet without touching PATH."""
-    found = shutil.which('dotnet')
-    if found:
-        return found
+def wait_for_api(api: subprocess.Popen, timeout: int = API_STARTUP_TIMEOUT_SECONDS) -> bool:
+    """Wait until migrations, seeding, and the API listener are actually ready.
 
-    local = Path.home() / '.dotnet' / 'dotnet'
-    return str(local) if local.exists() else None
+    Starting Next.js before this point lets the browser render first and cache failed catalog
+    queries while the .NET process is still compiling or applying migrations. The resulting UI
+    looks like an image/database bug even though a refresh works once the API has caught up.
+    """
+    deadline = time.monotonic() + timeout
+    print(f'Waiting for the API at {API_HEALTH_URL} ...', flush=True)
+
+    while time.monotonic() < deadline:
+        if api.poll() is not None:
+            print(f'The API exited during startup (code {api.returncode}).', file=sys.stderr)
+            return False
+
+        try:
+            with urlopen(API_HEALTH_URL, timeout=0.75) as response:
+                if response.status == 200:
+                    print('API ready. Starting the storefront.', flush=True)
+                    return True
+        except (HTTPError, URLError, TimeoutError, OSError):
+            pass
+
+        time.sleep(0.25)
+
+    print(
+        f'The API did not become healthy within {timeout} seconds. '
+        'Review the .NET output above for a migration or startup error.',
+        file=sys.stderr,
+    )
+    return False
 
 
 def main():
     signal.signal(signal.SIGINT, stop_children)
     signal.signal(signal.SIGTERM, stop_children)
 
-    dotnet = resolve_dotnet()
+    # Resolved (and installed on demand) before anything starts: without a .NET 10 SDK the
+    # API exits immediately, and the only symptom on the storefront is every image 404ing
+    # against a dead port — a confusing way to learn that a build failed.
+    dotnet = dotnet_sdk.ensure()
     if dotnet is None:
-        print(
-            'dotnet was not found. Install the .NET 10 SDK, for example:\n'
-            '  curl -fsSL https://builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.sh '
-            '| bash -s -- --channel 10.0',
-            file=sys.stderr,
-        )
         return 1
 
-    api_env = {
+    api_env = dotnet_sdk.child_env(dotnet, {
         **os.environ,
         'ASPNETCORE_ENVIRONMENT': 'Development',
         'ASPNETCORE_URLS': 'http://localhost:5080',
-        'DOTNET_ROOT': str(Path(dotnet).parent),
-    }
+    })
 
-    children.extend([
-        subprocess.Popen(
-            [dotnet, 'run', '--no-launch-profile'],
-            cwd=API_DIR, env=api_env, start_new_session=True,
-        ),
-        subprocess.Popen(['npm', 'run', 'dev:next'], cwd=CLIENT_DIR, start_new_session=True),
-    ])
+    api = subprocess.Popen(
+        [str(dotnet), 'run', '--no-launch-profile'],
+        cwd=API_DIR, env=api_env, start_new_session=True,
+    )
+    children.append(api)
 
     try:
+        if not wait_for_api(api):
+            return api.returncode or 1
+
+        storefront = subprocess.Popen(
+            ['npm', 'run', 'dev:next'], cwd=CLIENT_DIR, start_new_session=True,
+        )
+        children.append(storefront)
+
         while all(child.poll() is None for child in children):
             time.sleep(0.25)
     finally:

@@ -69,7 +69,7 @@ export default function CheckoutPage() {
       showToast({
         tone: 'error',
         title: t('checkout.failed'),
-        message: error instanceof ApiError ? error.message : t('checkout.retry'),
+        message: t('checkout.retry'),
       });
     }
   };
