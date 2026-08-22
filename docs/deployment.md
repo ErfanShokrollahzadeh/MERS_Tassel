@@ -158,6 +158,23 @@ Migrations run on startup. Take a backup before every deployment. To roll applic
 checkout the previous known-good commit and rebuild; do not automatically roll database schemas
 backward.
 
+### Adding a PostgreSQL migration
+
+`dotnet ef migrations add` only builds the model, so it needs no database and no credentials:
+
+```bash
+DOTNET="$(python3 scripts/dotnet_sdk.py)"
+"$DOTNET" ef migrations add <Name> --project api/src/MersTassel.PostgresMigrations \
+  --startup-project api/src/MersTassel.Api
+```
+
+Commands that do reach a database — `database update`, scripting against a live schema — read
+the connection string from `POSTGRES_DESIGN_CONNECTION`, so no password lives in the repository:
+
+```bash
+export POSTGRES_DESIGN_CONNECTION='Host=localhost;Database=merstassel;Username=merstassel;Password=...'
+```
+
 ## Existing local data
 
 The production stack uses PostgreSQL while local development currently uses SQLite. A fresh
