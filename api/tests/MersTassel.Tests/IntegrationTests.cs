@@ -109,12 +109,22 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var body = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/products?pageSize=100", Json);
 
         body!.Success.Should().BeTrue();
-        body.Data!.GetProperty("total").GetInt32().Should().BeGreaterThanOrEqualTo(19);
+        body.Data!.GetProperty("total").GetInt32().Should().BeGreaterThanOrEqualTo(25);
 
         var slugs = body.Data.GetProperty("items").EnumerateArray()
             .Select(i => i.GetProperty("slug").GetString()).ToList();
 
-        slugs.Should().Contain(["lale-pearl-tassel", "sedef-moon-pendant", "nazar-chain-bracelet"]);
+        slugs.Should().Contain([
+            "lale-pearl-tassel",
+            "sedef-moon-pendant",
+            "nazar-chain-bracelet",
+            "lal-pearl-hand-harness",
+            "shahmaran-filigree-hand-chain",
+            "miras-sculptural-arm-cuff",
+            "masal-shepherd-hat-scarf-set",
+            "bulut-chunky-infinity-scarf",
+            "anadolu-botanical-bandana",
+        ]);
 
         var seeded = body.Data.GetProperty("items").EnumerateArray()
             .First(i => i.GetProperty("slug").GetString() == "lale-pearl-tassel");
@@ -177,7 +187,8 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         [
             "rings", "necklaces", "bracelets", "anklets", "womens-handbags",
             "mens-wallets", "keychains", "prayer-beads", "earrings", "kids-mini-bags",
-            "card-holders",
+            "card-holders", "hand-harness-bracelets", "shahmaran-bracelets", "arm-cuffs",
+            "shepherd-hat-scarf-sets", "infinity-scarves", "bandanas-headscarves",
         ];
 
         categories.Keys.Should().BeEquivalentTo(requested);
@@ -808,9 +819,16 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var body = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/categories", Json);
 
         var categories = body!.Data!.EnumerateArray().ToList();
-        categories.Should().HaveCount(11);
-        categories.Sum(c => c.GetProperty("count").GetInt32()).Should().BeGreaterThanOrEqualTo(19);
+        categories.Should().HaveCount(17);
+        categories.Sum(c => c.GetProperty("count").GetInt32()).Should().BeGreaterThanOrEqualTo(25);
         categories.Should().OnlyContain(c => c.GetProperty("nameTr").GetString() != null);
+
+        var newCategories = categories
+            .Where(c => c.GetProperty("sortOrder").GetInt32() >= 11)
+            .ToList();
+        newCategories.Should().HaveCount(6);
+        newCategories.Should().OnlyContain(c => c.GetProperty("count").GetInt32() > 0);
+        newCategories.Should().OnlyContain(c => c.GetProperty("image").GetString()!.StartsWith("/uploads/categories/"));
     }
 
     private async Task<int> StockOfAsync(string slug)
