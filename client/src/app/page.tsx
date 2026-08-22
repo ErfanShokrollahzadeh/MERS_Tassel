@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { ArrowDown, ArrowRight, ArrowUpRight, Gem, PackageCheck, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -17,6 +18,7 @@ const reveal = { initial: { opacity: 0, y: 24 }, whileInView: { opacity: 1, y: 0
 
 export default function HomePage() {
   const { t, locale } = useI18n();
+  const quoteVideoRef = useRef<HTMLVideoElement>(null);
 
   const featured = useQuery({ queryKey: catalogKeys.featured(4), queryFn: () => fetchFeaturedProducts(4) });
   const categories = useQuery({ queryKey: catalogKeys.categories(), queryFn: () => fetchCategories() });
@@ -31,6 +33,16 @@ export default function HomePage() {
   const heroHeadline = locale === 'tr' && hero?.heroHeadlineTr ? hero.heroHeadlineTr : hero?.heroHeadline;
   const heroSub = locale === 'tr' && hero?.heroSubheadlineTr ? hero.heroSubheadlineTr : hero?.heroSubheadline;
   const heroEyebrow = locale === 'tr' && hero?.heroEyebrowTr ? hero.heroEyebrowTr : hero?.heroEyebrow;
+
+  useEffect(() => {
+    const video = quoteVideoRef.current;
+    if (!video || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    video.muted = true;
+    const play = () => { void video.play().catch(() => undefined); };
+    play();
+    video.addEventListener('canplay', play);
+    return () => video.removeEventListener('canplay', play);
+  }, []);
 
   return (
     <>
@@ -108,7 +120,12 @@ export default function HomePage() {
         </section>
       )}
 
-      <section className="section quote-section"><motion.div key={`review-${locale}`} className="container-narrow" {...reveal}><div className="quote-mark">“</div><blockquote>{t('home.review')}</blockquote><div className="quote-author"><div><strong>{t('home.reviewAuthor')}</strong><small>{t('home.reviewLocation')}</small></div></div></motion.div></section>
+      <section className="section quote-section">
+        <video ref={quoteVideoRef} className="quote-section__video" autoPlay muted loop playsInline preload="metadata" poster="/images/pearl-necklace-testimonial.webp" aria-hidden="true" tabIndex={-1}>
+          <source src="/videos/pearl-necklace-testimonial.mp4" type="video/mp4" />
+        </video>
+        <motion.div key={`review-${locale}`} className="container-narrow" {...reveal}><div className="quote-mark">“</div><blockquote>{t('home.review')}</blockquote><div className="quote-author"><div><strong>{t('home.reviewAuthor')}</strong><small>{t('home.reviewLocation')}</small></div></div></motion.div>
+      </section>
 
       <section className="newsletter-band"><div className="ambient ambient--three" /><div className="container-wide newsletter-grid"><div><span className="eyebrow">{t('home.letters')}</span><h2>{t('home.inbox')}</h2><p>{t('home.inboxCopy')}</p></div><NewsletterForm source="home" /></div></section>
     </>
