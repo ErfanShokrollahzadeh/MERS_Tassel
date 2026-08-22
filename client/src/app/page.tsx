@@ -104,11 +104,11 @@ export default function HomePage() {
             <MediaImage src={featured.data?.at(-1)?.image || heroProduct.image} alt={t('common.studioDetailAlt')} sizes="(max-width: 720px) 100vw, 55vw" />
             <span className="editorial-caption">{t('home.atelierCaption')}</span>
           </div>
-          <motion.div className="editorial-copy" {...reveal}><span className="eyebrow">{t('home.hands')}</span><h2>{t('home.slowTitle')}</h2><p>{t('home.slowCopy')}</p><blockquote>{t('home.quote')}<cite>{t('home.quoteBy')}</cite></blockquote><Link className="text-link" href="/about">{t('home.stepInside')} <ArrowRight size={17} /></Link></motion.div>
+          <motion.div key={`editorial-${locale}`} className="editorial-copy" {...reveal}><span className="eyebrow">{t('home.hands')}</span><h2>{t('home.slowTitle')}</h2><p>{t('home.slowCopy')}</p><blockquote>{t('home.quote')}<cite>{t('home.quoteBy')}</cite></blockquote><Link className="text-link" href="/about">{t('home.stepInside')} <ArrowRight size={17} /></Link></motion.div>
         </section>
       )}
 
-      <section className="section quote-section"><motion.div className="container-narrow" {...reveal}><div className="quote-mark">“</div><blockquote>{t('home.review')}</blockquote><div className="quote-author"><span>AK</span><div><strong>Ayşe K.</strong><small>{t('home.verified')}</small></div></div></motion.div></section>
+      <section className="section quote-section"><motion.div key={`review-${locale}`} className="container-narrow" {...reveal}><div className="quote-mark">“</div><blockquote>{t('home.review')}</blockquote><div className="quote-author"><div><strong>{t('home.reviewAuthor')}</strong><small>{t('home.reviewLocation')}</small></div></div></motion.div></section>
 
       <section className="newsletter-band"><div className="ambient ambient--three" /><div className="container-wide newsletter-grid"><div><span className="eyebrow">{t('home.letters')}</span><h2>{t('home.inbox')}</h2><p>{t('home.inboxCopy')}</p></div><NewsletterForm source="home" /></div></section>
     </>
