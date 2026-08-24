@@ -128,7 +128,7 @@ export default function CheckoutPage() {
                     : '';
                   return (
                     <div key={item.id} className="summary-line">
-                      <div><MediaImage src={item.image || ''} alt="" sizes="68px" /><span>{item.quantity}</span></div>
+                      <div className="summary-line__media"><MediaImage src={item.image || ''} alt="" sizes="68px" /><span>{item.quantity}</span></div>
                       <section><strong>{name}</strong><small>{surpriseDetails || finish}</small></section>
                       <b>${item.lineTotal.toFixed(0)}</b>
                     </div>
