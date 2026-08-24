@@ -18,6 +18,20 @@ import { useAuthStore } from '@/stores/auth';
 
 type CheckoutFields = { email: string };
 
+const surpriseRecipients = {
+  en: { girlfriend: 'Girlfriend', boyfriend: 'Boyfriend', partner: 'Partner', friend: 'Friend', sister: 'Sister', brother: 'Brother', mother: 'Mother', father: 'Father' },
+  tr: { girlfriend: 'Kız arkadaş', boyfriend: 'Erkek arkadaş', partner: 'Partner', friend: 'Arkadaş', sister: 'Kız kardeş', brother: 'Erkek kardeş', mother: 'Anne', father: 'Baba' },
+} as const;
+
+const surpriseVibes = {
+  en: { cute: 'Cute', elegant: 'Elegant', minimalist: 'Minimalist', casual: 'Casual', 'jewelry-heavy': 'Jewelry-heavy', accessories: 'Accessories' },
+  tr: { cute: 'Sevimli', elegant: 'Zarif', minimalist: 'Minimalist', casual: 'Günlük', 'jewelry-heavy': 'Takı ağırlıklı', accessories: 'Aksesuarlar' },
+} as const;
+
+function surpriseValue(labels: Record<string, string>, value: string) {
+  return labels[value] || value;
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
@@ -88,7 +102,7 @@ export default function CheckoutPage() {
 
           <section className="form-section"><div className="form-section__heading"><span>02</span><div><h2>{t('checkout.delivery')}</h2><p>{t('checkout.deliveryCopy')}</p></div></div><div className="delivery-options"><label className={delivery === 'standard' ? 'active' : ''}><input type="radio" name="delivery" checked={delivery === 'standard'} onChange={() => setDelivery('standard')} /><Truck /><span><strong>{t('checkout.standard')}</strong><small>{t('checkout.standardTime')}</small></span><b>{subtotal >= 120 ? t('cart.complimentary') : '$9'}</b></label><label className={delivery === 'express' ? 'active' : ''}><input type="radio" name="delivery" checked={delivery === 'express'} onChange={() => setDelivery('express')} /><PackageCheck /><span><strong>{t('checkout.express')}</strong><small>{t('checkout.expressTime')}</small></span><b>$18</b></label></div></section>
 
-          <section className="form-section"><div className="form-section__heading"><span>03</span><div><h2>{t('checkout.payment')}</h2><p>{t('checkout.paymentCopy')}</p></div></div><div className="stripe-handoff"><div><CreditCard /><span><strong>{t('checkout.methods')}</strong><small>{t('checkout.methodsCopy')}</small></span></div><ShieldCheck /><p>{t('checkout.neverStores')}</p></div></section>
+          <section className="form-section"><div className="form-section__heading"><span>03</span><div><h2>{t('checkout.payment')}</h2><p>{t('checkout.paymentCopy')}</p></div></div><div className="payment-handoff"><div><CreditCard /><span><strong>{t('checkout.methods')}</strong><small>{t('checkout.methodsCopy')}</small></span></div><ShieldCheck /><p>{t('checkout.neverStores')}</p></div></section>
 
           <button className="button button--primary button--block checkout-submit" type="submit" disabled={!items.length || isSubmitting}>{isSubmitting ? t('checkout.opening') : t('checkout.continue', { amount: total.toFixed(0) })} <LockKeyhole size={14} /></button>
           <p className="checkout-legal">{t('checkout.legal')}</p>
@@ -102,10 +116,17 @@ export default function CheckoutPage() {
                 {items.map((item) => {
                   const name = locale === 'tr' && item.productNameTr ? item.productNameTr : item.productName;
                   const finish = locale === 'tr' && item.colorTr ? item.colorTr : item.color;
+                  const isSurpriseBox = item.giftBoxKey?.startsWith('SUR-') ?? false;
+                  const surpriseDetails = isSurpriseBox
+                    ? [
+                      item.surpriseRecipient ? surpriseValue(surpriseRecipients[locale], item.surpriseRecipient) : null,
+                      item.surpriseVibes?.length ? item.surpriseVibes.map((vibe) => surpriseValue(surpriseVibes[locale], vibe)).join(' · ') : null,
+                    ].filter(Boolean).join(' — ')
+                    : '';
                   return (
                     <div key={item.id} className="summary-line">
                       <div><MediaImage src={item.image || ''} alt="" sizes="68px" /><span>{item.quantity}</span></div>
-                      <section><strong>{name}</strong><small>{finish}</small></section>
+                      <section><strong>{name}</strong><small>{surpriseDetails || finish}</small></section>
                       <b>${item.lineTotal.toFixed(0)}</b>
                     </div>
                   );

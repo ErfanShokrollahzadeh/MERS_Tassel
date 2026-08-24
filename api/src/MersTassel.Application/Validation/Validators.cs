@@ -130,6 +130,39 @@ public class AddGiftBoxRequestValidator : AbstractValidator<AddGiftBoxRequest>
     }
 }
 
+public class AddSurpriseBoxRequestValidator : AbstractValidator<AddSurpriseBoxRequest>
+{
+    private static readonly string[] Recipients =
+        ["girlfriend", "boyfriend", "partner", "friend", "sister", "brother", "mother", "father"];
+
+    private static readonly string[] Vibes =
+        ["cute", "elegant", "minimalist", "casual", "jewelry-heavy", "accessories"];
+
+    public AddSurpriseBoxRequestValidator()
+    {
+        RuleFor(x => x.Recipient)
+            .Must(value => Recipients.Contains(value, StringComparer.OrdinalIgnoreCase))
+            .WithMessage("Choose a valid recipient.");
+
+        RuleFor(x => x.Budget)
+            .Must(value => value is 30 or 50 or 100)
+            .WithMessage("Choose a supported Surprise Box budget.");
+
+        RuleFor(x => x.Vibes)
+            .Cascade(CascadeMode.Stop)
+            .NotNull()
+            .Must(values => values.Count is >= 1 and <= 4)
+            .WithMessage("Choose between 1 and 4 gift vibes.")
+            .Must(values => values.Distinct(StringComparer.OrdinalIgnoreCase).Count() == values.Count)
+            .WithMessage("Each gift vibe may only be selected once.")
+            .Must(values => values.All(value => Vibes.Contains(value, StringComparer.OrdinalIgnoreCase)))
+            .WithMessage("Choose only supported gift vibes.");
+
+        RuleFor(x => x.GiftMessage).MaximumLength(500);
+        RuleFor(x => x.SpecialInstructions).MaximumLength(350);
+    }
+}
+
 public class UpdateCartItemRequestValidator : AbstractValidator<UpdateCartItemRequest>
 {
     public UpdateCartItemRequestValidator()

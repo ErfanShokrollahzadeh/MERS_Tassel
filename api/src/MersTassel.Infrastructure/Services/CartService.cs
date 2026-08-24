@@ -143,6 +143,52 @@ public class CartService(AppDbContext db) : ICartService
         return ToDto((await LoadAsync(userId, ct))!);
     }
 
+    public async Task<CartDto> AddSurpriseBoxAsync(
+        string userId,
+        AddSurpriseBoxRequest request,
+        CancellationToken ct = default)
+    {
+        var productSlug = $"surprise-gift-box-{request.Budget}";
+        var product = await db.Products
+            .IgnoreQueryFilters()
+            .Include(entry => entry.Variants)
+            .Include(entry => entry.Media)
+            .FirstOrDefaultAsync(entry => entry.Slug == productSlug && !entry.IsDelete, ct)
+            ?? throw new NotFoundException("The selected Surprise Box is not available yet.");
+
+        var variant = product.Variants.FirstOrDefault(entry =>
+            !entry.IsDelete && entry.IsActive && entry.Stock > 0)
+            ?? throw new ValidationException("budget", "The selected Surprise Box is currently unavailable.");
+
+        var cart = await LoadAsync(userId, ct) ?? await CreateAsync(userId, product.Currency, ct);
+        var reserved = cart.Items
+            .Where(line => !line.IsDelete && line.ProductVariantId == variant.Id)
+            .Sum(line => line.Quantity);
+
+        if (variant.Stock <= reserved)
+            throw new ValidationException("budget", "The selected Surprise Box is currently unavailable.");
+
+        var recipient = request.Recipient.Trim().ToLowerInvariant();
+        var vibes = request.Vibes
+            .Select(value => value.Trim().ToLowerInvariant())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var instructions = CleanOptional(request.SpecialInstructions);
+
+        cart.Items.Add(new CartItem
+        {
+            CartId = cart.Id,
+            ProductVariantId = variant.Id,
+            Quantity = 1,
+            GiftBoxKey = $"SUR-{Guid.NewGuid():N}",
+            GiftMessage = CleanOptional(request.GiftMessage),
+            PackagingNotes = SurpriseBoxPreferenceCodec.Serialize(recipient, vibes, instructions),
+        });
+
+        await db.SaveChangesAsync(ct);
+        return ToDto((await LoadAsync(userId, ct))!);
+    }
+
     public async Task<CartDto> UpdateItemAsync(string userId, int itemId, int quantity, CancellationToken ct = default)
     {
         var cart = await LoadAsync(userId, ct) ?? throw new NotFoundException("No open bag for this account.");
@@ -233,6 +279,10 @@ public class CartService(AppDbContext db) : ICartService
                 .OrderBy(m => m.SortOrder).ThenBy(m => m.Id)
                 .Select(m => m.ImagePath).FirstOrDefault();
 
+            var surprise = i.GiftBoxKey?.StartsWith("SUR-", StringComparison.Ordinal) == true
+                ? SurpriseBoxPreferenceCodec.Parse(i.PackagingNotes)
+                : null;
+
             return new CartItemDto
             {
                 Id = i.Id,
@@ -252,6 +302,9 @@ public class CartService(AppDbContext db) : ICartService
                 GiftBoxKey = i.GiftBoxKey,
                 GiftMessage = i.GiftMessage,
                 PackagingNotes = i.PackagingNotes,
+                SurpriseRecipient = surprise?.Recipient,
+                SurpriseVibes = surprise?.Vibes ?? [],
+                SurpriseInstructions = surprise?.SpecialInstructions,
             };
         }).ToList();
 

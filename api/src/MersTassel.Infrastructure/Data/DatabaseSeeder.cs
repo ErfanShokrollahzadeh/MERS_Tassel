@@ -349,7 +349,7 @@ public class DatabaseSeeder(
                 ReviewCount = seed.Reviews,
                 IsFeatured = seed.IsFeatured,
                 IsNew = seed.IsNew,
-                IsActive = true,
+                IsActive = seed.IsActive,
                 SeoTitle = $"{seed.Name} · MERS Tassel",
                 MetaDescription = seed.Description.Length > 160 ? seed.Description[..160] : seed.Description,
             };

@@ -14,6 +14,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { categoryName } from '@/i18n/catalog';
 import { NewsletterForm } from '@/components/NewsletterForm';
 import { KavanozBuilder } from '@/components/KavanozBuilder';
+import { SurpriseBoxBuilder } from '@/components/SurpriseBoxBuilder';
 
 const reveal = { initial: { opacity: 0, y: 24 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: '-80px' }, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as const } };
 
@@ -39,10 +40,20 @@ export default function HomePage() {
     const video = quoteVideoRef.current;
     if (!video || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     video.muted = true;
-    const play = () => { void video.play().catch(() => undefined); };
+    video.defaultMuted = true;
+    const play = () => {
+      if (document.visibilityState === 'visible') void video.play().catch(() => undefined);
+    };
+    const resumeOnVisibility = () => play();
     play();
     video.addEventListener('canplay', play);
-    return () => video.removeEventListener('canplay', play);
+    window.addEventListener('pageshow', play);
+    document.addEventListener('visibilitychange', resumeOnVisibility);
+    return () => {
+      video.removeEventListener('canplay', play);
+      window.removeEventListener('pageshow', play);
+      document.removeEventListener('visibilitychange', resumeOnVisibility);
+    };
   }, []);
 
   return (
@@ -113,6 +124,8 @@ export default function HomePage() {
 
       <KavanozBuilder />
 
+      <SurpriseBoxBuilder />
+
       {heroProduct && (
         <section className="editorial-section">
           <div className="editorial-image">
@@ -124,7 +137,7 @@ export default function HomePage() {
       )}
 
       <section className="section quote-section">
-        <video ref={quoteVideoRef} className="quote-section__video" autoPlay muted loop playsInline preload="metadata" poster="/images/pearl-necklace-testimonial.webp" aria-hidden="true" tabIndex={-1}>
+        <video ref={quoteVideoRef} className="quote-section__video" autoPlay muted loop playsInline preload="auto" poster="/images/pearl-necklace-testimonial.webp" disablePictureInPicture aria-hidden="true" tabIndex={-1}>
           <source src="/videos/pearl-necklace-testimonial.mp4" type="video/mp4" />
         </video>
         <motion.div key={`review-${locale}`} className="container-narrow" {...reveal}><div className="quote-mark">“</div><blockquote>{t('home.review')}</blockquote><div className="quote-author"><div><strong>{t('home.reviewAuthor')}</strong><small>{t('home.reviewLocation')}</small></div></div></motion.div>

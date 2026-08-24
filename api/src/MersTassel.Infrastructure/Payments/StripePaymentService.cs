@@ -30,7 +30,7 @@ public class DisabledPaymentService : IPaymentService
 
     public Task<CheckoutSessionDto> CreateCheckoutSessionAsync(int orderId, string locale, CancellationToken ct = default) =>
         throw new NotConfiguredException("payments_not_configured",
-            "Payments are not configured on this deployment. Set Stripe:SecretKey and Stripe:WebhookSecret to enable checkout.");
+            "Online payments are not configured on this deployment. Configure a payment provider to enable hosted checkout.");
 
     public Task HandleWebhookAsync(string payload, string signatureHeader, CancellationToken ct = default) =>
         throw new NotConfiguredException("payments_not_configured", "Stripe webhooks are not configured on this deployment.");

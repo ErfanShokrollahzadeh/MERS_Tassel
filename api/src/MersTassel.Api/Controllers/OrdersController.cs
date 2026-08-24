@@ -39,7 +39,7 @@ public class OrdersController(
 }
 
 [ApiController]
-[Route("api/v1/payments/stripe")]
+[Route("api/v1/payments")]
 [Tags("Payments")]
 public class PaymentsController(
     IPaymentService payments,
@@ -50,10 +50,12 @@ public class PaymentsController(
     private string UserId => currentUser.UserId ?? throw new ForbiddenException("Sign in to pay for an order.");
 
     /// <summary>
-    /// Creates a hosted Stripe Checkout session for an order the caller owns. Amounts come
-    /// from the stored order, never from the request body.
+    /// Creates a hosted payment session for an order the caller owns. Amounts come from the
+    /// stored order, never from the request body. The Stripe route remains as a compatibility
+    /// alias while the provider-neutral route lets the storefront change gateways later.
     /// </summary>
     [HttpPost("checkout-session")]
+    [HttpPost("stripe/checkout-session")]
     [Authorize]
     public async Task<ActionResult<ApiResponse<CheckoutSessionDto>>> CreateSession(
         [FromBody] CreateCheckoutSessionRequest request, CancellationToken ct)
@@ -64,6 +66,7 @@ public class PaymentsController(
     }
 
     [HttpGet("session/{sessionId}")]
+    [HttpGet("stripe/session/{sessionId}")]
     [Authorize]
     public async Task<ActionResult<ApiResponse<OrderDto>>> SessionStatus(string sessionId, CancellationToken ct) =>
         Ok(ApiResponse<OrderDto>.Ok(
@@ -73,7 +76,7 @@ public class PaymentsController(
     /// Stripe callback. Anonymous by necessity — authenticity comes from the signature header,
     /// which the payment service verifies before any state changes.
     /// </summary>
-    [HttpPost("webhook")]
+    [HttpPost("stripe/webhook")]
     [AllowAnonymous]
     public async Task<IActionResult> Webhook(CancellationToken ct)
     {

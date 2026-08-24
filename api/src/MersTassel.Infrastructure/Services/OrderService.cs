@@ -272,20 +272,30 @@ public class OrderService(AppDbContext db) : IOrderService
         CreatedAt = o.CreatedAt,
         PaidAt = o.PaidAt,
         ItemCount = o.Items.Sum(i => i.Quantity),
-        Items = o.Items.Select(i => new OrderItemDto
+        Items = o.Items.Select(i =>
         {
-            Id = i.Id,
-            ProductName = i.ProductName,
-            ProductSlug = i.ProductSlug,
-            Sku = i.Sku,
-            Color = i.Color,
-            Image = i.ImagePath,
-            Quantity = i.Quantity,
-            UnitPrice = i.UnitPrice,
-            LineTotal = i.UnitPrice * i.Quantity,
-            GiftBoxKey = i.GiftBoxKey,
-            GiftMessage = i.GiftMessage,
-            PackagingNotes = i.PackagingNotes,
+            var surprise = i.GiftBoxKey?.StartsWith("SUR-", StringComparison.Ordinal) == true
+                ? SurpriseBoxPreferenceCodec.Parse(i.PackagingNotes)
+                : null;
+
+            return new OrderItemDto
+            {
+                Id = i.Id,
+                ProductName = i.ProductName,
+                ProductSlug = i.ProductSlug,
+                Sku = i.Sku,
+                Color = i.Color,
+                Image = i.ImagePath,
+                Quantity = i.Quantity,
+                UnitPrice = i.UnitPrice,
+                LineTotal = i.UnitPrice * i.Quantity,
+                GiftBoxKey = i.GiftBoxKey,
+                GiftMessage = i.GiftMessage,
+                PackagingNotes = i.PackagingNotes,
+                SurpriseRecipient = surprise?.Recipient,
+                SurpriseVibes = surprise?.Vibes ?? [],
+                SurpriseInstructions = surprise?.SpecialInstructions,
+            };
         }).ToList(),
     };
 }

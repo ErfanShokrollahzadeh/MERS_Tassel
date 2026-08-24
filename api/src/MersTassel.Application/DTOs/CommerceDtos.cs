@@ -29,6 +29,9 @@ public class CartItemDto
     public string? GiftBoxKey { get; set; }
     public string? GiftMessage { get; set; }
     public string? PackagingNotes { get; set; }
+    public string? SurpriseRecipient { get; set; }
+    public IReadOnlyList<string> SurpriseVibes { get; set; } = [];
+    public string? SurpriseInstructions { get; set; }
 
     /// <summary>Stock available for this variant, so the UI can cap the quantity stepper.</summary>
     public int AvailableStock { get; set; }
@@ -52,6 +55,15 @@ public class GiftBoxItemRequest
 {
     public string ProductSlug { get; set; } = string.Empty;
     public string Color { get; set; } = string.Empty;
+}
+
+public class AddSurpriseBoxRequest
+{
+    public string Recipient { get; set; } = string.Empty;
+    public int Budget { get; set; }
+    public IReadOnlyList<string> Vibes { get; set; } = [];
+    public string? GiftMessage { get; set; }
+    public string? SpecialInstructions { get; set; }
 }
 
 public class UpdateCartItemRequest
@@ -115,6 +127,9 @@ public class OrderItemDto
     public string? GiftBoxKey { get; set; }
     public string? GiftMessage { get; set; }
     public string? PackagingNotes { get; set; }
+    public string? SurpriseRecipient { get; set; }
+    public IReadOnlyList<string> SurpriseVibes { get; set; } = [];
+    public string? SurpriseInstructions { get; set; }
 }
 
 public class UpdateOrderStatusRequest

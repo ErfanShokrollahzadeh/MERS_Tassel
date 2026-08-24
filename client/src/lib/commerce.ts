@@ -1,4 +1,4 @@
-import { api } from '@/lib/apiClient';
+import { api, ApiError } from '@/lib/apiClient';
 import type { Cart, Order } from '@/types/commerce';
 
 // ── Bag ─────────────────────────────────────────────────────────────────────
@@ -19,6 +19,18 @@ export type GiftBoxPayload = {
 
 export function addGiftBox(payload: GiftBoxPayload) {
   return api.post<Cart>('/cart/gift-boxes', payload, { auth: true });
+}
+
+export type SurpriseBoxPayload = {
+  recipient: string;
+  budget: 30 | 50 | 100;
+  vibes: string[];
+  giftMessage?: string;
+  specialInstructions?: string;
+};
+
+export function addSurpriseBox(payload: SurpriseBoxPayload) {
+  return api.post<Cart>('/cart/surprise-boxes', payload, { auth: true });
 }
 
 export function updateCartItem(itemId: number, quantity: number) {
@@ -57,12 +69,26 @@ export function fetchOrder(number: string) {
 
 export type CheckoutSession = { checkoutUrl: string; sessionId: string; orderNumber: string };
 
-export function createCheckoutSession(orderNumber: string, locale: string) {
-  return api.post<CheckoutSession>('/payments/stripe/checkout-session', { orderNumber, locale }, { auth: true });
+export async function createCheckoutSession(orderNumber: string, locale: string) {
+  const payload = { orderNumber, locale };
+  try {
+    return await api.post<CheckoutSession>('/payments/checkout-session', payload, { auth: true });
+  } catch (error) {
+    // Compatibility during rolling deployments: older API instances expose the Stripe-
+    // named path only. New instances accept both while the storefront stays provider-neutral.
+    if (!(error instanceof ApiError) || error.status !== 404) throw error;
+    return api.post<CheckoutSession>('/payments/stripe/checkout-session', payload, { auth: true });
+  }
 }
 
-export function fetchOrderByStripeSession(sessionId: string, signal?: AbortSignal) {
-  return api.get<Order>(`/payments/stripe/session/${encodeURIComponent(sessionId)}`, { auth: true, signal });
+export async function fetchOrderByPaymentSession(sessionId: string, signal?: AbortSignal) {
+  const encoded = encodeURIComponent(sessionId);
+  try {
+    return await api.get<Order>(`/payments/session/${encoded}`, { auth: true, signal });
+  } catch (error) {
+    if (!(error instanceof ApiError) || error.status !== 404) throw error;
+    return api.get<Order>(`/payments/stripe/session/${encoded}`, { auth: true, signal });
+  }
 }
 
 export const commerceKeys = {

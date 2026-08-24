@@ -93,6 +93,9 @@ export type CartItem = {
   giftBoxKey?: string | null;
   giftMessage?: string | null;
   packagingNotes?: string | null;
+  surpriseRecipient?: string | null;
+  surpriseVibes?: string[];
+  surpriseInstructions?: string | null;
 };
 
 export type Cart = {
@@ -119,6 +122,9 @@ export type OrderItem = {
   giftBoxKey?: string | null;
   giftMessage?: string | null;
   packagingNotes?: string | null;
+  surpriseRecipient?: string | null;
+  surpriseVibes?: string[];
+  surpriseInstructions?: string | null;
 };
 
 export type Order = {

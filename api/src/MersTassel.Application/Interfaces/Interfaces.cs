@@ -52,6 +52,7 @@ public interface ICartService
     Task<CartDto> GetAsync(string userId, CancellationToken ct = default);
     Task<CartDto> AddItemAsync(string userId, AddCartItemRequest request, CancellationToken ct = default);
     Task<CartDto> AddGiftBoxAsync(string userId, AddGiftBoxRequest request, CancellationToken ct = default);
+    Task<CartDto> AddSurpriseBoxAsync(string userId, AddSurpriseBoxRequest request, CancellationToken ct = default);
     Task<CartDto> UpdateItemAsync(string userId, int itemId, int quantity, CancellationToken ct = default);
     Task<CartDto> RemoveItemAsync(string userId, int itemId, CancellationToken ct = default);
     Task ClearAsync(string userId, CancellationToken ct = default);
@@ -101,8 +102,8 @@ public interface IUserAdminService
 }
 
 /// <summary>
-/// Payment gateway boundary. A disabled implementation is registered when Stripe keys are
-/// absent so the API starts and fails loudly at the call site rather than at boot.
+/// Payment gateway boundary. A disabled implementation is registered when provider keys are
+/// absent so the API starts and fails explicitly at the call site rather than at boot.
 /// </summary>
 public interface IPaymentService
 {

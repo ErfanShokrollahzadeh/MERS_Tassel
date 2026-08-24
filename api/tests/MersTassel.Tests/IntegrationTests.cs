@@ -750,6 +750,60 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task Surprise_box_keeps_the_contents_hidden_and_preserves_preferences()
+    {
+        var client = factory.CreateClient();
+        var email = $"surprise-{Guid.NewGuid():N}@example.com";
+        await client.PostAsJsonAsync("/api/v1/auth/register",
+            new { email, firstName = "Mystery", lastName = "Giver", password = ApiFactory.AdminPassword });
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(client, email, ApiFactory.AdminPassword));
+
+        var add = await client.PostAsJsonAsync("/api/v1/cart/surprise-boxes", new
+        {
+            recipient = "girlfriend",
+            budget = 50,
+            vibes = new[] { "cute", "elegant" },
+            giftMessage = "For our next little adventure.",
+            specialInstructions = "Please avoid bright orange.",
+        });
+
+        add.StatusCode.Should().Be(HttpStatusCode.OK);
+        var cart = (await add.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        var lines = cart.GetProperty("items").EnumerateArray().ToList();
+        lines.Should().ContainSingle();
+        var line = lines.Single();
+        line.GetProperty("productSlug").GetString().Should().Be("surprise-gift-box-50");
+        line.GetProperty("giftBoxKey").GetString().Should().StartWith("SUR-");
+        line.GetProperty("unitPrice").GetDecimal().Should().Be(50m);
+        line.GetProperty("giftMessage").GetString().Should().Be("For our next little adventure.");
+        line.GetProperty("surpriseRecipient").GetString().Should().Be("girlfriend");
+        line.GetProperty("surpriseVibes").EnumerateArray().Select(value => value.GetString())
+            .Should().BeEquivalentTo(["cute", "elegant"]);
+        line.GetProperty("surpriseInstructions").GetString().Should().Be("Please avoid bright orange.");
+    }
+
+    [Fact]
+    public async Task Surprise_box_rejects_unsupported_budgets_and_missing_vibes()
+    {
+        var client = factory.CreateClient();
+        var email = $"surprise-invalid-{Guid.NewGuid():N}@example.com";
+        await client.PostAsJsonAsync("/api/v1/auth/register",
+            new { email, firstName = "Mystery", lastName = "Check", password = ApiFactory.AdminPassword });
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(client, email, ApiFactory.AdminPassword));
+
+        var response = await client.PostAsJsonAsync("/api/v1/cart/surprise-boxes", new
+        {
+            recipient = "friend",
+            budget = 75,
+            vibes = Array.Empty<string>(),
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task A_customer_cannot_read_another_customers_order()
     {
         var alice = factory.CreateClient();
@@ -800,7 +854,7 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
     // ── Payments, settings, dashboard ──────────────────────────────────────
 
     [Fact]
-    public async Task Payments_report_a_typed_503_when_stripe_is_not_configured()
+    public async Task Payments_report_a_typed_503_when_a_gateway_is_not_configured()
     {
         var client = factory.CreateClient();
         var email = $"pay-{Guid.NewGuid():N}@example.com";
@@ -816,12 +870,16 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var number = (await checkout.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!
             .Data!.GetProperty("number").GetString();
 
-        var response = await client.PostAsJsonAsync("/api/v1/payments/stripe/checkout-session",
+        var response = await client.PostAsJsonAsync("/api/v1/payments/checkout-session",
             new { orderNumber = number, locale = "en" });
 
         response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
         var body = await response.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
         body!.Code.Should().Be("payments_not_configured");
+
+        var legacyAlias = await client.PostAsJsonAsync("/api/v1/payments/stripe/checkout-session",
+            new { orderNumber = number, locale = "en" });
+        legacyAlias.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
     }
 
     [Fact]

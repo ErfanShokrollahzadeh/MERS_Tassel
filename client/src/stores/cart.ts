@@ -4,11 +4,12 @@ import { create } from 'zustand';
 import {
   addCartItem,
   addGiftBox,
+  addSurpriseBox,
   fetchCart,
   removeCartItem,
   updateCartItem,
 } from '@/lib/commerce';
-import type { GiftBoxPayload } from '@/lib/commerce';
+import type { GiftBoxPayload, SurpriseBoxPayload } from '@/lib/commerce';
 import { ApiError } from '@/lib/apiClient';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
@@ -23,6 +24,7 @@ type CartState = {
   load: () => Promise<void>;
   add: (productSlug: string, color: string, quantity?: number) => Promise<void>;
   addGiftBox: (payload: GiftBoxPayload) => Promise<boolean>;
+  addSurpriseBox: (payload: SurpriseBoxPayload) => Promise<boolean>;
   remove: (itemId: number) => Promise<void>;
   setQuantity: (itemId: number, quantity: number) => Promise<void>;
   clear: () => void;
@@ -88,6 +90,22 @@ export const useCartStore = create<CartState>()((set, get) => ({
       return true;
     } catch (error) {
       set({ isLoading: false });
+      reportError(error, 'cart.addFailed');
+      return false;
+    }
+  },
+
+  addSurpriseBox: async (payload) => {
+    if (!useAuthStore.getState().access) return false;
+
+    // Surprise Box has a guided checkout handoff. Keep the drawer closed while the
+    // request runs so an API error never presents a misleading empty-bag state.
+    set({ isOpen: false, isLoading: true });
+    try {
+      set(apply(await addSurpriseBox(payload)));
+      return true;
+    } catch (error) {
+      set({ isOpen: false, isLoading: false });
       reportError(error, 'cart.addFailed');
       return false;
     }
