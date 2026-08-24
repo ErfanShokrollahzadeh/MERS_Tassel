@@ -14,6 +14,7 @@ const links = [
   { href: '/', key: 'nav.home' },
   { href: '/products', key: 'nav.shop' },
   { href: '/kavanoz', key: 'nav.kavanoz' },
+  { href: '/surprise-box', key: 'nav.surprise' },
   { href: '/about', key: 'nav.story' },
   { href: '/contact', key: 'nav.journal' },
 ];

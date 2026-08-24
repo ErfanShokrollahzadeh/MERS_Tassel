@@ -854,7 +854,7 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
     // ── Payments, settings, dashboard ──────────────────────────────────────
 
     [Fact]
-    public async Task Payments_report_a_typed_503_when_stripe_is_not_configured()
+    public async Task Payments_report_a_typed_503_when_a_gateway_is_not_configured()
     {
         var client = factory.CreateClient();
         var email = $"pay-{Guid.NewGuid():N}@example.com";
@@ -870,12 +870,16 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var number = (await checkout.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!
             .Data!.GetProperty("number").GetString();
 
-        var response = await client.PostAsJsonAsync("/api/v1/payments/stripe/checkout-session",
+        var response = await client.PostAsJsonAsync("/api/v1/payments/checkout-session",
             new { orderNumber = number, locale = "en" });
 
         response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
         var body = await response.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
         body!.Code.Should().Be("payments_not_configured");
+
+        var legacyAlias = await client.PostAsJsonAsync("/api/v1/payments/stripe/checkout-session",
+            new { orderNumber = number, locale = "en" });
+        legacyAlias.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
     }
 
     [Fact]

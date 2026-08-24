@@ -66,15 +66,15 @@ const copy = {
     delivery: 'Estimated delivery',
     deliveryTime: '3–5 business days after dispatch',
     total: 'Surprise Box total',
-    add: 'Add Surprise Box to cart',
-    adding: 'Sealing your surprise…',
-    signIn: 'Sign in to add your surprise',
+    add: 'Continue to checkout',
+    adding: 'Preparing your surprise…',
+    signIn: 'Sign in to continue',
     recipientError: 'Choose who the Surprise Box is for.',
     vibeError: 'Choose at least one vibe for our curator.',
     vibeMaxError: 'Choose up to four vibes so the direction stays focused.',
     serverError: 'We could not add this Surprise Box. Please review your choices and try again.',
-    successTitle: 'Your surprise is in the bag',
-    successCopy: 'The budget, preferences and private notes are saved for our curator.',
+    successTitle: 'Your surprise is ready for checkout',
+    successCopy: 'Your budget, preferences and private notes are saved. Continue with delivery and payment details.',
     recipients: {
       girlfriend: 'Girlfriend', boyfriend: 'Boyfriend', partner: 'Partner', friend: 'Friend',
       sister: 'Sister', brother: 'Brother', mother: 'Mother', father: 'Father',
@@ -120,15 +120,15 @@ const copy = {
     delivery: 'Tahmini teslimat',
     deliveryTime: 'Kargoya verildikten sonra 3–5 iş günü',
     total: 'Sürpriz Kutu toplamı',
-    add: 'Sürpriz Kutuyu sepete ekle',
-    adding: 'Sürpriziniz mühürleniyor…',
-    signIn: 'Sürprizi eklemek için giriş yapın',
+    add: 'Ödemeye devam et',
+    adding: 'Sürpriziniz hazırlanıyor…',
+    signIn: 'Devam etmek için giriş yapın',
     recipientError: 'Sürpriz Kutunun kimin için olduğunu seçin.',
     vibeError: 'Küratörümüz için en az bir tarz seçin.',
     vibeMaxError: 'Yönü belirgin tutmak için en fazla dört tarz seçin.',
     serverError: 'Bu Sürpriz Kutu sepete eklenemedi. Seçimlerinizi kontrol edip tekrar deneyin.',
-    successTitle: 'Sürpriziniz sepette',
-    successCopy: 'Bütçe, tercihler ve özel notlar küratörümüz için kaydedildi.',
+    successTitle: 'Sürpriziniz ödeme adımına hazır',
+    successCopy: 'Bütçeniz, tercihleriniz ve özel notlarınız kaydedildi. Teslimat ve ödeme ayrıntılarıyla devam edin.',
     recipients: {
       girlfriend: 'Kız arkadaş', boyfriend: 'Erkek arkadaş', partner: 'Partner', friend: 'Arkadaş',
       sister: 'Kız kardeş', brother: 'Erkek kardeş', mother: 'Anne', father: 'Baba',
@@ -147,6 +147,7 @@ export function SurpriseBoxBuilder() {
   const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
   const addSurpriseBox = useCartStore((state) => state.addSurpriseBox);
+  const closeCart = useCartStore((state) => state.close);
   const showToast = useToastStore((state) => state.show);
   const [recipient, setRecipient] = useState<RecipientKey | ''>('');
   const [budget, setBudget] = useState<Budget>(50);
@@ -206,11 +207,8 @@ export function SurpriseBoxBuilder() {
     }
 
     showToast({ tone: 'success', title: text.successTitle, message: text.successCopy });
-    setRecipient('');
-    setBudget(50);
-    setSelectedVibes([]);
-    setGiftMessage('');
-    setSpecialInstructions('');
+    closeCart();
+    router.push('/checkout');
   };
 
   return (

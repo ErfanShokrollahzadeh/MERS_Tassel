@@ -98,12 +98,14 @@ export const useCartStore = create<CartState>()((set, get) => ({
   addSurpriseBox: async (payload) => {
     if (!useAuthStore.getState().access) return false;
 
-    set({ isOpen: true, isLoading: true });
+    // Surprise Box has a guided checkout handoff. Keep the drawer closed while the
+    // request runs so an API error never presents a misleading empty-bag state.
+    set({ isOpen: false, isLoading: true });
     try {
       set(apply(await addSurpriseBox(payload)));
       return true;
     } catch (error) {
-      set({ isLoading: false });
+      set({ isOpen: false, isLoading: false });
       reportError(error, 'cart.addFailed');
       return false;
     }

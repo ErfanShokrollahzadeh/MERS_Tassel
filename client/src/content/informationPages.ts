@@ -24,7 +24,7 @@ const en: Record<InformationPageId, InformationPageContent> = {
     note: 'Plain language, minimal collection, meaningful control.',
     cards: [
       { title: 'Only what we need', copy: 'Account, delivery, and order details are used only to provide the experience you request.' },
-      { title: 'Protected checkout', copy: 'Payments are completed through Stripe. MERS Tassel never sees or stores your full card number.' },
+      { title: 'Protected checkout', copy: 'Payments are completed on the encrypted page of our configured payment partner. MERS Tassel never sees or stores your full card number.' },
       { title: 'Your choices', copy: 'You may request access, correction, or deletion of eligible personal information at any time.' },
     ],
     sectionLabel: 'How we care for your information',
@@ -125,7 +125,7 @@ const tr: Record<InformationPageId, InformationPageContent> = {
     note: 'Sade dil, en az veri, gerçek kontrol.',
     cards: [
       { title: 'Yalnızca gerekenler', copy: 'Hesap, teslimat ve sipariş bilgileri yalnızca talep ettiğiniz deneyimi sunmak için kullanılır.' },
-      { title: 'Korumalı ödeme', copy: 'Ödemeler Stripe üzerinden tamamlanır. MERS Tassel kart numaranızın tamamını görmez veya saklamaz.' },
+      { title: 'Korumalı ödeme', copy: 'Ödemeler, yapılandırılan ödeme ortağımızın şifreli sayfasında tamamlanır. MERS Tassel kart numaranızın tamamını görmez veya saklamaz.' },
       { title: 'Seçimleriniz', copy: 'Uygun kişisel bilgilerinize erişmeyi, bunları düzeltmeyi veya silmeyi istediğiniz zaman talep edebilirsiniz.' },
     ],
     sectionLabel: 'Bilgilerinize nasıl özen gösteriyoruz',

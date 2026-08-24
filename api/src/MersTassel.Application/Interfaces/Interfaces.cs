@@ -102,8 +102,8 @@ public interface IUserAdminService
 }
 
 /// <summary>
-/// Payment gateway boundary. A disabled implementation is registered when Stripe keys are
-/// absent so the API starts and fails loudly at the call site rather than at boot.
+/// Payment gateway boundary. A disabled implementation is registered when provider keys are
+/// absent so the API starts and fails explicitly at the call site rather than at boot.
 /// </summary>
 public interface IPaymentService
 {

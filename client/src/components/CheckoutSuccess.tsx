@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { Check, Clock3, PackageCheck, RefreshCw } from 'lucide-react';
-import { fetchOrderByStripeSession } from '@/lib/commerce';
+import { fetchOrderByPaymentSession } from '@/lib/commerce';
 import { useCartStore } from '@/stores/cart';
 import { useI18n } from '@/i18n/I18nProvider';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
@@ -25,11 +25,11 @@ export function CheckoutSuccess({ sessionId }: { sessionId: string }) {
     let attempt = 0;
     let timeout = 0;
 
-    // The webhook marks the order paid asynchronously, so poll briefly rather than
-    // claiming success the moment Stripe redirects back.
+    // The provider webhook marks the order paid asynchronously, so poll briefly rather
+    // than claiming success the moment the hosted payment page redirects back.
     const load = async () => {
       try {
-        const next = await fetchOrderByStripeSession(sessionId, controller.signal);
+        const next = await fetchOrderByPaymentSession(sessionId, controller.signal);
         setOrder(next);
         setError('');
 
