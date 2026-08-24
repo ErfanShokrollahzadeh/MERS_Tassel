@@ -36,7 +36,8 @@ internal static class CatalogSeedData
         bool IsFeatured,
         bool IsNew,
         IReadOnlyList<(string Color, string ColorTr, string Hex)> Colors,
-        IReadOnlyList<string> Images);
+        IReadOnlyList<string> Images,
+        bool IsActive = true);
 
     /// <summary>
     /// The public storefront taxonomy. Images are either committed seed-asset names or stable
@@ -391,5 +392,38 @@ internal static class CatalogSeedData
             52m, null, 4.9, 28, 25, true, false,
             [("Dusty rose", "Pudra gül", "#c98e9b"), ("Indigo cream", "İndigo krem", "#4f6078")],
             ["folk-bandana"]),
+
+        // Private catalog rows used by the curated Surprise Box workflow. They remain hidden
+        // from product discovery while retaining the normal cart, order, payment and inventory
+        // relationships used by every sellable item.
+        new("Surprise Gift Box · Thoughtful", "Sürpriz Hediye Kutusu · Düşünceli", "surprise-gift-box-30", "keychains",
+            "A hand-curated mystery gift assembled around the recipient and chosen mood.",
+            "Alıcıya ve seçilen tarza göre elde hazırlanan gizemli bir hediye kutusu.",
+            "The contents stay secret until the box is opened. Our team selects a balanced mix at the chosen value.",
+            "Kutu açılana kadar içindekiler gizli kalır. Ekibimiz seçilen değerde dengeli bir karışım hazırlar.",
+            "Curated mixed materials", "Özenle seçilmiş farklı malzemeler",
+            "Gift-box presentation", "Hediye kutusu sunumu",
+            30m, null, 5, 0, 500, false, false,
+            [("Curator's choice", "Küratör seçimi", "#b97586")], ["studio"], false),
+
+        new("Surprise Gift Box · Signature", "Sürpriz Hediye Kutusu · İmza", "surprise-gift-box-50", "keychains",
+            "A hand-curated mystery gift assembled around the recipient and chosen mood.",
+            "Alıcıya ve seçilen tarza göre elde hazırlanan gizemli bir hediye kutusu.",
+            "The contents stay secret until the box is opened. Our team selects a balanced mix at the chosen value.",
+            "Kutu açılana kadar içindekiler gizli kalır. Ekibimiz seçilen değerde dengeli bir karışım hazırlar.",
+            "Curated mixed materials", "Özenle seçilmiş farklı malzemeler",
+            "Gift-box presentation", "Hediye kutusu sunumu",
+            50m, null, 5, 0, 500, false, false,
+            [("Curator's choice", "Küratör seçimi", "#69344f")], ["studio"], false),
+
+        new("Surprise Gift Box · Grand", "Sürpriz Hediye Kutusu · Büyük", "surprise-gift-box-100", "keychains",
+            "A hand-curated mystery gift assembled around the recipient and chosen mood.",
+            "Alıcıya ve seçilen tarza göre elde hazırlanan gizemli bir hediye kutusu.",
+            "The contents stay secret until the box is opened. Our team selects a balanced mix at the chosen value.",
+            "Kutu açılana kadar içindekiler gizli kalır. Ekibimiz seçilen değerde dengeli bir karışım hazırlar.",
+            "Curated mixed materials", "Özenle seçilmiş farklı malzemeler",
+            "Gift-box presentation", "Hediye kutusu sunumu",
+            100m, null, 5, 0, 500, false, false,
+            [("Curator's choice", "Küratör seçimi", "#946430")], ["studio"], false),
     ];
 }

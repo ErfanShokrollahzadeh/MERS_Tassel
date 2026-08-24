@@ -21,6 +21,18 @@ export function addGiftBox(payload: GiftBoxPayload) {
   return api.post<Cart>('/cart/gift-boxes', payload, { auth: true });
 }
 
+export type SurpriseBoxPayload = {
+  recipient: string;
+  budget: 30 | 50 | 100;
+  vibes: string[];
+  giftMessage?: string;
+  specialInstructions?: string;
+};
+
+export function addSurpriseBox(payload: SurpriseBoxPayload) {
+  return api.post<Cart>('/cart/surprise-boxes', payload, { auth: true });
+}
+
 export function updateCartItem(itemId: number, quantity: number) {
   return api.patch<Cart>(`/cart/items/${itemId}`, { quantity }, { auth: true });
 }

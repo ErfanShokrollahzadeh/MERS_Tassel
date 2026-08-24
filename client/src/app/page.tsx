@@ -14,6 +14,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { categoryName } from '@/i18n/catalog';
 import { NewsletterForm } from '@/components/NewsletterForm';
 import { KavanozBuilder } from '@/components/KavanozBuilder';
+import { SurpriseBoxBuilder } from '@/components/SurpriseBoxBuilder';
 
 const reveal = { initial: { opacity: 0, y: 24 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: '-80px' }, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as const } };
 
@@ -112,6 +113,8 @@ export default function HomePage() {
       </section>
 
       <KavanozBuilder />
+
+      <SurpriseBoxBuilder />
 
       {heroProduct && (
         <section className="editorial-section">

@@ -9,6 +9,20 @@ import { MediaImage } from '@/components/MediaImage';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useAuthStore } from '@/stores/auth';
 
+const surpriseRecipientLabels = {
+  en: { girlfriend: 'Girlfriend', boyfriend: 'Boyfriend', partner: 'Partner', friend: 'Friend', sister: 'Sister', brother: 'Brother', mother: 'Mother', father: 'Father' },
+  tr: { girlfriend: 'Kız arkadaş', boyfriend: 'Erkek arkadaş', partner: 'Partner', friend: 'Arkadaş', sister: 'Kız kardeş', brother: 'Erkek kardeş', mother: 'Anne', father: 'Baba' },
+} as const;
+
+const surpriseVibeLabels = {
+  en: { cute: 'Cute', elegant: 'Elegant', minimalist: 'Minimalist', casual: 'Casual', 'jewelry-heavy': 'Jewelry-heavy', accessories: 'Accessories' },
+  tr: { cute: 'Sevimli', elegant: 'Zarif', minimalist: 'Minimalist', casual: 'Günlük', 'jewelry-heavy': 'Takı ağırlıklı', accessories: 'Aksesuarlar' },
+} as const;
+
+function localizedSurpriseValue(labels: Record<string, string>, value: string) {
+  return labels[value] || value;
+}
+
 export function CartDrawer() {
   const { items, isOpen, close, remove, setQuantity } = useCartStore();
   const subtotal = useCartStore(cartSubtotal);
@@ -66,12 +80,13 @@ export function CartDrawer() {
                 {items.map((item) => {
                   const name = locale === 'tr' && item.productNameTr ? item.productNameTr : item.productName;
                   const finish = locale === 'tr' && item.colorTr ? item.colorTr : item.color;
+                  const isSurpriseBox = item.giftBoxKey?.startsWith('SUR-') ?? false;
                   return (
                     <motion.article className="cart-line" key={item.id} layout initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 24, height: 0, paddingTop: 0, paddingBottom: 0 }}>
                       <MediaImage src={item.image || ''} alt="" sizes="82px" />
                       <div className="cart-line__copy">
                         <h3>{name}</h3><p>{finish}</p>
-                        {item.giftBoxKey ? <span className="cart-gift-badge"><Gift size={12} /> Kavanoz</span> : (
+                        {item.giftBoxKey ? <span className={isSurpriseBox ? 'cart-gift-badge cart-gift-badge--surprise' : 'cart-gift-badge'}><Gift size={12} /> {isSurpriseBox ? (locale === 'tr' ? 'Sürpriz Kutu' : 'Surprise Box') : 'Kavanoz'}</span> : (
                           <div className="quantity-control" aria-label={t('cart.quantity', { name })}>
                             <button onClick={() => setQuantity(item.id, item.quantity - 1)} aria-label={t('cart.decrease')}><Minus size={14} /></button>
                             <span>{item.quantity}</span>
@@ -85,7 +100,20 @@ export function CartDrawer() {
                 })}
               </AnimatePresence>
             </div>
-            {giftBoxes.length > 0 && <div className="cart-gift-notes">{giftBoxes.map((box, index) => <section key={box.giftBoxKey}><strong><Gift /> {locale === 'tr' ? `${index + 1}. Kavanoz` : `Kavanoz ${index + 1}`}</strong>{box.giftMessage && <p><span>{locale === 'tr' ? 'Hediye mesajı' : 'Gift message'}</span>{box.giftMessage}</p>}{box.packagingNotes && <p><span>{locale === 'tr' ? 'Paketleme notu' : 'Packaging note'}</span>{box.packagingNotes}</p>}</section>)}</div>}
+            {giftBoxes.length > 0 && <div className="cart-gift-notes">{giftBoxes.map((box, index) => {
+              const isSurpriseBox = box.giftBoxKey?.startsWith('SUR-') ?? false;
+              const title = isSurpriseBox
+                ? locale === 'tr' ? `${index + 1}. Sürpriz Kutu` : `Surprise Box ${index + 1}`
+                : locale === 'tr' ? `${index + 1}. Kavanoz` : `Kavanoz ${index + 1}`;
+              return <section className={isSurpriseBox ? 'cart-gift-note--surprise' : undefined} key={box.giftBoxKey}>
+                <strong><Gift /> {title}</strong>
+                {isSurpriseBox && box.surpriseRecipient && <p><span>{locale === 'tr' ? 'Alıcı' : 'Recipient'}</span>{localizedSurpriseValue(surpriseRecipientLabels[locale], box.surpriseRecipient)}</p>}
+                {isSurpriseBox && box.surpriseVibes && box.surpriseVibes.length > 0 && <p><span>{locale === 'tr' ? 'Tarz' : 'Vibe'}</span>{box.surpriseVibes.map((value) => localizedSurpriseValue(surpriseVibeLabels[locale], value)).join(' · ')}</p>}
+                {box.giftMessage && <p><span>{locale === 'tr' ? 'Hediye mesajı' : 'Gift message'}</span>{box.giftMessage}</p>}
+                {isSurpriseBox && box.surpriseInstructions && <p><span>{locale === 'tr' ? 'Küratör notu' : 'Curator note'}</span>{box.surpriseInstructions}</p>}
+                {!isSurpriseBox && box.packagingNotes && <p><span>{locale === 'tr' ? 'Paketleme notu' : 'Packaging note'}</span>{box.packagingNotes}</p>}
+              </section>;
+            })}</div>}
             <footer className="drawer-footer">
               <div className="cart-estimates"><p><span>{t('cart.subtotal')}</span><b>${subtotal.toFixed(0)}</b></p><p><span>{t('cart.delivery')}</span><b>{estimatedShipping ? `$${estimatedShipping}` : t('cart.complimentary')}</b></p><p><span>{t('cart.tax')}</span><b>${estimatedTax.toFixed(0)}</b></p><div><span>{t('cart.total')}</span><strong>${(subtotal + estimatedShipping + estimatedTax).toFixed(0)}</strong></div></div>
               <small className="estimate-note">{t('cart.taxNote')}</small>

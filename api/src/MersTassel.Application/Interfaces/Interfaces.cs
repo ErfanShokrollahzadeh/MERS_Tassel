@@ -52,6 +52,7 @@ public interface ICartService
     Task<CartDto> GetAsync(string userId, CancellationToken ct = default);
     Task<CartDto> AddItemAsync(string userId, AddCartItemRequest request, CancellationToken ct = default);
     Task<CartDto> AddGiftBoxAsync(string userId, AddGiftBoxRequest request, CancellationToken ct = default);
+    Task<CartDto> AddSurpriseBoxAsync(string userId, AddSurpriseBoxRequest request, CancellationToken ct = default);
     Task<CartDto> UpdateItemAsync(string userId, int itemId, int quantity, CancellationToken ct = default);
     Task<CartDto> RemoveItemAsync(string userId, int itemId, CancellationToken ct = default);
     Task ClearAsync(string userId, CancellationToken ct = default);
