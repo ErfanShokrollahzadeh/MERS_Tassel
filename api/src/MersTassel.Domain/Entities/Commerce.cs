@@ -12,7 +12,25 @@ public class Cart : SoftDeletableEntity
     public CartStatus Status { get; set; } = CartStatus.Open;
     public string Currency { get; set; } = "USD";
 
+    public int? CouponId { get; set; }
+    public Coupon? Coupon { get; set; }
+
     public ICollection<CartItem> Items { get; set; } = new List<CartItem>();
+}
+
+public class Coupon : SoftDeletableEntity
+{
+    public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
+    public string NormalizedCode { get; set; } = string.Empty;
+    public CouponDiscountType DiscountType { get; set; }
+    public decimal Value { get; set; }
+    public decimal MinimumSpend { get; set; }
+    public bool IsActive { get; set; } = true;
+    public DateTimeOffset? StartsAt { get; set; }
+    public DateTimeOffset? ExpiresAt { get; set; }
+    public int? UsageLimit { get; set; }
+    public int RedemptionCount { get; set; }
 }
 
 public class CartItem : SoftDeletableEntity
@@ -50,8 +68,11 @@ public class Order : SoftDeletableEntity
 
     public string Currency { get; set; } = "USD";
     public decimal Subtotal { get; set; }
+    public decimal DiscountTotal { get; set; }
     public decimal ShippingTotal { get; set; }
     public decimal Total { get; set; }
+    public string? CouponCode { get; set; }
+    public string? CouponDiscountType { get; set; }
 
     /// <summary>Serialized shipping address; SQLite has no native JSON column type.</summary>
     public string ShippingAddressJson { get; set; } = "{}";

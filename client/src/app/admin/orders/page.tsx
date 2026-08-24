@@ -125,6 +125,7 @@ export default function OrdersPage() {
                               </div>
                               <dl>
                                 <div><dt>Subtotal</dt><dd>{money(order.subtotal)}</dd></div>
+                                {order.discountTotal > 0 && <div><dt>Promotion {order.couponCode ? `(${order.couponCode})` : ''}</dt><dd>−{money(order.discountTotal)}</dd></div>}
                                 <div><dt>Delivery</dt><dd>{order.shippingTotal ? money(order.shippingTotal) : 'Complimentary'}</dd></div>
                                 <div><dt>Total</dt><dd><strong>{money(order.total)}</strong></dd></div>
                                 <div><dt>Channel</dt><dd>{order.channel}</dd></div>

@@ -6,19 +6,24 @@ import {
   addGiftBox,
   addSurpriseBox,
   fetchCart,
+  removeCoupon as removeCouponRequest,
   removeCartItem,
   updateCartItem,
+  validateCoupon,
 } from '@/lib/commerce';
 import type { GiftBoxPayload, SurpriseBoxPayload } from '@/lib/commerce';
 import { ApiError } from '@/lib/apiClient';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
-import type { Cart, CartItem } from '@/types/commerce';
+import type { AppliedCoupon, Cart, CartItem } from '@/types/commerce';
 import { translate, type Locale, type TranslationKey } from '@/i18n/I18nProvider';
 
 type CartState = {
   items: CartItem[];
   subtotal: number;
+  discountTotal: number;
+  totalAfterDiscount: number;
+  coupon: AppliedCoupon | null;
   isOpen: boolean;
   isLoading: boolean;
   load: () => Promise<void>;
@@ -27,13 +32,29 @@ type CartState = {
   addSurpriseBox: (payload: SurpriseBoxPayload) => Promise<boolean>;
   remove: (itemId: number) => Promise<void>;
   setQuantity: (itemId: number, quantity: number) => Promise<void>;
+  applyCoupon: (code: string) => Promise<Cart>;
+  removeCoupon: () => Promise<Cart>;
   clear: () => void;
   open: () => void;
   close: () => void;
 };
 
 function apply(cart: Cart) {
-  return { items: cart.items, subtotal: cart.subtotal, isLoading: false };
+  // Older API instances may not include the coupon totals until they are restarted
+  // with the coupon migration. Keep checkout arithmetic valid during that handover.
+  const discountTotal = Number.isFinite(cart.discountTotal) ? cart.discountTotal : 0;
+  const totalAfterDiscount = Number.isFinite(cart.totalAfterDiscount)
+    ? cart.totalAfterDiscount
+    : Math.max(0, cart.subtotal - discountTotal);
+
+  return {
+    items: cart.items,
+    subtotal: cart.subtotal,
+    discountTotal,
+    totalAfterDiscount,
+    coupon: cart.coupon ?? null,
+    isLoading: false,
+  };
 }
 
 function activeLocale(): Locale {
@@ -51,12 +72,15 @@ function reportError(error: unknown, fallback: TranslationKey) {
 export const useCartStore = create<CartState>()((set, get) => ({
   items: [],
   subtotal: 0,
+  discountTotal: 0,
+  totalAfterDiscount: 0,
+  coupon: null,
   isOpen: false,
   isLoading: false,
 
   load: async () => {
     if (!useAuthStore.getState().access) {
-      set({ items: [], subtotal: 0, isLoading: false, isOpen: false });
+      set({ items: [], subtotal: 0, discountTotal: 0, totalAfterDiscount: 0, coupon: null, isLoading: false, isOpen: false });
       return;
     }
 
@@ -141,7 +165,19 @@ export const useCartStore = create<CartState>()((set, get) => ({
     }
   },
 
-  clear: () => set({ items: [], subtotal: 0, isOpen: false }),
+  applyCoupon: async (code) => {
+    const cart = await validateCoupon(code, get().subtotal);
+    set(apply(cart));
+    return cart;
+  },
+
+  removeCoupon: async () => {
+    const cart = await removeCouponRequest();
+    set(apply(cart));
+    return cart;
+  },
+
+  clear: () => set({ items: [], subtotal: 0, discountTotal: 0, totalAfterDiscount: 0, coupon: null, isOpen: false }),
   open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false }),
 }));

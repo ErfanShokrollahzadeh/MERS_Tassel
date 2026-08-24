@@ -609,6 +609,124 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
     // ── Cart and orders ────────────────────────────────────────────────────
 
     [Fact]
+    public async Task Coupons_are_admin_managed_validated_and_snapshotted_at_checkout()
+    {
+        var anonymous = factory.CreateClient();
+        var unauthorized = await anonymous.PostAsJsonAsync("/api/v1/coupons/validate",
+            new { code = "WELCOME15", subtotal = 9999 });
+        unauthorized.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+
+        var admin = await AdminClientAsync();
+        var code = $"TEST{Guid.NewGuid():N}"[..16].ToUpperInvariant();
+        var percentCode = $"PCT{Guid.NewGuid():N}"[..16].ToUpperInvariant();
+        var created = await admin.PostAsJsonAsync("/api/v1/admin/promotions", new
+        {
+            name = "Integration fixed offer",
+            code,
+            discountType = "fixed_amount",
+            value = 10,
+            minimumSpend = 30,
+            isActive = true,
+            usageLimit = 2,
+        });
+        created.StatusCode.Should().Be(HttpStatusCode.Created);
+        (await admin.PostAsJsonAsync("/api/v1/admin/promotions", new
+        {
+            name = "Integration percentage offer",
+            code = percentCode,
+            discountType = "percentage",
+            value = 15,
+            minimumSpend = 0,
+            isActive = true,
+        })).StatusCode.Should().Be(HttpStatusCode.Created);
+        var adminList = await admin.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/admin/promotions", Json);
+        adminList!.Data!.EnumerateArray().Select(item => item.GetProperty("code").GetString())
+            .Should().Contain([code, percentCode]);
+
+        var client = factory.CreateClient();
+        var email = $"coupon-{Guid.NewGuid():N}@example.com";
+        await client.PostAsJsonAsync("/api/v1/auth/register",
+            new { email, firstName = "Code", lastName = "Tester", password = ApiFactory.AdminPassword });
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(client, email, ApiFactory.AdminPassword));
+
+        await client.PostAsJsonAsync("/api/v1/cart/items",
+            new { productSlug = "ada-layered-chain", color = "Silver", quantity = 1 });
+
+        var applied = await client.PostAsJsonAsync("/api/v1/coupons/validate",
+            new { code = code.ToLowerInvariant(), subtotal = 1 });
+        applied.StatusCode.Should().Be(HttpStatusCode.OK);
+        var cart = (await applied.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        cart.GetProperty("coupon").GetProperty("code").GetString().Should().Be(code);
+        cart.GetProperty("coupon").GetProperty("badge").GetString().Should().Be("$10 OFF");
+        cart.GetProperty("discountTotal").GetDecimal().Should().Be(10m);
+        cart.GetProperty("totalAfterDiscount").GetDecimal()
+            .Should().Be(cart.GetProperty("subtotal").GetDecimal() - 10m);
+
+        // Removal returns server-repriced totals, then the same persisted code can be applied.
+        var removed = await client.DeleteAsync("/api/v1/coupons/current");
+        removed.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await removed.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!
+            .GetProperty("discountTotal").GetDecimal().Should().Be(0m);
+
+        var percentage = await client.PostAsJsonAsync("/api/v1/coupons/validate",
+            new { code = percentCode, subtotal = 0 });
+        var percentageCart = (await percentage.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        percentageCart.GetProperty("discountTotal").GetDecimal().Should().Be(
+            decimal.Round(percentageCart.GetProperty("subtotal").GetDecimal() * .15m, 2));
+        await client.DeleteAsync("/api/v1/coupons/current");
+
+        await client.PostAsJsonAsync("/api/v1/coupons/validate", new { code, subtotal = 0 });
+
+        var checkout = await client.PostAsJsonAsync("/api/v1/orders/checkout",
+            new { email, delivery = "standard", locale = "en" });
+        checkout.StatusCode.Should().Be(HttpStatusCode.Created);
+        var order = (await checkout.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        order.GetProperty("couponCode").GetString().Should().Be(code);
+        order.GetProperty("couponDiscountType").GetString().Should().Be("fixed_amount");
+        order.GetProperty("discountTotal").GetDecimal().Should().Be(10m);
+        order.GetProperty("total").GetDecimal().Should().Be(
+            order.GetProperty("subtotal").GetDecimal() - 10m + order.GetProperty("shippingTotal").GetDecimal());
+    }
+
+    [Fact]
+    public async Task Coupon_validation_reports_expiry_and_minimum_spend_with_stable_codes()
+    {
+        var admin = await AdminClientAsync();
+        var suffix = Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
+        await admin.PostAsJsonAsync("/api/v1/admin/promotions", new
+        {
+            name = "Expired test", code = $"OLD{suffix}", discountType = "percentage",
+            value = 15, minimumSpend = 0, isActive = true,
+            startsAt = DateTimeOffset.UtcNow.AddDays(-2), expiresAt = DateTimeOffset.UtcNow.AddDays(-1),
+        });
+        await admin.PostAsJsonAsync("/api/v1/admin/promotions", new
+        {
+            name = "High minimum test", code = $"HIGH{suffix}", discountType = "percentage",
+            value = 15, minimumSpend = 10000, isActive = true,
+        });
+
+        var client = factory.CreateClient();
+        var email = $"coupon-errors-{Guid.NewGuid():N}@example.com";
+        await client.PostAsJsonAsync("/api/v1/auth/register",
+            new { email, firstName = "Coupon", lastName = "Errors", password = ApiFactory.AdminPassword });
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(client, email, ApiFactory.AdminPassword));
+        await client.PostAsJsonAsync("/api/v1/cart/items",
+            new { productSlug = "ada-layered-chain", color = "Silver", quantity = 1 });
+
+        var expired = await client.PostAsJsonAsync("/api/v1/coupons/validate", new { code = $"OLD{suffix}", subtotal = 0 });
+        expired.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await expired.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Code.Should().Be("expired_coupon");
+
+        var minimum = await client.PostAsJsonAsync("/api/v1/coupons/validate", new { code = $"HIGH{suffix}", subtotal = 10000 });
+        minimum.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await minimum.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
+        body!.Code.Should().Be("minimum_spend");
+        body.Message.Should().Contain("$10,000");
+    }
+
+    [Fact]
     public async Task Checkout_reserves_stock_and_cancelling_returns_it()
     {
         var client = factory.CreateClient();

@@ -20,7 +20,7 @@ public class CartService(AppDbContext db) : ICartService
     public async Task<CartDto> GetAsync(string userId, CancellationToken ct = default)
     {
         var cart = await LoadAsync(userId, ct);
-        return cart is null ? Empty() : ToDto(cart);
+        return cart is null ? Empty() : await ToFreshDtoAsync(cart, ct);
     }
 
     public async Task<CartDto> AddItemAsync(string userId, AddCartItemRequest request, CancellationToken ct = default)
@@ -64,7 +64,7 @@ public class CartService(AppDbContext db) : ICartService
         }
 
         await db.SaveChangesAsync(ct);
-        return ToDto((await LoadAsync(userId, ct))!);
+        return await ToFreshDtoAsync((await LoadAsync(userId, ct))!, ct);
     }
 
     public async Task<CartDto> AddGiftBoxAsync(
@@ -140,7 +140,7 @@ public class CartService(AppDbContext db) : ICartService
 
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
-        return ToDto((await LoadAsync(userId, ct))!);
+        return await ToFreshDtoAsync((await LoadAsync(userId, ct))!, ct);
     }
 
     public async Task<CartDto> AddSurpriseBoxAsync(
@@ -186,7 +186,7 @@ public class CartService(AppDbContext db) : ICartService
         });
 
         await db.SaveChangesAsync(ct);
-        return ToDto((await LoadAsync(userId, ct))!);
+        return await ToFreshDtoAsync((await LoadAsync(userId, ct))!, ct);
     }
 
     public async Task<CartDto> UpdateItemAsync(string userId, int itemId, int quantity, CancellationToken ct = default)
@@ -210,7 +210,7 @@ public class CartService(AppDbContext db) : ICartService
         }
 
         await db.SaveChangesAsync(ct);
-        return ToDto((await LoadAsync(userId, ct))!);
+        return await ToFreshDtoAsync((await LoadAsync(userId, ct))!, ct);
     }
 
     public async Task<CartDto> RemoveItemAsync(string userId, int itemId, CancellationToken ct = default)
@@ -223,7 +223,7 @@ public class CartService(AppDbContext db) : ICartService
         line.DeletedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
 
-        return ToDto((await LoadAsync(userId, ct))!);
+        return await ToFreshDtoAsync((await LoadAsync(userId, ct))!, ct);
     }
 
     public async Task ClearAsync(string userId, CancellationToken ct = default)
@@ -237,16 +237,35 @@ public class CartService(AppDbContext db) : ICartService
             item.DeletedAt = DateTimeOffset.UtcNow;
         }
 
+        cart.CouponId = null;
+        cart.Coupon = null;
+
         await db.SaveChangesAsync(ct);
     }
 
     private Task<Cart?> LoadAsync(string userId, CancellationToken ct) => db.Carts
+        .Include(c => c.Coupon)
         .Include(c => c.Items.Where(i => !i.IsDelete))
             .ThenInclude(i => i.Variant)
                 .ThenInclude(v => v.Product)
                     .ThenInclude(p => p.Media)
         .AsSplitQuery()
         .FirstOrDefaultAsync(c => c.UserId == userId && c.Status == CartStatus.Open, ct);
+
+    private async Task<CartDto> ToFreshDtoAsync(Cart cart, CancellationToken ct)
+    {
+        var dto = ToDto(cart);
+        // If quantity changes made the applied code ineligible (or it expired), detach it.
+        // Otherwise checkout would reject a coupon the storefront no longer displays and the
+        // shopper would have no visible Remove action to recover.
+        if (cart.CouponId.HasValue && dto.Coupon is null)
+        {
+            cart.CouponId = null;
+            cart.Coupon = null;
+            await db.SaveChangesAsync(ct);
+        }
+        return dto;
+    }
 
     private async Task<Cart> CreateAsync(string userId, string currency, CancellationToken ct)
     {
@@ -266,7 +285,18 @@ public class CartService(AppDbContext db) : ICartService
         return cart;
     }
 
-    private static CartDto Empty() => new() { Items = [], Subtotal = 0, Count = 0 };
+    internal static CartDto Empty() => new()
+    {
+        Items = [],
+        Subtotal = 0,
+        DiscountTotal = 0,
+        TotalAfterDiscount = 0,
+        Count = 0,
+    };
+
+    internal static decimal CalculateSubtotal(Cart cart) => cart.Items
+        .Where(item => !item.IsDelete)
+        .Sum(item => (item.Variant.PriceOverride ?? item.Variant.Product.Price) * item.Quantity);
 
     internal static CartDto ToDto(Cart cart)
     {
@@ -308,12 +338,19 @@ public class CartService(AppDbContext db) : ICartService
             };
         }).ToList();
 
+        var subtotal = items.Sum(i => i.LineTotal);
+        var coupon = CouponPricing.TryEvaluate(cart.Coupon, subtotal, cart.Currency);
+        var discount = coupon?.DiscountAmount ?? 0m;
+
         return new CartDto
         {
             Id = cart.Id,
             Currency = cart.Currency,
             Items = items,
-            Subtotal = items.Sum(i => i.LineTotal),
+            Subtotal = subtotal,
+            DiscountTotal = discount,
+            TotalAfterDiscount = Math.Max(0, subtotal - discount),
+            Coupon = coupon,
             Count = items.Sum(i => i.Quantity),
         };
     }

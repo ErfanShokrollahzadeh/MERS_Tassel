@@ -31,3 +31,9 @@ public enum ReservationStatus
     Converted = 1,
     Released = 2,
 }
+
+public enum CouponDiscountType
+{
+    Percentage = 0,
+    FixedAmount = 1,
+}

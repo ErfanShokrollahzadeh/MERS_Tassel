@@ -45,6 +45,14 @@ export function clearCart() {
   return api.delete<null>('/cart', { auth: true });
 }
 
+export function validateCoupon(code: string, subtotal: number) {
+  return api.post<Cart>('/coupons/validate', { code, subtotal }, { auth: true });
+}
+
+export function removeCoupon() {
+  return api.delete<Cart>('/coupons/current', { auth: true });
+}
+
 // ── Orders ──────────────────────────────────────────────────────────────────
 
 export type CheckoutPayload = {

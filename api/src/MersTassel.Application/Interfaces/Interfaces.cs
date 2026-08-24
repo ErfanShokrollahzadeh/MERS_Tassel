@@ -68,6 +68,16 @@ public interface IOrderService
     Task<OrderDto> GetByStripeSessionAsync(string sessionId, string? restrictToUserId, CancellationToken ct = default);
 }
 
+public interface ICouponService
+{
+    Task<CartDto> ValidateAsync(string userId, ValidateCouponRequest request, CancellationToken ct = default);
+    Task<CartDto> RemoveAsync(string userId, CancellationToken ct = default);
+    Task<IReadOnlyList<CouponDto>> ListAsync(CancellationToken ct = default);
+    Task<CouponDto> CreateAsync(CouponWriteRequest request, CancellationToken ct = default);
+    Task<CouponDto> UpdateAsync(int id, CouponWriteRequest request, CancellationToken ct = default);
+    Task DeleteAsync(int id, CancellationToken ct = default);
+}
+
 public interface ISiteSettingsService
 {
     Task<SiteSettingsDto> GetAsync(CancellationToken ct = default);

@@ -103,6 +103,7 @@ public static class DependencyInjection
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ICartService, CartService>();
+        services.AddScoped<ICouponService, CouponService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<ISiteSettingsService, SiteSettingsService>();
         services.AddScoped<INewsletterService, NewsletterService>();

@@ -22,6 +22,7 @@ public class OrderService(AppDbContext db) : IOrderService
     public async Task<OrderDto> CheckoutAsync(string userId, CheckoutRequest request, CancellationToken ct = default)
     {
         var cart = await db.Carts
+            .Include(c => c.Coupon)
             .Include(c => c.Items.Where(i => !i.IsDelete))
                 .ThenInclude(i => i.Variant)
                     .ThenInclude(v => v.Product)
@@ -44,6 +45,10 @@ public class OrderService(AppDbContext db) : IOrderService
         }
 
         var subtotal = lines.Sum(l => (l.Variant.PriceOverride ?? l.Variant.Product.Price) * l.Quantity);
+        var appliedCoupon = cart.Coupon is null
+            ? null
+            : CouponPricing.Evaluate(cart.Coupon, subtotal, cart.Currency);
+        var discount = appliedCoupon?.DiscountAmount ?? 0m;
         var shipping = request.Delivery == "express"
             ? ExpressShipping
             : subtotal >= FreeShippingThreshold ? 0m : StandardShipping;
@@ -60,8 +65,11 @@ public class OrderService(AppDbContext db) : IOrderService
             PaymentStatus = PaymentStatus.Unpaid,
             Currency = cart.Currency,
             Subtotal = subtotal,
+            DiscountTotal = discount,
             ShippingTotal = shipping,
-            Total = subtotal + shipping,
+            Total = Math.Max(0m, subtotal - discount + shipping),
+            CouponCode = appliedCoupon?.Code,
+            CouponDiscountType = appliedCoupon?.DiscountType,
             ShippingAddressJson = request.ShippingAddress is null
                 ? "{}"
                 : JsonSerializer.Serialize(request.ShippingAddress, new JsonSerializerOptions(JsonSerializerDefaults.Web)),
@@ -106,7 +114,11 @@ public class OrderService(AppDbContext db) : IOrderService
 
         db.Orders.Add(order);
 
+        if (appliedCoupon is not null && cart.Coupon is not null)
+            cart.Coupon.RedemptionCount += 1;
+
         cart.Status = CartStatus.Converted;
+        cart.CouponId = null;
         foreach (var line in lines)
         {
             line.IsDelete = true;
@@ -266,8 +278,11 @@ public class OrderService(AppDbContext db) : IOrderService
         PaymentStatus = OrderStatusNames.ToApi(o.PaymentStatus),
         Currency = o.Currency,
         Subtotal = o.Subtotal,
+        DiscountTotal = o.DiscountTotal,
         ShippingTotal = o.ShippingTotal,
         Total = o.Total,
+        CouponCode = o.CouponCode,
+        CouponDiscountType = o.CouponDiscountType,
         Channel = o.Channel,
         CreatedAt = o.CreatedAt,
         PaidAt = o.PaidAt,

@@ -15,6 +15,7 @@ import { MediaImage } from '@/components/MediaImage';
 import { useI18n } from '@/i18n/I18nProvider';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { useAuthStore } from '@/stores/auth';
+import { PromoCode } from '@/components/PromoCode';
 
 type CheckoutFields = { email: string };
 
@@ -38,6 +39,7 @@ export default function CheckoutPage() {
   const hasHydrated = useAuthStore((state) => state.hasHydrated);
   const items = useCartStore((state) => state.items);
   const subtotal = useCartStore(cartSubtotal);
+  const storedDiscount = useCartStore((state) => state.discountTotal);
   const loadCart = useCartStore((state) => state.load);
   const showToast = useToastStore((state) => state.show);
   const { t, locale } = useI18n();
@@ -46,8 +48,9 @@ export default function CheckoutPage() {
   const [delivery, setDelivery] = useState<'standard' | 'express'>('standard');
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CheckoutFields>({ resolver: zodResolver(schema) });
 
+  const discount = Number.isFinite(storedDiscount) ? storedDiscount : 0;
   const shipping = delivery === 'express' ? 18 : subtotal >= 120 ? 0 : 9;
-  const total = subtotal + shipping;
+  const total = Math.max(0, subtotal - discount + shipping);
 
   useEffect(() => {
     if (hasHydrated && !user) router.replace('/login?next=%2Fcheckout');
@@ -135,7 +138,8 @@ export default function CheckoutPage() {
             ) : (
               <div className="summary-empty"><p>{t('checkout.empty')}</p><Link href="/products">{t('checkout.browse')}</Link></div>
             )}
-            <div className="summary-totals summary-totals--checkout"><p><span>{t('cart.subtotal')}</span><b>${subtotal.toFixed(0)}</b></p><p><span>{t('checkout.delivery')}</span><b>{shipping ? `$${shipping}` : t('cart.complimentary')}</b></p><div><span>{t('cart.total')} <small>USD</small></span><strong>${total.toFixed(0)}</strong></div></div>
+            <PromoCode currency="USD" />
+            <div className="summary-totals summary-totals--checkout"><p><span>{t('cart.subtotal')}</span><b>${subtotal.toFixed(0)}</b></p>{discount > 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Promosyon indirimi' : 'Promo discount'}</span><b>−${discount.toFixed(2)}</b></p>}<p><span>{t('checkout.delivery')}</span><b>{shipping ? `$${shipping}` : t('cart.complimentary')}</b></p><div><span>{t('cart.total')} <small>USD</small></span><strong>${total.toFixed(2)}</strong></div></div>
             <div className="summary-trust"><LockKeyhole size={14} /> {t('checkout.trust')}</div>
           </div>
         </aside>
