@@ -27,6 +27,12 @@ public class ForbiddenException(string message) : Exception(message);
 /// <summary>Conflicting state, e.g. a slug already in use. Surfaces as 409.</summary>
 public class ConflictException(string message) : Exception(message);
 
+/// <summary>A coupon was recognized but cannot be used for this cart.</summary>
+public class CouponException(string code, string message) : Exception(message)
+{
+    public string Code { get; } = code;
+}
+
 /// <summary>
 /// A dependency the deployment has not configured (payment-provider keys, for instance). Surfaces as
 /// 503 with a machine-readable code so the client can explain the gap rather than retry.

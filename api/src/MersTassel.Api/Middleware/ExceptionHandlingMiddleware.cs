@@ -55,6 +55,11 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
                 return (StatusCodes.Status409Conflict,
                     ApiResponse<object?>.Fail(conflict.Message, code: "conflict"));
 
+            case CouponException coupon:
+                logger.LogInformation("Coupon validation failed for {Path}: {Code}", context.Request.Path, coupon.Code);
+                return (StatusCodes.Status400BadRequest,
+                    ApiResponse<object?>.Fail(coupon.Message, code: coupon.Code));
+
             case NotConfiguredException notConfigured:
                 logger.LogWarning("Unconfigured dependency hit at {Path}: {Code}", context.Request.Path, notConfigured.Code);
                 return (StatusCodes.Status503ServiceUnavailable,

@@ -181,6 +181,42 @@ public class CheckoutRequestValidator : AbstractValidator<CheckoutRequest>
     }
 }
 
+public class ValidateCouponRequestValidator : AbstractValidator<ValidateCouponRequest>
+{
+    public ValidateCouponRequestValidator()
+    {
+        RuleFor(x => x.Code).NotEmpty().MaximumLength(40);
+        RuleFor(x => x.Subtotal).GreaterThanOrEqualTo(0);
+    }
+}
+
+public class CouponWriteRequestValidator : AbstractValidator<CouponWriteRequest>
+{
+    public CouponWriteRequestValidator()
+    {
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(120);
+        RuleFor(x => x.Code)
+            .NotEmpty()
+            .MaximumLength(40)
+            .Matches("^[A-Za-z0-9_-]+$")
+            .WithMessage("Codes may contain letters, numbers, dashes and underscores only.");
+        RuleFor(x => x.DiscountType)
+            .Must(value => value is "percentage" or "fixed_amount")
+            .WithMessage("Discount type must be 'percentage' or 'fixed_amount'.");
+        RuleFor(x => x.Value).GreaterThan(0);
+        RuleFor(x => x.Value)
+            .LessThanOrEqualTo(100)
+            .When(x => x.DiscountType == "percentage")
+            .WithMessage("Percentage discounts cannot exceed 100%.");
+        RuleFor(x => x.MinimumSpend).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.UsageLimit).GreaterThan(0).When(x => x.UsageLimit.HasValue);
+        RuleFor(x => x.ExpiresAt)
+            .GreaterThan(x => x.StartsAt)
+            .When(x => x.StartsAt.HasValue && x.ExpiresAt.HasValue)
+            .WithMessage("Expiry must be after the start date.");
+    }
+}
+
 public class SiteSettingsDtoValidator : AbstractValidator<SiteSettingsDto>
 {
     public SiteSettingsDtoValidator()

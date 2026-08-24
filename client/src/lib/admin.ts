@@ -2,6 +2,7 @@ import { api, queryString, type Paged } from '@/lib/apiClient';
 import type {
   AdminUser,
   Category,
+  Coupon,
   Dashboard,
   Order,
   OrderStatus,
@@ -191,6 +192,36 @@ export function updateOrderStatus(id: number, status: OrderStatus) {
   return api.patch<Order>(`/admin/orders/${id}/status`, { status }, { auth: true });
 }
 
+// ── Promotions ──────────────────────────────────────────────────────────────
+
+export type CouponDraft = {
+  name: string;
+  code: string;
+  discountType: 'percentage' | 'fixed_amount';
+  value: number;
+  minimumSpend: number;
+  isActive: boolean;
+  startsAt?: string | null;
+  expiresAt?: string | null;
+  usageLimit?: number | null;
+};
+
+export function fetchPromotions() {
+  return api.get<Coupon[]>('/admin/promotions', { auth: true });
+}
+
+export function createPromotion(draft: CouponDraft) {
+  return api.post<Coupon>('/admin/promotions', draft, { auth: true });
+}
+
+export function updatePromotion(id: number, draft: CouponDraft) {
+  return api.put<Coupon>(`/admin/promotions/${id}`, draft, { auth: true });
+}
+
+export function deletePromotion(id: number) {
+  return api.delete<null>(`/admin/promotions/${id}`, { auth: true });
+}
+
 // ── Users ───────────────────────────────────────────────────────────────────
 
 export function fetchAdminUsers(query: { search?: string; page?: number; pageSize?: number } = {}) {
@@ -247,4 +278,5 @@ export const adminKeys = {
   orders: (query: AdminOrderQuery = {}) => ['admin', 'orders', query] as const,
   users: (query: { search?: string; page?: number } = {}) => ['admin', 'users', query] as const,
   settings: () => ['admin', 'settings'] as const,
+  promotions: () => ['admin', 'promotions'] as const,
 };

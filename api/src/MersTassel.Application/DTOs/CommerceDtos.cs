@@ -8,7 +8,60 @@ public class CartDto
     public string Currency { get; set; } = "USD";
     public IReadOnlyList<CartItemDto> Items { get; set; } = [];
     public decimal Subtotal { get; set; }
+    public decimal DiscountTotal { get; set; }
+    public decimal TotalAfterDiscount { get; set; }
+    public AppliedCouponDto? Coupon { get; set; }
     public int Count { get; set; }
+}
+
+public class AppliedCouponDto
+{
+    public string Code { get; set; } = string.Empty;
+    public string DiscountType { get; set; } = string.Empty;
+    public decimal Value { get; set; }
+    public decimal MinimumSpend { get; set; }
+    public decimal DiscountAmount { get; set; }
+    public string Badge { get; set; } = string.Empty;
+}
+
+public class ValidateCouponRequest
+{
+    public string Code { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Client snapshot included in the request contract for diagnostics. The server always
+    /// prices the signed-in customer's current cart and never trusts this amount.
+    /// </summary>
+    public decimal Subtotal { get; set; }
+}
+
+public class CouponDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
+    public string DiscountType { get; set; } = string.Empty;
+    public decimal Value { get; set; }
+    public decimal MinimumSpend { get; set; }
+    public bool IsActive { get; set; }
+    public DateTimeOffset? StartsAt { get; set; }
+    public DateTimeOffset? ExpiresAt { get; set; }
+    public int? UsageLimit { get; set; }
+    public int RedemptionCount { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+public class CouponWriteRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
+    public string DiscountType { get; set; } = "percentage";
+    public decimal Value { get; set; }
+    public decimal MinimumSpend { get; set; }
+    public bool IsActive { get; set; } = true;
+    public DateTimeOffset? StartsAt { get; set; }
+    public DateTimeOffset? ExpiresAt { get; set; }
+    public int? UsageLimit { get; set; }
 }
 
 public class CartItemDto
@@ -104,8 +157,11 @@ public class OrderDto
     public string PaymentStatus { get; set; } = string.Empty;
     public string Currency { get; set; } = "USD";
     public decimal Subtotal { get; set; }
+    public decimal DiscountTotal { get; set; }
     public decimal ShippingTotal { get; set; }
     public decimal Total { get; set; }
+    public string? CouponCode { get; set; }
+    public string? CouponDiscountType { get; set; }
     public string Channel { get; set; } = string.Empty;
     public IReadOnlyList<OrderItemDto> Items { get; set; } = [];
     public int ItemCount { get; set; }

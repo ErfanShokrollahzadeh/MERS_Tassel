@@ -145,6 +145,28 @@ public class CartConfiguration : IEntityTypeConfiguration<Cart>
             .WithMany()
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        b.HasOne(x => x.Coupon)
+            .WithMany()
+            .HasForeignKey(x => x.CouponId)
+            .OnDelete(DeleteBehavior.SetNull);
+    }
+}
+
+public class CouponConfiguration : IEntityTypeConfiguration<Coupon>
+{
+    public void Configure(EntityTypeBuilder<Coupon> b)
+    {
+        b.ToTable("Coupons");
+        b.Property(x => x.Name).HasMaxLength(120).IsRequired();
+        b.Property(x => x.Code).HasMaxLength(40).IsRequired();
+        b.Property(x => x.NormalizedCode).HasMaxLength(40).IsRequired();
+        b.Property(x => x.DiscountType).HasConversion<string>().HasMaxLength(20);
+
+        b.HasIndex(x => x.NormalizedCode).IsUnique();
+        b.HasIndex(x => x.IsActive);
+        b.HasIndex(x => x.ExpiresAt);
+        b.HasIndex(x => x.IsDelete);
     }
 }
 
@@ -187,6 +209,8 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
 
         b.Property(x => x.Status).HasConversion<string>().HasMaxLength(16);
         b.Property(x => x.PaymentStatus).HasConversion<string>().HasMaxLength(16);
+        b.Property(x => x.CouponCode).HasMaxLength(40);
+        b.Property(x => x.CouponDiscountType).HasMaxLength(20);
 
 
         b.HasIndex(x => x.Number).IsUnique();

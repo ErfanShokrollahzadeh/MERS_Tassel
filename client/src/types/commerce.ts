@@ -103,7 +103,34 @@ export type Cart = {
   currency: string;
   items: CartItem[];
   subtotal: number;
+  discountTotal: number;
+  totalAfterDiscount: number;
+  coupon?: AppliedCoupon | null;
   count: number;
+};
+
+export type AppliedCoupon = {
+  code: string;
+  discountType: 'percentage' | 'fixed_amount';
+  value: number;
+  minimumSpend: number;
+  discountAmount: number;
+  badge: string;
+};
+
+export type Coupon = {
+  id: number;
+  name: string;
+  code: string;
+  discountType: 'percentage' | 'fixed_amount';
+  value: number;
+  minimumSpend: number;
+  isActive: boolean;
+  startsAt?: string | null;
+  expiresAt?: string | null;
+  usageLimit?: number | null;
+  redemptionCount: number;
+  createdAt: string;
 };
 
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
@@ -136,8 +163,11 @@ export type Order = {
   paymentStatus: PaymentStatus;
   currency: string;
   subtotal: number;
+  discountTotal: number;
   shippingTotal: number;
   total: number;
+  couponCode?: string | null;
+  couponDiscountType?: string | null;
   channel: string;
   items: OrderItem[];
   itemCount: number;
