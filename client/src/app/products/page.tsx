@@ -1,8 +1,8 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ChevronDown, SlidersHorizontal, Sparkles, X } from 'lucide-react';
+import { ChevronDown, Pause, Play, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ProductTile } from '@/components/ProductTile';
 import { EmptyState, ErrorState, ProductGridSkeleton } from '@/components/DataStates';
@@ -14,6 +14,7 @@ const PAGE_SIZE = 12;
 
 function Catalog() {
   const { t, locale } = useI18n();
+  const heroVideoRef = useRef<HTMLVideoElement>(null);
   const searchParams = useSearchParams();
   const urlSearch = searchParams.get('search') || '';
   const shouldFocusSearch = searchParams.get('focus') === 'search';
@@ -24,6 +25,29 @@ function Catalog() {
   const [sort, setSort] = useState<CatalogSort>(searchParams.get('sort') === 'new' ? 'newest' : 'featured');
   const [filtersOpen, setFiltersOpen] = useState(Boolean(urlSearch) || shouldFocusSearch);
   const [page, setPage] = useState(1);
+  const [heroVideoPlaying, setHeroVideoPlaying] = useState(true);
+
+  useEffect(() => {
+    const video = heroVideoRef.current;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (!video) return;
+
+    const syncMotionPreference = () => {
+      if (reducedMotion.matches) {
+        video.pause();
+        setHeroVideoPlaying(false);
+        return;
+      }
+
+      video.muted = true;
+      video.defaultMuted = true;
+      void video.play().then(() => setHeroVideoPlaying(true)).catch(() => setHeroVideoPlaying(false));
+    };
+
+    syncMotionPreference();
+    reducedMotion.addEventListener('change', syncMotionPreference);
+    return () => reducedMotion.removeEventListener('change', syncMotionPreference);
+  }, []);
 
   // Debounce so typing does not fire a request per keystroke.
   useEffect(() => {
@@ -56,13 +80,47 @@ function Catalog() {
   const categories = useQuery({ queryKey: catalogKeys.categories(), queryFn: () => fetchCategories() });
 
   const clearAll = () => { setCategory(''); setQuery(''); setDebouncedQuery(''); };
+  const toggleHeroVideo = () => {
+    const video = heroVideoRef.current;
+    if (!video) return;
+    if (video.paused) void video.play().catch(() => setHeroVideoPlaying(false));
+    else video.pause();
+  };
   const result = products.data;
 
   return (
     <div className="catalog-page">
-      <section className="catalog-hero"><div className="ambient ambient--one" /><div className="container-wide"><span className="eyebrow"><Sparkles size={12} /> {t('catalog.eyebrow')}</span><h1>{t('catalog.title1')}<br /><em>{t('catalog.title2')}</em></h1><p>{t('catalog.lede')}</p></div></section>
+      <section className="catalog-hero catalog-hero--video">
+        <video
+          ref={heroVideoRef}
+          className="catalog-hero__video"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster="/images/products-collection-video-poster.jpg"
+          aria-hidden="true"
+          tabIndex={-1}
+          onPlay={() => setHeroVideoPlaying(true)}
+          onPause={() => setHeroVideoPlaying(false)}
+        >
+          <source src="/videos/products-collection-hero.mp4" type="video/mp4" />
+        </video>
+        <div className="catalog-hero__veil" aria-hidden="true" />
+        <div className="ambient ambient--one" />
+        <div className="container-wide catalog-hero__content">
+          <span className="eyebrow"><Sparkles size={12} /> {t('catalog.eyebrow')}</span>
+          <h1>{t('catalog.title1')}<br /><em>{t('catalog.title2')}</em></h1>
+          <p>{t('catalog.lede')}</p>
+        </div>
+        <button className="catalog-hero__video-control" type="button" onClick={toggleHeroVideo} aria-label={heroVideoPlaying ? t('catalog.pauseVideo') : t('catalog.playVideo')}>
+          {heroVideoPlaying ? <Pause size={15} fill="currentColor" /> : <Play size={15} fill="currentColor" />}
+          <span>{heroVideoPlaying ? t('catalog.pauseFilm') : t('catalog.playFilm')}</span>
+        </button>
+      </section>
 
-      <section className="catalog-shell container-wide">
+      <section id="catalog-products" className="catalog-shell container-wide">
         <div className="catalog-toolbar">
           <div className="category-tabs" role="tablist" aria-label={t('catalog.categories')}>
             <button role="tab" aria-selected={category === ''} onClick={() => setCategory('')}>{t('catalog.all')}</button>
