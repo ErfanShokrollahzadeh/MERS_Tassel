@@ -20,6 +20,7 @@ const reveal = { initial: { opacity: 0, y: 24 }, whileInView: { opacity: 1, y: 0
 
 export default function HomePage() {
   const { t, locale } = useI18n();
+  const homeHeroVideoRef = useRef<HTMLVideoElement>(null);
   const quoteVideoRef = useRef<HTMLVideoElement>(null);
 
   const featured = useQuery({ queryKey: catalogKeys.featured(4), queryFn: () => fetchFeaturedProducts(4) });
@@ -28,13 +29,38 @@ export default function HomePage() {
 
   const hero = settings.data;
   const heroProduct = featured.data?.[0];
-  const heroProductName = locale === 'tr' && heroProduct?.nameTr ? heroProduct.nameTr : heroProduct?.name;
-  // Hero art comes from site settings, falling back to the leading product's photograph.
-  const heroImage = hero?.heroImagePath || heroProduct?.image || '';
 
   const heroHeadline = locale === 'tr' && hero?.heroHeadlineTr ? hero.heroHeadlineTr : hero?.heroHeadline;
   const heroSub = locale === 'tr' && hero?.heroSubheadlineTr ? hero.heroSubheadlineTr : hero?.heroSubheadline;
   const heroEyebrow = locale === 'tr' && hero?.heroEyebrowTr ? hero.heroEyebrowTr : hero?.heroEyebrow;
+
+  useEffect(() => {
+    const video = homeHeroVideoRef.current;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (!video) return;
+
+    const play = () => {
+      if (reducedMotion.matches || document.visibilityState !== 'visible') {
+        video.pause();
+        return;
+      }
+      video.muted = true;
+      video.defaultMuted = true;
+      void video.play().catch(() => undefined);
+    };
+
+    play();
+    video.addEventListener('canplay', play);
+    window.addEventListener('pageshow', play);
+    document.addEventListener('visibilitychange', play);
+    reducedMotion.addEventListener('change', play);
+    return () => {
+      video.removeEventListener('canplay', play);
+      window.removeEventListener('pageshow', play);
+      document.removeEventListener('visibilitychange', play);
+      reducedMotion.removeEventListener('change', play);
+    };
+  }, []);
 
   useEffect(() => {
     const video = quoteVideoRef.current;
@@ -58,29 +84,19 @@ export default function HomePage() {
 
   return (
     <>
-      <section className="home-hero">
+      <section className="home-hero home-hero--video">
+        <video ref={homeHeroVideoRef} className="home-hero__video" autoPlay muted loop playsInline preload="metadata" poster="/images/home-jewelry-hero-poster.jpg" disablePictureInPicture aria-hidden="true" tabIndex={-1}>
+          <source src="/videos/home-jewelry-hero.mp4" type="video/mp4" />
+        </video>
+        <div className="home-hero__video-veil" aria-hidden="true" />
         <div className="ambient ambient--one" /><div className="ambient ambient--two" />
         <div className="container-wide home-hero__grid">
-          <motion.div className="hero-copy" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .7 }}>
+          <motion.div className="hero-copy hero-copy--video" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .7 }}>
             <span className="eyebrow"><i /> {heroEyebrow || t('home.eyebrow')}</span>
             <h1>{heroHeadline ? heroHeadline : <>{t('home.title1')}<br /><em>{t('home.title2')}</em></>}</h1>
             <p>{heroSub || t('home.lede')}</p>
             <div className="hero-actions"><MagneticLink className="button button--primary" href="/products">{t('common.explore')} <ArrowRight size={17} /></MagneticLink><Link className="button button--ghost" href="/about">{t('home.makers')}</Link></div>
             <div className="hero-proof"><div className="avatar-stack"><span>A</span><span>M</span><span>S</span></div><div><div className="stars">★★★★★</div><small>{t('home.proof')}</small></div></div>
-          </motion.div>
-          <motion.div className="hero-visual" initial={{ opacity: 0, scale: .96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: .9, delay: .1 }}>
-            <div className="hero-image-wrap">
-              {heroImage ? <MediaImage src={heroImage} alt={heroProductName || 'MERS Tassel'} sizes="(max-width: 720px) 92vw, 52vw" priority /> : <span className="skeleton-block hero-image-placeholder" />}
-            </div>
-            {heroProduct && (
-              <div className="hero-float-card glass-panel">
-                <span className="mini-label">{t('home.pick')}</span>
-                <strong>{heroProductName}</strong>
-                <span>{t('home.handknotted')}</span>
-                <Link href={`/products/${heroProduct.slug}`} aria-label={t('home.viewProduct')}><ArrowRight size={17} /></Link>
-              </div>
-            )}
-            <div className="hero-number">01</div>
           </motion.div>
         </div>
         <a className="scroll-cue" href="#collection"><ArrowDown size={16} /> {t('home.scroll')}</a>
