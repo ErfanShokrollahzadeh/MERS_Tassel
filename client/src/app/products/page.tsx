@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ChevronDown, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
@@ -14,6 +14,7 @@ const PAGE_SIZE = 12;
 
 function Catalog() {
   const { t, locale } = useI18n();
+  const heroVideoRef = useRef<HTMLVideoElement>(null);
   const searchParams = useSearchParams();
   const urlSearch = searchParams.get('search') || '';
   const shouldFocusSearch = searchParams.get('focus') === 'search';
@@ -24,6 +25,26 @@ function Catalog() {
   const [sort, setSort] = useState<CatalogSort>(searchParams.get('sort') === 'new' ? 'newest' : 'featured');
   const [filtersOpen, setFiltersOpen] = useState(Boolean(urlSearch) || shouldFocusSearch);
   const [page, setPage] = useState(1);
+  useEffect(() => {
+    const video = heroVideoRef.current;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (!video) return;
+
+    const syncMotionPreference = () => {
+      if (reducedMotion.matches) {
+        video.pause();
+        return;
+      }
+
+      video.muted = true;
+      video.defaultMuted = true;
+      void video.play().catch(() => undefined);
+    };
+
+    syncMotionPreference();
+    reducedMotion.addEventListener('change', syncMotionPreference);
+    return () => reducedMotion.removeEventListener('change', syncMotionPreference);
+  }, []);
 
   // Debounce so typing does not fire a request per keystroke.
   useEffect(() => {
@@ -60,9 +81,31 @@ function Catalog() {
 
   return (
     <div className="catalog-page">
-      <section className="catalog-hero"><div className="ambient ambient--one" /><div className="container-wide"><span className="eyebrow"><Sparkles size={12} /> {t('catalog.eyebrow')}</span><h1>{t('catalog.title1')}<br /><em>{t('catalog.title2')}</em></h1><p>{t('catalog.lede')}</p></div></section>
+      <section className="catalog-hero catalog-hero--video">
+        <video
+          ref={heroVideoRef}
+          className="catalog-hero__video"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster="/images/products-collection-video-poster.jpg"
+          aria-hidden="true"
+          tabIndex={-1}
+        >
+          <source src="/videos/products-collection-hero.mp4" type="video/mp4" />
+        </video>
+        <div className="catalog-hero__veil" aria-hidden="true" />
+        <div className="ambient ambient--one" />
+        <div className="container-wide catalog-hero__content">
+          <span className="eyebrow"><Sparkles size={12} /> {t('catalog.eyebrow')}</span>
+          <h1>{t('catalog.title1')}<br /><em>{t('catalog.title2')}</em></h1>
+          <p>{t('catalog.lede')}</p>
+        </div>
+      </section>
 
-      <section className="catalog-shell container-wide">
+      <section id="catalog-products" className="catalog-shell container-wide">
         <div className="catalog-toolbar">
           <div className="category-tabs" role="tablist" aria-label={t('catalog.categories')}>
             <button role="tab" aria-selected={category === ''} onClick={() => setCategory('')}>{t('catalog.all')}</button>
