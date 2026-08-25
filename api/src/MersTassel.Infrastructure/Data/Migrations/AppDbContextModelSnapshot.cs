@@ -610,6 +610,9 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.Property<long>("Total")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long>("TradeInCredit")
+                        .HasColumnType("INTEGER");
+
                     b.Property<long>("UpdatedAt")
                         .HasColumnType("INTEGER");
 
@@ -1130,6 +1133,106 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.ToTable("SiteSettings", (string)null);
                 });
 
+            modelBuilder.Entity("MersTassel.Domain.Entities.TradeInRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AdminNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("BrandModel")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CartId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Condition")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CreatedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("DeletedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("EstimatedCredit")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("HandoffMethod")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ImagePath")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("isDelete");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TargetProductName")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("TargetProductPrice")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("TargetProductSlug")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("UpdatedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CartId")
+                        .IsUnique();
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("IsDelete");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("TradeInRequests", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.Property<int>("Id")
@@ -1360,6 +1463,30 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("MersTassel.Domain.Entities.TradeInRequest", b =>
+                {
+                    b.HasOne("MersTassel.Domain.Entities.Cart", "Cart")
+                        .WithOne("TradeIn")
+                        .HasForeignKey("MersTassel.Domain.Entities.TradeInRequest", "CartId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("MersTassel.Domain.Entities.Order", "Order")
+                        .WithOne("TradeIn")
+                        .HasForeignKey("MersTassel.Domain.Entities.TradeInRequest", "OrderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("MersTassel.Domain.Entities.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Cart");
+
+                    b.Navigation("Order");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("MersTassel.Domain.Entities.AppRole", null)
@@ -1419,6 +1546,8 @@ namespace MersTassel.Infrastructure.Data.Migrations
             modelBuilder.Entity("MersTassel.Domain.Entities.Cart", b =>
                 {
                     b.Navigation("Items");
+
+                    b.Navigation("TradeIn");
                 });
 
             modelBuilder.Entity("MersTassel.Domain.Entities.Category", b =>
@@ -1431,6 +1560,8 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.Navigation("Items");
 
                     b.Navigation("Reservations");
+
+                    b.Navigation("TradeIn");
                 });
 
             modelBuilder.Entity("MersTassel.Domain.Entities.Product", b =>

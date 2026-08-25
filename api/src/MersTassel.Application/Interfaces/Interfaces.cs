@@ -78,6 +78,14 @@ public interface ICouponService
     Task DeleteAsync(int id, CancellationToken ct = default);
 }
 
+public interface ITradeInService
+{
+    Task<TradeInEstimateDto> EstimateAsync(TradeInEstimateRequest request, CancellationToken ct = default);
+    Task<CartDto> ApplyAsync(string userId, ApplyTradeInRequest request, UploadedFile image, CancellationToken ct = default);
+    Task<CartDto> RemoveAsync(string userId, CancellationToken ct = default);
+    Task<TradeInDto> UpdateStatusAsync(int id, UpdateTradeInStatusRequest request, CancellationToken ct = default);
+}
+
 public interface ISiteSettingsService
 {
     Task<SiteSettingsDto> GetAsync(CancellationToken ct = default);

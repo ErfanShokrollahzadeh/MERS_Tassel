@@ -9,8 +9,11 @@ public class CartDto
     public IReadOnlyList<CartItemDto> Items { get; set; } = [];
     public decimal Subtotal { get; set; }
     public decimal DiscountTotal { get; set; }
+    public decimal CouponDiscountTotal { get; set; }
+    public decimal TradeInCredit { get; set; }
     public decimal TotalAfterDiscount { get; set; }
     public AppliedCouponDto? Coupon { get; set; }
+    public TradeInDto? TradeIn { get; set; }
     public int Count { get; set; }
 }
 
@@ -135,6 +138,49 @@ public class CheckoutRequest
     public ShippingAddressDto? ShippingAddress { get; set; }
 }
 
+public class TradeInEstimateRequest
+{
+    public string Category { get; set; } = string.Empty;
+    public string Condition { get; set; } = string.Empty;
+    public string? TargetProductSlug { get; set; }
+    public decimal? TargetProductPrice { get; set; }
+}
+
+public class ApplyTradeInRequest : TradeInEstimateRequest
+{
+    public string BrandModel { get; set; } = string.Empty;
+    public string HandoffMethod { get; set; } = string.Empty;
+}
+
+public class TradeInEstimateDto
+{
+    public decimal EstimatedCredit { get; set; }
+    public string Currency { get; set; } = "USD";
+    public decimal? EstimatedPriceAfterTradeIn { get; set; }
+    public string Status { get; set; } = "estimate";
+}
+
+public class TradeInDto : TradeInEstimateDto
+{
+    public int Id { get; set; }
+    public string Category { get; set; } = string.Empty;
+    public string BrandModel { get; set; } = string.Empty;
+    public string Condition { get; set; } = string.Empty;
+    public string ImagePath { get; set; } = string.Empty;
+    public string? TargetProductSlug { get; set; }
+    public string? TargetProductName { get; set; }
+    public decimal? TargetProductPrice { get; set; }
+    public string HandoffMethod { get; set; } = string.Empty;
+    public string? AdminNote { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+public class UpdateTradeInStatusRequest
+{
+    public string Status { get; set; } = string.Empty;
+    public string? AdminNote { get; set; }
+}
+
 public class ShippingAddressDto
 {
     public string Line1 { get; set; } = string.Empty;
@@ -158,10 +204,13 @@ public class OrderDto
     public string Currency { get; set; } = "USD";
     public decimal Subtotal { get; set; }
     public decimal DiscountTotal { get; set; }
+    public decimal CouponDiscountTotal { get; set; }
+    public decimal TradeInCredit { get; set; }
     public decimal ShippingTotal { get; set; }
     public decimal Total { get; set; }
     public string? CouponCode { get; set; }
     public string? CouponDiscountType { get; set; }
+    public TradeInDto? TradeIn { get; set; }
     public string Channel { get; set; } = string.Empty;
     public IReadOnlyList<OrderItemDto> Items { get; set; } = [];
     public int ItemCount { get; set; }

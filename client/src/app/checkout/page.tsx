@@ -16,6 +16,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { useAuthStore } from '@/stores/auth';
 import { PromoCode } from '@/components/PromoCode';
+import { TradeInWidget } from '@/components/TradeInWidget';
 
 type CheckoutFields = { email: string };
 
@@ -40,6 +41,8 @@ export default function CheckoutPage() {
   const items = useCartStore((state) => state.items);
   const subtotal = useCartStore(cartSubtotal);
   const storedDiscount = useCartStore((state) => state.discountTotal);
+  const couponDiscount = useCartStore((state) => state.couponDiscountTotal);
+  const tradeInCredit = useCartStore((state) => state.tradeInCredit);
   const loadCart = useCartStore((state) => state.load);
   const showToast = useToastStore((state) => state.show);
   const { t, locale } = useI18n();
@@ -139,7 +142,8 @@ export default function CheckoutPage() {
               <div className="summary-empty"><p>{t('checkout.empty')}</p><Link href="/products">{t('checkout.browse')}</Link></div>
             )}
             <PromoCode currency="USD" />
-            <div className="summary-totals summary-totals--checkout"><p><span>{t('cart.subtotal')}</span><b>${subtotal.toFixed(0)}</b></p>{discount > 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Promosyon indirimi' : 'Promo discount'}</span><b>−${discount.toFixed(2)}</b></p>}<p><span>{t('checkout.delivery')}</span><b>{shipping ? `$${shipping}` : t('cart.complimentary')}</b></p><div><span>{t('cart.total')} <small>USD</small></span><strong>${total.toFixed(2)}</strong></div></div>
+            <TradeInWidget source="checkout" compact />
+            <div className="summary-totals summary-totals--checkout"><p><span>{t('cart.subtotal')}</span><b>${subtotal.toFixed(0)}</b></p>{couponDiscount > 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Promosyon indirimi' : 'Promo discount'}</span><b>−${couponDiscount.toFixed(2)}</b></p>}{tradeInCredit > 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Takas kredisi' : 'Trade-in credit'}</span><b>−${tradeInCredit.toFixed(2)}</b></p>}{discount > 0 && couponDiscount === 0 && tradeInCredit === 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Toplam indirim' : 'Total discount'}</span><b>−${discount.toFixed(2)}</b></p>}<p><span>{t('checkout.delivery')}</span><b>{shipping ? `$${shipping}` : t('cart.complimentary')}</b></p><div><span>{t('cart.total')} <small>USD</small></span><strong>${total.toFixed(2)}</strong></div></div>
             <div className="summary-trust"><LockKeyhole size={14} /> {t('checkout.trust')}</div>
           </div>
         </aside>

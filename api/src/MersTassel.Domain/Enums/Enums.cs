@@ -37,3 +37,25 @@ public enum CouponDiscountType
     Percentage = 0,
     FixedAmount = 1,
 }
+
+public enum TradeInCondition
+{
+    LikeNew = 0,
+    Good = 1,
+    Fair = 2,
+}
+
+public enum TradeInStatus
+{
+    Draft = 0,
+    PendingVerification = 1,
+    Approved = 2,
+    Rejected = 3,
+    Cancelled = 4,
+}
+
+public enum TradeInHandoffMethod
+{
+    Pickup = 0,
+    DropOff = 1,
+}

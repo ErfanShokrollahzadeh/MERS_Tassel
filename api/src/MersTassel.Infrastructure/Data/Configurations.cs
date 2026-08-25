@@ -228,6 +228,46 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
     }
 }
 
+public class TradeInRequestConfiguration : IEntityTypeConfiguration<TradeInRequest>
+{
+    public void Configure(EntityTypeBuilder<TradeInRequest> b)
+    {
+        b.ToTable("TradeInRequests");
+        b.Property(x => x.Category).HasMaxLength(40).IsRequired();
+        b.Property(x => x.BrandModel).HasMaxLength(160).IsRequired();
+        b.Property(x => x.ImagePath).HasMaxLength(400).IsRequired();
+        b.Property(x => x.TargetProductSlug).HasMaxLength(200);
+        b.Property(x => x.TargetProductName).HasMaxLength(200);
+        b.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+        b.Property(x => x.AdminNote).HasMaxLength(1000);
+        b.Property(x => x.Condition).HasConversion<string>().HasMaxLength(16);
+        b.Property(x => x.HandoffMethod).HasConversion<string>().HasMaxLength(16);
+        b.Property(x => x.Status).HasConversion<string>().HasMaxLength(24);
+
+        b.HasIndex(x => x.CartId).IsUnique();
+        b.HasIndex(x => x.OrderId).IsUnique();
+        b.HasIndex(x => x.UserId);
+        b.HasIndex(x => x.Status);
+        b.HasIndex(x => x.CreatedAt);
+        b.HasIndex(x => x.IsDelete);
+
+        b.HasOne(x => x.User)
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        b.HasOne(x => x.Cart)
+            .WithOne(x => x.TradeIn)
+            .HasForeignKey<TradeInRequest>(x => x.CartId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        b.HasOne(x => x.Order)
+            .WithOne(x => x.TradeIn)
+            .HasForeignKey<TradeInRequest>(x => x.OrderId)
+            .OnDelete(DeleteBehavior.SetNull);
+    }
+}
+
 public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
 {
     public void Configure(EntityTypeBuilder<OrderItem> b)

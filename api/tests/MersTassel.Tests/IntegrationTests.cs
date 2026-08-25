@@ -609,6 +609,98 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
     // ── Cart and orders ────────────────────────────────────────────────────
 
     [Fact]
+    public async Task Trade_in_is_estimated_applied_snapshotted_and_admin_verified()
+    {
+        var anonymous = factory.CreateClient();
+        var estimate = await anonymous.PostAsJsonAsync("/api/v1/trade-ins/estimate", new
+        {
+            category = "jewelry",
+            condition = "good",
+            targetProductSlug = "sedef-moon-pendant",
+            targetProductPrice = 100m,
+        });
+        estimate.StatusCode.Should().Be(HttpStatusCode.OK);
+        var estimateBody = (await estimate.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        estimateBody.GetProperty("estimatedCredit").GetDecimal().Should().BeGreaterThan(0m);
+
+        var email = $"trade-{Guid.NewGuid():N}@example.com";
+        var registered = await anonymous.PostAsJsonAsync("/api/v1/auth/register",
+            new { email, firstName = "Trade", lastName = "Customer", password = ApiFactory.AdminPassword });
+        var session = (await registered.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+
+        var customer = factory.CreateClient();
+        customer.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer", session.GetProperty("access").GetString());
+
+        (await customer.PostAsJsonAsync("/api/v1/cart/items",
+            new { productSlug = "sedef-moon-pendant", color = "", quantity = 1 }))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+
+        using var form = new MultipartFormDataContent
+        {
+            { new StringContent("jewelry"), "category" },
+            { new StringContent("good"), "condition" },
+            { new StringContent("Vintage pearl necklace"), "brandModel" },
+            { new StringContent("drop_off"), "handoffMethod" },
+            { new StringContent("sedef-moon-pendant"), "targetProductSlug" },
+        };
+        var photo = new ByteArrayContent(JpegBytes());
+        photo.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+        form.Add(photo, "image", "trade-in.jpg");
+
+        var applied = await customer.PostAsync("/api/v1/trade-ins/apply", form);
+        applied.StatusCode.Should().Be(HttpStatusCode.OK);
+        var cart = (await applied.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        var credit = cart.GetProperty("tradeInCredit").GetDecimal();
+        credit.Should().BeGreaterThan(0m);
+        cart.GetProperty("tradeIn").GetProperty("status").GetString().Should().Be("pending_verification");
+        cart.GetProperty("totalAfterDiscount").GetDecimal().Should().Be(
+            cart.GetProperty("subtotal").GetDecimal() - credit);
+
+        // Coupon and trade-in are independent server-owned credits; applying one must not
+        // make the other disappear from the returned cart.
+        var admin = await AdminClientAsync();
+        var couponCode = $"TRADE{Guid.NewGuid():N}"[..16].ToUpperInvariant();
+        (await admin.PostAsJsonAsync("/api/v1/admin/promotions", new
+        {
+            name = "Trade-in compatibility",
+            code = couponCode,
+            discountType = "fixed_amount",
+            value = 5m,
+            minimumSpend = 0m,
+            isActive = true,
+        })).StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var couponApplied = await customer.PostAsJsonAsync("/api/v1/coupons/validate",
+            new { code = couponCode, subtotal = 9999m });
+        var combinedCart = (await couponApplied.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        combinedCart.GetProperty("tradeIn").GetProperty("id").GetInt32().Should().BeGreaterThan(0);
+        combinedCart.GetProperty("couponDiscountTotal").GetDecimal().Should().Be(5m);
+        combinedCart.GetProperty("tradeInCredit").GetDecimal().Should().Be(credit);
+
+        var checkedOut = await customer.PostAsJsonAsync("/api/v1/orders/checkout",
+            new { email, delivery = "standard", locale = "en" });
+        checkedOut.StatusCode.Should().Be(HttpStatusCode.Created);
+        var order = (await checkedOut.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        order.GetProperty("tradeInCredit").GetDecimal().Should().Be(credit);
+        order.GetProperty("tradeIn").GetProperty("status").GetString().Should().Be("pending_verification");
+        order.GetProperty("discountTotal").GetDecimal().Should().Be(credit + 5m);
+
+        var tradeInId = order.GetProperty("tradeIn").GetProperty("id").GetInt32();
+        var approved = await admin.PatchAsJsonAsync($"/api/v1/admin/trade-ins/{tradeInId}/status",
+            new { status = "approved", adminNote = "Condition verified at PTT handoff." });
+        approved.StatusCode.Should().Be(HttpStatusCode.OK);
+        var approvedBody = (await approved.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        approvedBody.GetProperty("status").GetString().Should().Be("approved");
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var persisted = await db.TradeInRequests.IgnoreQueryFilters().SingleAsync(entry => entry.Id == tradeInId);
+        persisted.CartId.Should().BeNull();
+        persisted.OrderId.Should().Be(order.GetProperty("id").GetInt32());
+    }
+
+    [Fact]
     public async Task Coupons_are_admin_managed_validated_and_snapshotted_at_checkout()
     {
         var anonymous = factory.CreateClient();

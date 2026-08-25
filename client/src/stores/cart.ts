@@ -5,25 +5,30 @@ import {
   addCartItem,
   addGiftBox,
   addSurpriseBox,
+  applyTradeIn as applyTradeInRequest,
   fetchCart,
   removeCoupon as removeCouponRequest,
+  removeTradeIn as removeTradeInRequest,
   removeCartItem,
   updateCartItem,
   validateCoupon,
 } from '@/lib/commerce';
-import type { GiftBoxPayload, SurpriseBoxPayload } from '@/lib/commerce';
+import type { ApplyTradeInPayload, GiftBoxPayload, SurpriseBoxPayload } from '@/lib/commerce';
 import { ApiError } from '@/lib/apiClient';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
-import type { AppliedCoupon, Cart, CartItem } from '@/types/commerce';
+import type { AppliedCoupon, Cart, CartItem, TradeIn } from '@/types/commerce';
 import { translate, type Locale, type TranslationKey } from '@/i18n/I18nProvider';
 
 type CartState = {
   items: CartItem[];
   subtotal: number;
   discountTotal: number;
+  couponDiscountTotal: number;
+  tradeInCredit: number;
   totalAfterDiscount: number;
   coupon: AppliedCoupon | null;
+  tradeIn: TradeIn | null;
   isOpen: boolean;
   isLoading: boolean;
   load: () => Promise<void>;
@@ -34,6 +39,8 @@ type CartState = {
   setQuantity: (itemId: number, quantity: number) => Promise<void>;
   applyCoupon: (code: string) => Promise<Cart>;
   removeCoupon: () => Promise<Cart>;
+  applyTradeIn: (payload: ApplyTradeInPayload) => Promise<Cart>;
+  removeTradeIn: () => Promise<Cart>;
   clear: () => void;
   open: () => void;
   close: () => void;
@@ -43,6 +50,10 @@ function apply(cart: Cart) {
   // Older API instances may not include the coupon totals until they are restarted
   // with the coupon migration. Keep checkout arithmetic valid during that handover.
   const discountTotal = Number.isFinite(cart.discountTotal) ? cart.discountTotal : 0;
+  const tradeInCredit = Number.isFinite(cart.tradeInCredit) ? cart.tradeInCredit : 0;
+  const couponDiscountTotal = Number.isFinite(cart.couponDiscountTotal)
+    ? cart.couponDiscountTotal
+    : Math.max(0, discountTotal - tradeInCredit);
   const totalAfterDiscount = Number.isFinite(cart.totalAfterDiscount)
     ? cart.totalAfterDiscount
     : Math.max(0, cart.subtotal - discountTotal);
@@ -51,8 +62,11 @@ function apply(cart: Cart) {
     items: cart.items,
     subtotal: cart.subtotal,
     discountTotal,
+    couponDiscountTotal,
+    tradeInCredit,
     totalAfterDiscount,
     coupon: cart.coupon ?? null,
+    tradeIn: cart.tradeIn ?? null,
     isLoading: false,
   };
 }
@@ -73,14 +87,17 @@ export const useCartStore = create<CartState>()((set, get) => ({
   items: [],
   subtotal: 0,
   discountTotal: 0,
+  couponDiscountTotal: 0,
+  tradeInCredit: 0,
   totalAfterDiscount: 0,
   coupon: null,
+  tradeIn: null,
   isOpen: false,
   isLoading: false,
 
   load: async () => {
     if (!useAuthStore.getState().access) {
-      set({ items: [], subtotal: 0, discountTotal: 0, totalAfterDiscount: 0, coupon: null, isLoading: false, isOpen: false });
+      set({ items: [], subtotal: 0, discountTotal: 0, couponDiscountTotal: 0, tradeInCredit: 0, totalAfterDiscount: 0, coupon: null, tradeIn: null, isLoading: false, isOpen: false });
       return;
     }
 
@@ -177,7 +194,19 @@ export const useCartStore = create<CartState>()((set, get) => ({
     return cart;
   },
 
-  clear: () => set({ items: [], subtotal: 0, discountTotal: 0, totalAfterDiscount: 0, coupon: null, isOpen: false }),
+  applyTradeIn: async (payload) => {
+    const cart = await applyTradeInRequest(payload);
+    set(apply(cart));
+    return cart;
+  },
+
+  removeTradeIn: async () => {
+    const cart = await removeTradeInRequest();
+    set(apply(cart));
+    return cart;
+  },
+
+  clear: () => set({ items: [], subtotal: 0, discountTotal: 0, couponDiscountTotal: 0, tradeInCredit: 0, totalAfterDiscount: 0, coupon: null, tradeIn: null, isOpen: false }),
   open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false }),
 }));
