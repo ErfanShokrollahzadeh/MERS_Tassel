@@ -104,6 +104,7 @@ public static class DependencyInjection
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ICartService, CartService>();
         services.AddScoped<ICouponService, CouponService>();
+        services.AddScoped<ITradeInService, TradeInService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<ISiteSettingsService, SiteSettingsService>();
         services.AddScoped<INewsletterService, NewsletterService>();

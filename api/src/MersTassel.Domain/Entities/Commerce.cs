@@ -16,6 +16,7 @@ public class Cart : SoftDeletableEntity
     public Coupon? Coupon { get; set; }
 
     public ICollection<CartItem> Items { get; set; } = new List<CartItem>();
+    public TradeInRequest? TradeIn { get; set; }
 }
 
 public class Coupon : SoftDeletableEntity
@@ -69,6 +70,7 @@ public class Order : SoftDeletableEntity
     public string Currency { get; set; } = "USD";
     public decimal Subtotal { get; set; }
     public decimal DiscountTotal { get; set; }
+    public decimal TradeInCredit { get; set; }
     public decimal ShippingTotal { get; set; }
     public decimal Total { get; set; }
     public string? CouponCode { get; set; }
@@ -86,6 +88,36 @@ public class Order : SoftDeletableEntity
 
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
     public ICollection<InventoryReservation> Reservations { get; set; } = new List<InventoryReservation>();
+    public TradeInRequest? TradeIn { get; set; }
+}
+
+/// <summary>
+/// A provisional credit request. The estimate reduces the checkout amount immediately, but
+/// remains pending until the atelier physically inspects the submitted item.
+/// </summary>
+public class TradeInRequest : SoftDeletableEntity
+{
+    public string? UserId { get; set; }
+    public AppUser? User { get; set; }
+
+    public int? CartId { get; set; }
+    public Cart? Cart { get; set; }
+
+    public int? OrderId { get; set; }
+    public Order? Order { get; set; }
+
+    public string Category { get; set; } = string.Empty;
+    public string BrandModel { get; set; } = string.Empty;
+    public TradeInCondition Condition { get; set; }
+    public string ImagePath { get; set; } = string.Empty;
+    public string? TargetProductSlug { get; set; }
+    public string? TargetProductName { get; set; }
+    public decimal? TargetProductPrice { get; set; }
+    public decimal EstimatedCredit { get; set; }
+    public string Currency { get; set; } = "USD";
+    public TradeInHandoffMethod HandoffMethod { get; set; }
+    public TradeInStatus Status { get; set; } = TradeInStatus.PendingVerification;
+    public string? AdminNote { get; set; }
 }
 
 /// <summary>

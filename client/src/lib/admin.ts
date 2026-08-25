@@ -6,6 +6,8 @@ import type {
   Dashboard,
   Order,
   OrderStatus,
+  TradeIn,
+  TradeInStatus,
   Product,
   SiteSettings,
 } from '@/types/commerce';
@@ -190,6 +192,10 @@ export function fetchAdminOrders(query: AdminOrderQuery = {}) {
 
 export function updateOrderStatus(id: number, status: OrderStatus) {
   return api.patch<Order>(`/admin/orders/${id}/status`, { status }, { auth: true });
+}
+
+export function updateTradeInStatus(id: number, status: TradeInStatus, adminNote?: string) {
+  return api.patch<TradeIn>(`/admin/trade-ins/${id}/status`, { status, adminNote }, { auth: true });
 }
 
 // ── Promotions ──────────────────────────────────────────────────────────────

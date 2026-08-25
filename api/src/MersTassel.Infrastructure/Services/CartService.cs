@@ -239,12 +239,20 @@ public class CartService(AppDbContext db) : ICartService
 
         cart.CouponId = null;
         cart.Coupon = null;
+        if (cart.TradeIn is not null)
+        {
+            cart.TradeIn.Status = TradeInStatus.Cancelled;
+            cart.TradeIn.CartId = null;
+            cart.TradeIn.Cart = null;
+            cart.TradeIn = null;
+        }
 
         await db.SaveChangesAsync(ct);
     }
 
     private Task<Cart?> LoadAsync(string userId, CancellationToken ct) => db.Carts
         .Include(c => c.Coupon)
+        .Include(c => c.TradeIn)
         .Include(c => c.Items.Where(i => !i.IsDelete))
             .ThenInclude(i => i.Variant)
                 .ThenInclude(v => v.Product)
@@ -263,6 +271,16 @@ public class CartService(AppDbContext db) : ICartService
             cart.CouponId = null;
             cart.Coupon = null;
             await db.SaveChangesAsync(ct);
+        }
+
+        if (dto.Subtotal <= 0 && cart.TradeIn is not null)
+        {
+            cart.TradeIn.Status = TradeInStatus.Cancelled;
+            cart.TradeIn.CartId = null;
+            cart.TradeIn.Cart = null;
+            cart.TradeIn = null;
+            await db.SaveChangesAsync(ct);
+            dto = ToDto(cart);
         }
         return dto;
     }
@@ -340,7 +358,9 @@ public class CartService(AppDbContext db) : ICartService
 
         var subtotal = items.Sum(i => i.LineTotal);
         var coupon = CouponPricing.TryEvaluate(cart.Coupon, subtotal, cart.Currency);
-        var discount = coupon?.DiscountAmount ?? 0m;
+        var couponDiscount = coupon?.DiscountAmount ?? 0m;
+        var tradeInCredit = TradeInService.CalculateAppliedCredit(cart.TradeIn, subtotal - couponDiscount);
+        var discount = couponDiscount + tradeInCredit;
 
         return new CartDto
         {
@@ -349,8 +369,11 @@ public class CartService(AppDbContext db) : ICartService
             Items = items,
             Subtotal = subtotal,
             DiscountTotal = discount,
+            CouponDiscountTotal = couponDiscount,
+            TradeInCredit = tradeInCredit,
             TotalAfterDiscount = Math.Max(0, subtotal - discount),
             Coupon = coupon,
+            TradeIn = TradeInService.ToDto(cart.TradeIn, tradeInCredit),
             Count = items.Sum(i => i.Quantity),
         };
     }

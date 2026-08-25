@@ -12,6 +12,7 @@ import { MediaImage } from '@/components/MediaImage';
 import { useI18n } from '@/i18n/I18nProvider';
 import { colorName, colorSwatch, productCopy } from '@/i18n/catalog';
 import { useAuthStore } from '@/stores/auth';
+import { TradeInWidget } from '@/components/TradeInWidget';
 
 export function ProductDetail({ product, related }: { product: Product; related: Product[] }) {
   const [activeImage, setActiveImage] = useState(0);
@@ -104,6 +105,8 @@ export function ProductDetail({ product, related }: { product: Product; related:
               {availableStock === 0 ? t('pdp.waitlist') : t('pdp.add', { amount: price * quantity })}
             </button>
           </div>
+
+          <TradeInWidget source="pdp" target={{ slug: product.slug, name: display.name, price: price * quantity }} />
 
           {availableStock > 0 && availableStock < 8 && <div className="stock-note"><i /><span>{t('pdp.stock', { count: availableStock })}</span></div>}
 

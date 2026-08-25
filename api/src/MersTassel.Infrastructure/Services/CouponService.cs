@@ -96,6 +96,7 @@ public class CouponService(AppDbContext db) : ICouponService
 
     private Task<Cart?> LoadCartAsync(string userId, CancellationToken ct) => db.Carts
         .Include(cart => cart.Coupon)
+        .Include(cart => cart.TradeIn)
         .Include(cart => cart.Items.Where(item => !item.IsDelete))
             .ThenInclude(item => item.Variant)
                 .ThenInclude(variant => variant.Product)

@@ -1,5 +1,5 @@
 import { api, ApiError } from '@/lib/apiClient';
-import type { Cart, Order } from '@/types/commerce';
+import type { Cart, Order, TradeInEstimate } from '@/types/commerce';
 
 // ── Bag ─────────────────────────────────────────────────────────────────────
 
@@ -51,6 +51,41 @@ export function validateCoupon(code: string, subtotal: number) {
 
 export function removeCoupon() {
   return api.delete<Cart>('/coupons/current', { auth: true });
+}
+
+// ── Trade-in ───────────────────────────────────────────────────────────────
+
+export type TradeInEstimatePayload = {
+  category: string;
+  condition: 'like_new' | 'good' | 'fair';
+  targetProductSlug?: string;
+  targetProductPrice?: number;
+};
+
+export type ApplyTradeInPayload = TradeInEstimatePayload & {
+  brandModel: string;
+  handoffMethod: 'pickup' | 'drop_off';
+  image: File;
+};
+
+export function estimateTradeIn(payload: TradeInEstimatePayload) {
+  return api.post<TradeInEstimate>('/trade-ins/estimate', payload);
+}
+
+export function applyTradeIn(payload: ApplyTradeInPayload) {
+  const form = new FormData();
+  form.set('category', payload.category);
+  form.set('condition', payload.condition);
+  form.set('brandModel', payload.brandModel);
+  form.set('handoffMethod', payload.handoffMethod);
+  if (payload.targetProductSlug) form.set('targetProductSlug', payload.targetProductSlug);
+  if (payload.targetProductPrice !== undefined) form.set('targetProductPrice', String(payload.targetProductPrice));
+  form.set('image', payload.image);
+  return api.postForm<Cart>('/trade-ins/apply', form, { auth: true });
+}
+
+export function removeTradeIn() {
+  return api.delete<Cart>('/trade-ins/current', { auth: true });
 }
 
 // ── Orders ──────────────────────────────────────────────────────────────────

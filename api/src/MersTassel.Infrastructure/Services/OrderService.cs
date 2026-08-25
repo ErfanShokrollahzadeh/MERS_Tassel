@@ -23,6 +23,7 @@ public class OrderService(AppDbContext db) : IOrderService
     {
         var cart = await db.Carts
             .Include(c => c.Coupon)
+            .Include(c => c.TradeIn)
             .Include(c => c.Items.Where(i => !i.IsDelete))
                 .ThenInclude(i => i.Variant)
                     .ThenInclude(v => v.Product)
@@ -48,7 +49,9 @@ public class OrderService(AppDbContext db) : IOrderService
         var appliedCoupon = cart.Coupon is null
             ? null
             : CouponPricing.Evaluate(cart.Coupon, subtotal, cart.Currency);
-        var discount = appliedCoupon?.DiscountAmount ?? 0m;
+        var couponDiscount = appliedCoupon?.DiscountAmount ?? 0m;
+        var tradeInCredit = TradeInService.CalculateAppliedCredit(cart.TradeIn, subtotal - couponDiscount);
+        var discount = couponDiscount + tradeInCredit;
         var shipping = request.Delivery == "express"
             ? ExpressShipping
             : subtotal >= FreeShippingThreshold ? 0m : StandardShipping;
@@ -66,6 +69,7 @@ public class OrderService(AppDbContext db) : IOrderService
             Currency = cart.Currency,
             Subtotal = subtotal,
             DiscountTotal = discount,
+            TradeInCredit = tradeInCredit,
             ShippingTotal = shipping,
             Total = Math.Max(0m, subtotal - discount + shipping),
             CouponCode = appliedCoupon?.Code,
@@ -114,6 +118,17 @@ public class OrderService(AppDbContext db) : IOrderService
 
         db.Orders.Add(order);
 
+        if (cart.TradeIn is not null && tradeInCredit > 0)
+        {
+            cart.TradeIn.EstimatedCredit = tradeInCredit;
+            cart.TradeIn.Status = TradeInStatus.PendingVerification;
+            cart.TradeIn.CartId = null;
+            cart.TradeIn.Cart = null;
+            cart.TradeIn.Order = order;
+            order.TradeIn = cart.TradeIn;
+            cart.TradeIn = null;
+        }
+
         if (appliedCoupon is not null && cart.Coupon is not null)
             cart.Coupon.RedemptionCount += 1;
 
@@ -135,6 +150,7 @@ public class OrderService(AppDbContext db) : IOrderService
     {
         var orders = await db.Orders
             .Include(o => o.Items)
+            .Include(o => o.TradeIn)
             .Where(o => o.UserId == userId)
             .OrderByDescending(o => o.CreatedAt)
             .AsSplitQuery()
@@ -147,6 +163,7 @@ public class OrderService(AppDbContext db) : IOrderService
     {
         var order = await db.Orders
             .Include(o => o.Items)
+            .Include(o => o.TradeIn)
             .AsSplitQuery()
             .FirstOrDefaultAsync(o => o.Number == number, ct)
             ?? throw new NotFoundException($"No order found with number {number}.");
@@ -161,6 +178,7 @@ public class OrderService(AppDbContext db) : IOrderService
     {
         var order = await db.Orders
             .Include(o => o.Items)
+            .Include(o => o.TradeIn)
             .AsSplitQuery()
             .FirstOrDefaultAsync(o => o.StripeCheckoutSessionId == sessionId, ct)
             ?? throw new NotFoundException("No order found for that checkout session.");
@@ -173,7 +191,7 @@ public class OrderService(AppDbContext db) : IOrderService
 
     public async Task<PagedResult<OrderDto>> ListAsync(OrderQuery query, CancellationToken ct = default)
     {
-        var q = db.Orders.Include(o => o.Items).AsQueryable();
+        var q = db.Orders.Include(o => o.Items).Include(o => o.TradeIn).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(query.Status) &&
             OrderStatusNames.TryParseOrderStatus(query.Status, out var status))
@@ -211,6 +229,7 @@ public class OrderService(AppDbContext db) : IOrderService
 
         var order = await db.Orders
             .Include(o => o.Items)
+            .Include(o => o.TradeIn)
             .Include(o => o.Reservations)
             .AsSplitQuery()
             .FirstOrDefaultAsync(o => o.Id == id, ct)
@@ -279,10 +298,13 @@ public class OrderService(AppDbContext db) : IOrderService
         Currency = o.Currency,
         Subtotal = o.Subtotal,
         DiscountTotal = o.DiscountTotal,
+        CouponDiscountTotal = Math.Max(0m, o.DiscountTotal - o.TradeInCredit),
+        TradeInCredit = o.TradeInCredit,
         ShippingTotal = o.ShippingTotal,
         Total = o.Total,
         CouponCode = o.CouponCode,
         CouponDiscountType = o.CouponDiscountType,
+        TradeIn = TradeInService.ToDto(o.TradeIn, o.TradeInCredit),
         Channel = o.Channel,
         CreatedAt = o.CreatedAt,
         PaidAt = o.PaidAt,

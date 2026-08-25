@@ -107,6 +107,43 @@ public class AddCartItemRequestValidator : AbstractValidator<AddCartItemRequest>
     }
 }
 
+public class TradeInEstimateRequestValidator : AbstractValidator<TradeInEstimateRequest>
+{
+    private static readonly string[] Categories = ["jewelry", "accessories", "leather", "textiles", "other"];
+    private static readonly string[] Conditions = ["like_new", "good", "fair"];
+
+    public TradeInEstimateRequestValidator()
+    {
+        RuleFor(x => x.Category).Must(value => Categories.Contains(value?.Trim().ToLowerInvariant()))
+            .WithMessage("Choose a valid item category.");
+        RuleFor(x => x.Condition).Must(value => Conditions.Contains(value?.Trim().ToLowerInvariant()))
+            .WithMessage("Choose a valid item condition.");
+        RuleFor(x => x.TargetProductSlug).MaximumLength(200);
+        RuleFor(x => x.TargetProductPrice).GreaterThan(0).When(x => x.TargetProductPrice.HasValue);
+    }
+}
+
+public class ApplyTradeInRequestValidator : AbstractValidator<ApplyTradeInRequest>
+{
+    public ApplyTradeInRequestValidator()
+    {
+        Include(new TradeInEstimateRequestValidator());
+        RuleFor(x => x.BrandModel).NotEmpty().MaximumLength(160);
+        RuleFor(x => x.HandoffMethod).Must(value => value is "pickup" or "drop_off")
+            .WithMessage("Choose pickup or drop-off.");
+    }
+}
+
+public class UpdateTradeInStatusRequestValidator : AbstractValidator<UpdateTradeInStatusRequest>
+{
+    public UpdateTradeInStatusRequestValidator()
+    {
+        RuleFor(x => x.Status).Must(value => value is "pending_verification" or "approved" or "rejected" or "cancelled")
+            .WithMessage("Choose a valid trade-in status.");
+        RuleFor(x => x.AdminNote).MaximumLength(1000);
+    }
+}
+
 public class AddGiftBoxRequestValidator : AbstractValidator<AddGiftBoxRequest>
 {
     public AddGiftBoxRequestValidator()

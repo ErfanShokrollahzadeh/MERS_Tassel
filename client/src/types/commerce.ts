@@ -104,9 +104,37 @@ export type Cart = {
   items: CartItem[];
   subtotal: number;
   discountTotal: number;
+  couponDiscountTotal: number;
+  tradeInCredit: number;
   totalAfterDiscount: number;
   coupon?: AppliedCoupon | null;
+  tradeIn?: TradeIn | null;
   count: number;
+};
+
+export type TradeInCondition = 'like_new' | 'good' | 'fair';
+export type TradeInHandoffMethod = 'pickup' | 'drop_off';
+export type TradeInStatus = 'estimate' | 'draft' | 'pending_verification' | 'approved' | 'rejected' | 'cancelled';
+
+export type TradeInEstimate = {
+  estimatedCredit: number;
+  currency: string;
+  estimatedPriceAfterTradeIn?: number | null;
+  status: TradeInStatus;
+};
+
+export type TradeIn = TradeInEstimate & {
+  id: number;
+  category: string;
+  brandModel: string;
+  condition: TradeInCondition;
+  imagePath: string;
+  targetProductSlug?: string | null;
+  targetProductName?: string | null;
+  targetProductPrice?: number | null;
+  handoffMethod: TradeInHandoffMethod;
+  adminNote?: string | null;
+  createdAt: string;
 };
 
 export type AppliedCoupon = {
@@ -164,10 +192,13 @@ export type Order = {
   currency: string;
   subtotal: number;
   discountTotal: number;
+  couponDiscountTotal: number;
+  tradeInCredit: number;
   shippingTotal: number;
   total: number;
   couponCode?: string | null;
   couponDiscountType?: string | null;
+  tradeIn?: TradeIn | null;
   channel: string;
   items: OrderItem[];
   itemCount: number;

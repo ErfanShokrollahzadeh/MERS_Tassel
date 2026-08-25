@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Heart, Menu, Moon, Search, ShoppingBag, Sun, UserRound, X } from 'lucide-react';
+import { ArrowRight, Heart, Menu, Moon, Recycle, Search, ShoppingBag, Sun, UserRound, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cartCount, useCartStore } from '@/stores/cart';
 import { useI18n, type TranslationKey } from '@/i18n/I18nProvider';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { useAuthStore } from '@/stores/auth';
+import { useTradeInModalStore } from '@/stores/tradeIn';
 
 const links = [
   { href: '/', key: 'nav.home' },
@@ -30,7 +31,8 @@ export function StoreHeader() {
   const count = useCartStore(cartCount);
   const openCart = useCartStore((state) => state.open);
   const user = useAuthStore((state) => state.user);
-  const { t } = useI18n();
+  const openTradeIn = useTradeInModalStore((state) => state.open);
+  const { t, locale } = useI18n();
 
   useEffect(() => {
     const saved = window.localStorage.getItem('mers-theme');
@@ -79,6 +81,10 @@ export function StoreHeader() {
 
   return (
     <header className="store-header glass-bar">
+      <div className="tradein-announcement">
+        <span><Recycle /> {locale === 'tr' ? 'Eski bir ürününüz mü var? Mağaza kredisi için takas edin.' : 'Have an old item? Trade it in for store credit.'}</span>
+        <button type="button" onClick={() => openTradeIn('announcement')}>{locale === 'tr' ? 'Değerleme al' : 'Start a trade-in'} <ArrowRight /></button>
+      </div>
       <div className="store-header__inner container-wide">
         <button className="icon-button nav-menu-button" onClick={() => { setSearchOpen(false); setMenuOpen((value) => !value); }} aria-label={t('header.menu')} aria-expanded={menuOpen}>
           {menuOpen ? <X size={20} /> : <Menu size={20} />}

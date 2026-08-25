@@ -1,15 +1,18 @@
 'use client';
 
 import { Fragment, useEffect, useState } from 'react';
-import { ChevronDown, Search, X } from 'lucide-react';
+import { ChevronDown, Recycle, Search, X } from 'lucide-react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { adminKeys, fetchAdminOrders, updateOrderStatus } from '@/lib/admin';
+import { adminKeys, fetchAdminOrders, updateOrderStatus, updateTradeInStatus } from '@/lib/admin';
 import { EmptyState, ErrorState, TableSkeleton } from '@/components/DataStates';
 import { useToastStore } from '@/stores/toast';
 import type { Order, OrderStatus } from '@/types/commerce';
+import type { TradeInStatus } from '@/types/commerce';
+import { MediaImage } from '@/components/MediaImage';
 
 const PAGE_SIZE = 15;
 const STATUSES: OrderStatus[] = ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'];
+const TRADE_IN_STATUSES: TradeInStatus[] = ['pending_verification', 'approved', 'rejected', 'cancelled'];
 const money = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
 
 export default function OrdersPage() {
@@ -48,6 +51,15 @@ export default function OrdersPage() {
       showToast({ tone: 'success', title: `${order.number} → ${order.status}`, message: 'Order updated.' });
     },
     onError: (error) => showToast({ tone: 'error', title: 'Could not update the order', message: error instanceof Error ? error.message : '' }),
+  });
+
+  const changeTradeInStatus = useMutation({
+    mutationFn: ({ id, next }: { id: number; next: TradeInStatus }) => updateTradeInStatus(id, next),
+    onSuccess: (tradeIn) => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
+      showToast({ tone: 'success', title: 'Trade-in updated', message: `${tradeIn.brandModel} → ${tradeIn.status.replaceAll('_', ' ')}` });
+    },
+    onError: (error) => showToast({ tone: 'error', title: 'Could not update the trade-in', message: error instanceof Error ? error.message : '' }),
   });
 
   const result = orders.data;
@@ -122,10 +134,16 @@ export default function OrdersPage() {
                                     <li key={item.id}><span>{item.quantity} × {item.productName}{item.color ? ` · ${item.color}` : ''}</span><b>{money(item.lineTotal)}</b></li>
                                   ))}
                                 </ul>
+                                {order.tradeIn && <section className="admin-tradein-card">
+                                  <div className="admin-tradein-card__media"><MediaImage src={order.tradeIn.imagePath} alt={`Trade-in: ${order.tradeIn.brandModel}`} sizes="74px" /></div>
+                                  <div><span><Recycle /> Trade-in · {money(order.tradeInCredit)}</span><strong>{order.tradeIn.brandModel}</strong><small>{order.tradeIn.category} · {order.tradeIn.condition.replaceAll('_', ' ')} · {order.tradeIn.handoffMethod.replaceAll('_', ' ')}</small></div>
+                                  <label className="status-select"><select value={order.tradeIn.status} onChange={(event) => changeTradeInStatus.mutate({ id: order.tradeIn!.id, next: event.target.value as TradeInStatus })} disabled={changeTradeInStatus.isPending} aria-label={`Trade-in status for ${order.number}`}>{TRADE_IN_STATUSES.map((entry) => <option key={entry} value={entry}>{entry.replaceAll('_', ' ')}</option>)}</select><ChevronDown size={13} /></label>
+                                </section>}
                               </div>
                               <dl>
                                 <div><dt>Subtotal</dt><dd>{money(order.subtotal)}</dd></div>
-                                {order.discountTotal > 0 && <div><dt>Promotion {order.couponCode ? `(${order.couponCode})` : ''}</dt><dd>−{money(order.discountTotal)}</dd></div>}
+                                {order.couponDiscountTotal > 0 && <div><dt>Promotion {order.couponCode ? `(${order.couponCode})` : ''}</dt><dd>−{money(order.couponDiscountTotal)}</dd></div>}
+                                {order.tradeInCredit > 0 && <div><dt>Trade-in credit</dt><dd>−{money(order.tradeInCredit)}</dd></div>}
                                 <div><dt>Delivery</dt><dd>{order.shippingTotal ? money(order.shippingTotal) : 'Complimentary'}</dd></div>
                                 <div><dt>Total</dt><dd><strong>{money(order.total)}</strong></dd></div>
                                 <div><dt>Channel</dt><dd>{order.channel}</dd></div>
