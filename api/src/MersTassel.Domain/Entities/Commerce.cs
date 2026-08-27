@@ -71,6 +71,7 @@ public class Order : SoftDeletableEntity
     public decimal Subtotal { get; set; }
     public decimal DiscountTotal { get; set; }
     public decimal TradeInCredit { get; set; }
+    public decimal WalletCredit { get; set; }
     public decimal ShippingTotal { get; set; }
     public decimal Total { get; set; }
     public string? CouponCode { get; set; }
@@ -85,10 +86,71 @@ public class Order : SoftDeletableEntity
     public string? StripeCheckoutSessionId { get; set; }
     public string? StripePaymentIntentId { get; set; }
     public DateTimeOffset? PaidAt { get; set; }
+    public DateTimeOffset? DeliveredAt { get; set; }
 
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
     public ICollection<InventoryReservation> Reservations { get; set; } = new List<InventoryReservation>();
     public TradeInRequest? TradeIn { get; set; }
+}
+
+/// <summary>A currency-specific customer store-credit account backed by an immutable ledger.</summary>
+public class StoreWallet
+{
+    public int Id { get; set; }
+    public string UserId { get; set; } = string.Empty;
+    public AppUser User { get; set; } = null!;
+    public string Currency { get; set; } = "USD";
+    public decimal Balance { get; set; }
+    public string ConcurrencyStamp { get; set; } = Guid.NewGuid().ToString("N");
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public ICollection<StoreWalletTransaction> Transactions { get; set; } = new List<StoreWalletTransaction>();
+}
+
+/// <summary>Append-only wallet movement; Amount is positive for credit and negative for debit.</summary>
+public class StoreWalletTransaction
+{
+    public int Id { get; set; }
+    public int WalletId { get; set; }
+    public StoreWallet Wallet { get; set; } = null!;
+    public WalletTransactionType Type { get; set; }
+    public decimal Amount { get; set; }
+    public decimal BalanceAfter { get; set; }
+    public string Description { get; set; } = string.Empty;
+    public string ReferenceType { get; set; } = string.Empty;
+    public string ReferenceId { get; set; } = string.Empty;
+    public string IdempotencyKey { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+}
+
+/// <summary>
+/// A request to exchange one unit from a delivered order for a current catalog variant.
+/// Values are snapshotted server-side so later price edits cannot change the agreement.
+/// </summary>
+public class ExchangeRequest : SoftDeletableEntity
+{
+    public string UserId { get; set; } = string.Empty;
+    public AppUser User { get; set; } = null!;
+    public int OrderItemId { get; set; }
+    public OrderItem OrderItem { get; set; } = null!;
+    public int NewProductVariantId { get; set; }
+    public ProductVariant NewProductVariant { get; set; } = null!;
+    public decimal OldProductValue { get; set; }
+    public decimal NewProductValue { get; set; }
+    public decimal Difference { get; set; }
+    public decimal WalletCredit { get; set; }
+    public decimal AmountDue { get; set; }
+    public string Currency { get; set; } = "USD";
+    public bool InvoiceIntact { get; set; }
+    public bool PackagingIntact { get; set; }
+    public string? CustomerNote { get; set; }
+    public string? AdminNote { get; set; }
+    public ExchangeRequestStatus Status { get; set; } = ExchangeRequestStatus.PendingVerification;
+    public DateTimeOffset? ReviewedAt { get; set; }
+    public int? WalletTransactionId { get; set; }
+    public StoreWalletTransaction? WalletTransaction { get; set; }
+    public int? SettlementOrderId { get; set; }
+    public Order? SettlementOrder { get; set; }
 }
 
 /// <summary>

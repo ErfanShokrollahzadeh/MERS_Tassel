@@ -421,6 +421,102 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.ToTable("Coupons", (string)null);
                 });
 
+            modelBuilder.Entity("MersTassel.Domain.Entities.ExchangeRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AdminNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("AmountDue")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CreatedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CustomerNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("DeletedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Difference")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("InvoiceIntact")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("isDelete");
+
+                    b.Property<long>("NewProductValue")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("NewProductVariantId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("OldProductValue")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("OrderItemId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("PackagingIntact")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("ReviewedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("SettlementOrderId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("UpdatedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("WalletCredit")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("WalletTransactionId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsDelete");
+
+                    b.HasIndex("NewProductVariantId");
+
+                    b.HasIndex("OrderItemId");
+
+                    b.HasIndex("SettlementOrderId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("WalletTransactionId");
+
+                    b.ToTable("ExchangeRequests", (string)null);
+                });
+
             modelBuilder.Entity("MersTassel.Domain.Entities.InventoryReservation", b =>
                 {
                     b.Property<int>("Id")
@@ -555,6 +651,9 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.Property<long?>("DeletedAt")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long?>("DeliveredAt")
+                        .HasColumnType("INTEGER");
+
                     b.Property<long>("DiscountTotal")
                         .HasColumnType("INTEGER");
 
@@ -618,6 +717,9 @@ namespace MersTassel.Infrastructure.Data.Migrations
 
                     b.Property<string>("UserId")
                         .HasColumnType("TEXT");
+
+                    b.Property<long>("WalletCredit")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -1133,6 +1235,97 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.ToTable("SiteSettings", (string)null);
                 });
 
+            modelBuilder.Entity("MersTassel.Domain.Entities.StoreWallet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Balance")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CreatedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("UpdatedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Currency")
+                        .IsUnique();
+
+                    b.ToTable("StoreWallets", (string)null);
+                });
+
+            modelBuilder.Entity("MersTassel.Domain.Entities.StoreWalletTransaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Amount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("BalanceAfter")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CreatedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ReferenceId")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ReferenceType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("WalletId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique();
+
+                    b.HasIndex("WalletId", "CreatedAt");
+
+                    b.ToTable("StoreWalletTransactions", (string)null);
+                });
+
             modelBuilder.Entity("MersTassel.Domain.Entities.TradeInRequest", b =>
                 {
                     b.Property<int>("Id")
@@ -1372,6 +1565,47 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.Navigation("Variant");
                 });
 
+            modelBuilder.Entity("MersTassel.Domain.Entities.ExchangeRequest", b =>
+                {
+                    b.HasOne("MersTassel.Domain.Entities.ProductVariant", "NewProductVariant")
+                        .WithMany()
+                        .HasForeignKey("NewProductVariantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MersTassel.Domain.Entities.OrderItem", "OrderItem")
+                        .WithMany()
+                        .HasForeignKey("OrderItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MersTassel.Domain.Entities.Order", "SettlementOrder")
+                        .WithMany()
+                        .HasForeignKey("SettlementOrderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("MersTassel.Domain.Entities.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MersTassel.Domain.Entities.StoreWalletTransaction", "WalletTransaction")
+                        .WithMany()
+                        .HasForeignKey("WalletTransactionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("NewProductVariant");
+
+                    b.Navigation("OrderItem");
+
+                    b.Navigation("SettlementOrder");
+
+                    b.Navigation("User");
+
+                    b.Navigation("WalletTransaction");
+                });
+
             modelBuilder.Entity("MersTassel.Domain.Entities.InventoryReservation", b =>
                 {
                     b.HasOne("MersTassel.Domain.Entities.Order", "Order")
@@ -1461,6 +1695,28 @@ namespace MersTassel.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MersTassel.Domain.Entities.StoreWallet", b =>
+                {
+                    b.HasOne("MersTassel.Domain.Entities.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MersTassel.Domain.Entities.StoreWalletTransaction", b =>
+                {
+                    b.HasOne("MersTassel.Domain.Entities.StoreWallet", "Wallet")
+                        .WithMany("Transactions")
+                        .HasForeignKey("WalletId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Wallet");
                 });
 
             modelBuilder.Entity("MersTassel.Domain.Entities.TradeInRequest", b =>
@@ -1569,6 +1825,11 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.Navigation("Media");
 
                     b.Navigation("Variants");
+                });
+
+            modelBuilder.Entity("MersTassel.Domain.Entities.StoreWallet", b =>
+                {
+                    b.Navigation("Transactions");
                 });
 #pragma warning restore 612, 618
         }

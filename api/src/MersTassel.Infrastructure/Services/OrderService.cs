@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MersTassel.Infrastructure.Services;
 
-public class OrderService(AppDbContext db) : IOrderService
+public class OrderService(AppDbContext db, IWalletService wallets) : IOrderService
 {
     /// <summary>Window a reservation holds stock before an unpaid order releases it.</summary>
     public static readonly TimeSpan ReservationWindow = TimeSpan.FromMinutes(30);
@@ -58,20 +58,29 @@ public class OrderService(AppDbContext db) : IOrderService
 
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
 
+        var orderNumber = await NextOrderNumberAsync(ct);
+        var walletCredit = request.UseWalletBalance
+            ? await wallets.ApplyToOrderAsync(userId, cart.Currency, subtotal - discount, orderNumber, ct)
+            : 0m;
+        var total = Math.Max(0m, subtotal - discount - walletCredit + shipping);
+        var paidWithWallet = total == 0m;
+
         var order = new Order
         {
-            Number = await NextOrderNumberAsync(ct),
+            Number = orderNumber,
             UserId = userId,
             Email = request.Email.Trim(),
             CustomerName = user is null ? string.Empty : $"{user.FirstName} {user.LastName}".Trim(),
-            Status = OrderStatus.Pending,
-            PaymentStatus = PaymentStatus.Unpaid,
+            Status = paidWithWallet ? OrderStatus.Processing : OrderStatus.Pending,
+            PaymentStatus = paidWithWallet ? PaymentStatus.Paid : PaymentStatus.Unpaid,
+            PaidAt = paidWithWallet ? DateTimeOffset.UtcNow : null,
             Currency = cart.Currency,
             Subtotal = subtotal,
-            DiscountTotal = discount,
+            DiscountTotal = discount + walletCredit,
             TradeInCredit = tradeInCredit,
+            WalletCredit = walletCredit,
             ShippingTotal = shipping,
-            Total = Math.Max(0m, subtotal - discount + shipping),
+            Total = total,
             CouponCode = appliedCoupon?.Code,
             CouponDiscountType = appliedCoupon?.DiscountType,
             ShippingAddressJson = request.ShippingAddress is null
@@ -108,7 +117,7 @@ public class OrderService(AppDbContext db) : IOrderService
             {
                 ProductVariantId = variant.Id,
                 Quantity = line.Quantity,
-                Status = ReservationStatus.Active,
+                Status = paidWithWallet ? ReservationStatus.Converted : ReservationStatus.Active,
                 ExpiresAt = DateTimeOffset.UtcNow.Add(ReservationWindow),
             });
 
@@ -120,7 +129,6 @@ public class OrderService(AppDbContext db) : IOrderService
 
         if (cart.TradeIn is not null && tradeInCredit > 0)
         {
-            cart.TradeIn.EstimatedCredit = tradeInCredit;
             cart.TradeIn.Status = TradeInStatus.PendingVerification;
             cart.TradeIn.CartId = null;
             cart.TradeIn.Cart = null;
@@ -240,10 +248,14 @@ public class OrderService(AppDbContext db) : IOrderService
         var wasReturned = order.Status is OrderStatus.Cancelled or OrderStatus.Refunded;
 
         if (returnsStock && !wasReturned)
+        {
             await ReleaseReservationsAsync(order, ct);
+            await wallets.ReverseOrderDebitAsync(order, ct);
+        }
 
         order.Status = parsed;
         if (parsed == OrderStatus.Refunded) order.PaymentStatus = PaymentStatus.Refunded;
+        if (parsed == OrderStatus.Delivered && order.DeliveredAt is null) order.DeliveredAt = DateTimeOffset.UtcNow;
 
         await db.SaveChangesAsync(ct);
         return ToDto(order);
@@ -298,8 +310,9 @@ public class OrderService(AppDbContext db) : IOrderService
         Currency = o.Currency,
         Subtotal = o.Subtotal,
         DiscountTotal = o.DiscountTotal,
-        CouponDiscountTotal = Math.Max(0m, o.DiscountTotal - o.TradeInCredit),
+        CouponDiscountTotal = Math.Max(0m, o.DiscountTotal - o.TradeInCredit - o.WalletCredit),
         TradeInCredit = o.TradeInCredit,
+        WalletCredit = o.WalletCredit,
         ShippingTotal = o.ShippingTotal,
         Total = o.Total,
         CouponCode = o.CouponCode,
@@ -308,6 +321,11 @@ public class OrderService(AppDbContext db) : IOrderService
         Channel = o.Channel,
         CreatedAt = o.CreatedAt,
         PaidAt = o.PaidAt,
+        DeliveredAt = o.DeliveredAt,
+        ExchangeEligibleUntil = o.DeliveredAt.HasValue
+            ? ExchangePolicy.AddBusinessDays(o.DeliveredAt.Value, ExchangePolicy.ExchangeBusinessDays)
+            : null,
+        ReturnEligibleUntil = o.DeliveredAt?.AddDays(ExchangePolicy.ReturnCalendarDays),
         ItemCount = o.Items.Sum(i => i.Quantity),
         Items = o.Items.Select(i =>
         {

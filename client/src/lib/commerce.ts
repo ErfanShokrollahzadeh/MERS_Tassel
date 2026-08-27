@@ -1,5 +1,5 @@
 import { api, ApiError } from '@/lib/apiClient';
-import type { Cart, Order, TradeInEstimate } from '@/types/commerce';
+import type { Cart, ExchangeRequest, Order, TradeInEstimate, Wallet } from '@/types/commerce';
 
 // ── Bag ─────────────────────────────────────────────────────────────────────
 
@@ -94,6 +94,7 @@ export type CheckoutPayload = {
   email: string;
   delivery: 'standard' | 'express';
   locale: string;
+  useWalletBalance?: boolean;
 };
 
 export function checkout(payload: CheckoutPayload) {
@@ -106,6 +107,32 @@ export function fetchMyOrders() {
 
 export function fetchOrder(number: string) {
   return api.get<Order>(`/orders/${encodeURIComponent(number)}`, { auth: true });
+}
+
+// ── Wallet & exchanges ─────────────────────────────────────────────────────
+
+export function fetchWallet(currency = 'USD') {
+  return api.get<Wallet>(`/wallet?currency=${encodeURIComponent(currency)}`, { auth: true });
+}
+
+export type CreateExchangePayload = {
+  orderItemId: number;
+  newProductVariantId: number;
+  invoiceIntact: boolean;
+  packagingIntact: boolean;
+  customerNote?: string;
+};
+
+export function fetchMyExchanges() {
+  return api.get<ExchangeRequest[]>('/exchanges', { auth: true });
+}
+
+export function createExchange(payload: CreateExchangePayload) {
+  return api.post<ExchangeRequest>('/exchanges', payload, { auth: true });
+}
+
+export function checkoutExchange(id: number, payload: { email: string; locale: string; useWalletBalance?: boolean }) {
+  return api.post<Order>(`/exchanges/${id}/checkout`, payload, { auth: true });
 }
 
 // ── Payments ────────────────────────────────────────────────────────────────
@@ -138,4 +165,6 @@ export const commerceKeys = {
   cart: () => ['cart'] as const,
   orders: () => ['orders'] as const,
   order: (number: string) => ['order', number] as const,
+  wallet: (currency = 'USD') => ['wallet', currency] as const,
+  exchanges: () => ['exchanges'] as const,
 };

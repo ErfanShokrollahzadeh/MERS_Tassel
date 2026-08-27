@@ -856,6 +856,88 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task Exchange_difference_is_credited_to_wallet_and_can_pay_a_later_exchange()
+    {
+        var client = factory.CreateClient();
+        var email = $"wallet-exchange-{Guid.NewGuid():N}@example.com";
+        await client.PostAsJsonAsync("/api/v1/auth/register",
+            new { email, firstName = "Wallet", lastName = "Collector", password = ApiFactory.AdminPassword });
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(client, email, ApiFactory.AdminPassword));
+        var admin = await AdminClientAsync();
+
+        async Task<JsonElement> BuyAndDeliver(string slug, string color)
+        {
+            (await client.PostAsJsonAsync("/api/v1/cart/items", new { productSlug = slug, color, quantity = 1 }))
+                .StatusCode.Should().Be(HttpStatusCode.OK);
+            var checkout = await client.PostAsJsonAsync("/api/v1/orders/checkout",
+                new { email, delivery = "standard", locale = "en" });
+            checkout.StatusCode.Should().Be(HttpStatusCode.Created);
+            var order = (await checkout.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+            (await admin.PatchAsJsonAsync($"/api/v1/admin/orders/{order.GetProperty("id").GetInt32()}/status",
+                new { status = "delivered" })).StatusCode.Should().Be(HttpStatusCode.OK);
+            return order;
+        }
+
+        async Task<int> VariantId(string slug, string color)
+        {
+            var product = await client.GetFromJsonAsync<Envelope<JsonElement>>($"/api/v1/products/{slug}", Json);
+            return product!.Data!.GetProperty("variants").EnumerateArray()
+                .Single(variant => variant.GetProperty("color").GetString() == color)
+                .GetProperty("id").GetInt32();
+        }
+
+        var expensiveOrder = await BuyAndDeliver("ada-layered-chain", "Silver");
+        var cheapVariant = await VariantId("atelier-charm-no-7", "Sage");
+        var creditRequest = await client.PostAsJsonAsync("/api/v1/exchanges", new
+        {
+            orderItemId = expensiveOrder.GetProperty("items")[0].GetProperty("id").GetInt32(),
+            newProductVariantId = cheapVariant,
+            invoiceIntact = true,
+            packagingIntact = true,
+        });
+        creditRequest.StatusCode.Should().Be(HttpStatusCode.Created);
+        var creditExchange = (await creditRequest.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        creditExchange.GetProperty("walletCredit").GetDecimal().Should().Be(88m);
+        creditExchange.GetProperty("status").GetString().Should().Be("pending_verification");
+
+        var approvedCredit = await admin.PatchAsJsonAsync(
+            $"/api/v1/admin/exchanges/{creditExchange.GetProperty("id").GetInt32()}/status",
+            new { status = "approved", adminNote = "Invoice and original box verified." });
+        approvedCredit.StatusCode.Should().Be(HttpStatusCode.OK);
+        var walletAfterCredit = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/wallet?currency=USD", Json);
+        walletAfterCredit!.Data!.GetProperty("balance").GetDecimal().Should().Be(88m);
+        walletAfterCredit.Data.GetProperty("transactions").EnumerateArray().Should().ContainSingle();
+
+        var cheapOrder = await BuyAndDeliver("atelier-charm-no-7", "Sage");
+        var expensiveVariant = await VariantId("ada-layered-chain", "Silver");
+        var dueRequest = await client.PostAsJsonAsync("/api/v1/exchanges", new
+        {
+            orderItemId = cheapOrder.GetProperty("items")[0].GetProperty("id").GetInt32(),
+            newProductVariantId = expensiveVariant,
+            invoiceIntact = true,
+            packagingIntact = true,
+        });
+        var dueExchange = (await dueRequest.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        dueExchange.GetProperty("amountDue").GetDecimal().Should().Be(88m);
+        var dueId = dueExchange.GetProperty("id").GetInt32();
+        (await admin.PatchAsJsonAsync($"/api/v1/admin/exchanges/{dueId}/status",
+            new { status = "approved" })).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var settlement = await client.PostAsJsonAsync($"/api/v1/exchanges/{dueId}/checkout",
+            new { email, locale = "en", useWalletBalance = true });
+        settlement.StatusCode.Should().Be(HttpStatusCode.Created);
+        var settlementOrder = (await settlement.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        settlementOrder.GetProperty("walletCredit").GetDecimal().Should().Be(88m);
+        settlementOrder.GetProperty("total").GetDecimal().Should().Be(0m);
+        settlementOrder.GetProperty("paymentStatus").GetString().Should().Be("paid");
+
+        var emptyWallet = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/wallet?currency=USD", Json);
+        emptyWallet!.Data!.GetProperty("balance").GetDecimal().Should().Be(0m);
+        emptyWallet.Data.GetProperty("transactions").EnumerateArray().Should().HaveCount(2);
+    }
+
+    [Fact]
     public async Task Adding_more_than_available_stock_is_capped_not_oversold()
     {
         var client = factory.CreateClient();

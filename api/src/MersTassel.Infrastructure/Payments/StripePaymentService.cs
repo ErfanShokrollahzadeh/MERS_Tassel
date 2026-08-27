@@ -53,35 +53,29 @@ public class StripePaymentService(
         if (order.PaymentStatus == PaymentStatus.Paid)
             throw new ValidationException("order", "This order has already been paid.");
 
-        var lineItems = order.Items.Select(item => new SessionLineItemOptions
-        {
-            Quantity = item.Quantity,
-            PriceData = new SessionLineItemPriceDataOptions
-            {
-                // Stripe works in minor units; rounding here rather than trusting a float.
-                UnitAmount = (long)Math.Round(item.UnitPrice * 100m, MidpointRounding.AwayFromZero),
-                Currency = order.Currency.ToLowerInvariant(),
-                ProductData = new SessionLineItemPriceDataProductDataOptions
-                {
-                    Name = item.ProductName,
-                    Description = string.IsNullOrWhiteSpace(item.Color) ? null : item.Color,
-                },
-            },
-        }).ToList();
+        if (order.Total <= 0)
+            throw new ValidationException("order", "This order is already fully paid with store credit.");
 
-        if (order.ShippingTotal > 0)
+        // Charge the authoritative stored total. Sending raw product prices here would ignore
+        // coupon, trade-in, exchange and wallet discounts and could overcharge the customer.
+        var itemSummary = string.Join(", ", order.Items.Select(item => $"{item.Quantity}× {item.ProductName}"));
+        var lineItems = new List<SessionLineItemOptions>
         {
-            lineItems.Add(new SessionLineItemOptions
+            new()
             {
                 Quantity = 1,
                 PriceData = new SessionLineItemPriceDataOptions
                 {
-                    UnitAmount = (long)Math.Round(order.ShippingTotal * 100m, MidpointRounding.AwayFromZero),
+                    UnitAmount = (long)Math.Round(order.Total * 100m, MidpointRounding.AwayFromZero),
                     Currency = order.Currency.ToLowerInvariant(),
-                    ProductData = new SessionLineItemPriceDataProductDataOptions { Name = "Delivery" },
+                    ProductData = new SessionLineItemPriceDataProductDataOptions
+                    {
+                        Name = $"MERS Tassel order {order.Number}",
+                        Description = itemSummary.Length > 240 ? itemSummary[..240] : itemSummary,
+                    },
                 },
-            });
-        }
+            },
+        };
 
         var service = new SessionService(new StripeClient(_options.SecretKey));
         var session = await service.CreateAsync(new SessionCreateOptions
@@ -166,6 +160,9 @@ public class StripePaymentService(
         // Stock already left the shelf at checkout; converting just closes the reservation.
         foreach (var reservation in order.Reservations.Where(r => r.Status == ReservationStatus.Active))
             reservation.Status = ReservationStatus.Converted;
+
+        var exchange = await db.ExchangeRequests.FirstOrDefaultAsync(x => x.SettlementOrderId == order.Id, ct);
+        if (exchange is not null) exchange.Status = ExchangeRequestStatus.Completed;
 
         logger.LogInformation("Order {Number} marked paid", order.Number);
     }
