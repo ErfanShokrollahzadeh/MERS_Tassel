@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, CreditCard, LockKeyhole, PackageCheck, ShieldCheck, Truck } from 'lucide-react';
+import { ArrowRight, ChevronLeft, CreditCard, LockKeyhole, PackageCheck, ShieldCheck, Truck, WalletCards } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cartSubtotal, useCartStore } from '@/stores/cart';
 import { useToastStore } from '@/stores/toast';
-import { checkout, createCheckoutSession } from '@/lib/commerce';
+import { checkout, checkoutExchange, commerceKeys, createCheckoutSession, fetchMyExchanges, fetchWallet } from '@/lib/commerce';
 import { ApiError } from '@/lib/apiClient';
 import { MediaImage } from '@/components/MediaImage';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -49,19 +50,32 @@ export default function CheckoutPage() {
 
   const schema = useMemo(() => z.object({ email: z.string().email(t('checkout.emailError')) }), [t]);
   const [delivery, setDelivery] = useState<'standard' | 'express'>('standard');
+  const [useWallet, setUseWallet] = useState(false);
+  const [exchangeId, setExchangeId] = useState<number | null>(null);
+  const exchanges = useQuery({ queryKey: commerceKeys.exchanges(), queryFn: fetchMyExchanges, enabled: Boolean(user) && exchangeId !== null });
+  const exchange = exchanges.data?.find((entry) => entry.id === exchangeId);
+  const walletCurrency = exchange?.currency || 'USD';
+  const wallet = useQuery({ queryKey: commerceKeys.wallet(walletCurrency), queryFn: () => fetchWallet(walletCurrency), enabled: Boolean(user) });
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CheckoutFields>({ resolver: zodResolver(schema) });
 
   const discount = Number.isFinite(storedDiscount) ? storedDiscount : 0;
-  const shipping = delivery === 'express' ? 18 : subtotal >= 120 ? 0 : 9;
-  const total = Math.max(0, subtotal - discount + shipping);
+  const payableBeforeWallet = exchange ? exchange.amountDue : Math.max(0, subtotal - discount);
+  const walletApplied = useWallet ? Math.min(wallet.data?.balance || 0, payableBeforeWallet) : 0;
+  const shipping = exchange ? 0 : delivery === 'express' ? 18 : subtotal >= 120 ? 0 : 9;
+  const total = Math.max(0, payableBeforeWallet - walletApplied + shipping);
 
   useEffect(() => {
     if (hasHydrated && !user) router.replace('/login?next=%2Fcheckout');
     if (user) reset({ email: user.email });
   }, [hasHydrated, reset, router, user]);
 
+  useEffect(() => {
+    const value = new URLSearchParams(window.location.search).get('exchange');
+    setExchangeId(value && Number.isInteger(Number(value)) ? Number(value) : null);
+  }, []);
+
   const onSubmit = async ({ email }: CheckoutFields) => {
-    if (!items.length) {
+    if (!exchange && !items.length) {
       showToast({ tone: 'info', title: t('checkout.emptyToast'), message: t('checkout.emptyToastCopy') });
       return;
     }
@@ -69,8 +83,16 @@ export default function CheckoutPage() {
     try {
       // The order is created server-side first, so pricing and stock are settled before
       // the customer ever reaches the payment page.
-      const order = await checkout({ email, delivery, locale });
-      await loadCart();
+      const order = exchange
+        ? await checkoutExchange(exchange.id, { email, locale, useWalletBalance: useWallet })
+        : await checkout({ email, delivery, locale, useWalletBalance: useWallet });
+      if (!exchange) await loadCart();
+
+      if (order.total <= 0) {
+        showToast({ tone: 'success', title: t('checkout.orderPlaced'), message: locale === 'tr' ? 'Siparişiniz mağaza cüzdanınızla tamamen ödendi.' : 'Your order was paid in full with your store wallet.' });
+        router.push('/account');
+        return;
+      }
 
       const session = await createCheckoutSession(order.number, locale);
       window.location.assign(session.checkoutUrl);
@@ -106,18 +128,18 @@ export default function CheckoutPage() {
 
           <section className="form-section"><div className="form-section__heading"><span>01</span><div><h2>{t('checkout.contact')}</h2><p>{t('checkout.contactCopy')}</p></div></div><Field label={t('checkout.email')} error={errors.email?.message}><input type="email" autoComplete="email" placeholder={t('common.emailPlaceholder')} {...register('email')} /></Field></section>
 
-          <section className="form-section"><div className="form-section__heading"><span>02</span><div><h2>{t('checkout.delivery')}</h2><p>{t('checkout.deliveryCopy')}</p></div></div><div className="delivery-options"><label className={delivery === 'standard' ? 'active' : ''}><input type="radio" name="delivery" checked={delivery === 'standard'} onChange={() => setDelivery('standard')} /><Truck /><span><strong>{t('checkout.standard')}</strong><small>{t('checkout.standardTime')}</small></span><b>{subtotal >= 120 ? t('cart.complimentary') : '$9'}</b></label><label className={delivery === 'express' ? 'active' : ''}><input type="radio" name="delivery" checked={delivery === 'express'} onChange={() => setDelivery('express')} /><PackageCheck /><span><strong>{t('checkout.express')}</strong><small>{t('checkout.expressTime')}</small></span><b>$18</b></label></div></section>
+          {exchange ? <section className="form-section"><div className="form-section__heading"><span>02</span><div><h2>{locale === 'tr' ? 'Değişim farkı' : 'Exchange difference'}</h2><p>{locale === 'tr' ? 'Onaylanan yeni ürün için yalnızca kalan farkı ödersiniz. Teslimat düzenlemesi atölye ekibi tarafından yapılır.' : 'You pay only the approved difference for the replacement. The atelier team coordinates delivery.'}</p></div></div><div className="payment-handoff"><div><ArrowRight /><span><strong>{exchange.originalProductName} → {exchange.newProductName}</strong><small>{exchange.newProductColor}</small></span></div><ShieldCheck /><p>{locale === 'tr' ? 'Atölye tarafından doğrulandı' : 'Verified by the atelier'}</p></div></section> : <section className="form-section"><div className="form-section__heading"><span>02</span><div><h2>{t('checkout.delivery')}</h2><p>{t('checkout.deliveryCopy')}</p></div></div><div className="delivery-options"><label className={delivery === 'standard' ? 'active' : ''}><input type="radio" name="delivery" checked={delivery === 'standard'} onChange={() => setDelivery('standard')} /><Truck /><span><strong>{t('checkout.standard')}</strong><small>{t('checkout.standardTime')}</small></span><b>{subtotal >= 120 ? t('cart.complimentary') : '$9'}</b></label><label className={delivery === 'express' ? 'active' : ''}><input type="radio" name="delivery" checked={delivery === 'express'} onChange={() => setDelivery('express')} /><PackageCheck /><span><strong>{t('checkout.express')}</strong><small>{t('checkout.expressTime')}</small></span><b>$18</b></label></div></section>}
 
           <section className="form-section"><div className="form-section__heading"><span>03</span><div><h2>{t('checkout.payment')}</h2><p>{t('checkout.paymentCopy')}</p></div></div><div className="payment-handoff"><div><CreditCard /><span><strong>{t('checkout.methods')}</strong><small>{t('checkout.methodsCopy')}</small></span></div><ShieldCheck /><p>{t('checkout.neverStores')}</p></div></section>
 
-          <button className="button button--primary button--block checkout-submit" type="submit" disabled={!items.length || isSubmitting}>{isSubmitting ? t('checkout.opening') : t('checkout.continue', { amount: total.toFixed(0) })} <LockKeyhole size={14} /></button>
+          <button className="button button--primary button--block checkout-submit" type="submit" disabled={(!exchange && !items.length) || (exchangeId !== null && !exchange) || isSubmitting}>{isSubmitting ? t('checkout.opening') : t('checkout.continue', { amount: total.toFixed(0) })} <LockKeyhole size={14} /></button>
           <p className="checkout-legal">{t('checkout.legal')}</p>
         </form>
 
         <aside className="order-summary">
           <div className="order-summary__inner">
             <span className="eyebrow">{t('cart.eyebrow')}</span><h2>{t('checkout.summary')}</h2>
-            {items.length ? (
+            {exchange ? <div className="exchange-checkout-line"><span className="eyebrow">{locale === 'tr' ? 'ONAYLANAN DEĞİŞİM' : 'APPROVED EXCHANGE'}</span><strong>{exchange.newProductName}</strong><small>{exchange.newProductColor}</small><p><span>{locale === 'tr' ? 'Yeni ürün' : 'New product'}</span><b>${exchange.newProductValue.toFixed(2)}</b></p><p><span>{locale === 'tr' ? 'Eski ürün kredisi' : 'Original item credit'}</span><b>−${exchange.oldProductValue.toFixed(2)}</b></p></div> : items.length ? (
               <div className="summary-lines">
                 {items.map((item) => {
                   const name = locale === 'tr' && item.productNameTr ? item.productNameTr : item.productName;
@@ -141,9 +163,14 @@ export default function CheckoutPage() {
             ) : (
               <div className="summary-empty"><p>{t('checkout.empty')}</p><Link href="/products">{t('checkout.browse')}</Link></div>
             )}
-            <PromoCode currency="USD" />
-            <TradeInWidget source="checkout" compact />
-            <div className="summary-totals summary-totals--checkout"><p><span>{t('cart.subtotal')}</span><b>${subtotal.toFixed(0)}</b></p>{couponDiscount > 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Promosyon indirimi' : 'Promo discount'}</span><b>−${couponDiscount.toFixed(2)}</b></p>}{tradeInCredit > 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Takas kredisi' : 'Trade-in credit'}</span><b>−${tradeInCredit.toFixed(2)}</b></p>}{discount > 0 && couponDiscount === 0 && tradeInCredit === 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Toplam indirim' : 'Total discount'}</span><b>−${discount.toFixed(2)}</b></p>}<p><span>{t('checkout.delivery')}</span><b>{shipping ? `$${shipping}` : t('cart.complimentary')}</b></p><div><span>{t('cart.total')} <small>USD</small></span><strong>${total.toFixed(2)}</strong></div></div>
+            {!exchange && <PromoCode currency="USD" />}
+            {!exchange && <TradeInWidget source="checkout" compact />}
+            <section className="checkout-wallet">
+              <div><WalletCards /><span><strong>{locale === 'tr' ? 'Mağaza cüzdanı' : 'Store wallet'}</strong><small>{locale === 'tr' ? 'Kullanılabilir bakiye' : 'Available balance'} · ${(wallet.data?.balance || 0).toFixed(2)}</small></span></div>
+              <label><input type="checkbox" checked={useWallet} onChange={(event) => setUseWallet(event.target.checked)} disabled={!wallet.data?.balance} /><span>{locale === 'tr' ? 'Bakiyeyi bu siparişe uygula' : 'Apply wallet balance to this order'}</span></label>
+              {walletApplied > 0 && <p>{locale === 'tr' ? 'Bu siparişte kullanılacak' : 'Applied to this order'} <b>−${walletApplied.toFixed(2)}</b></p>}
+            </section>
+            <div className="summary-totals summary-totals--checkout"><p><span>{exchange ? (locale === 'tr' ? 'Değişim farkı' : 'Exchange difference') : t('cart.subtotal')}</span><b>${(exchange ? exchange.amountDue : subtotal).toFixed(0)}</b></p>{!exchange && couponDiscount > 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Promosyon indirimi' : 'Promo discount'}</span><b>−${couponDiscount.toFixed(2)}</b></p>}{!exchange && tradeInCredit > 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Takas kredisi' : 'Trade-in credit'}</span><b>−${tradeInCredit.toFixed(2)}</b></p>}{!exchange && discount > 0 && couponDiscount === 0 && tradeInCredit === 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Toplam indirim' : 'Total discount'}</span><b>−${discount.toFixed(2)}</b></p>}{walletApplied > 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Cüzdan bakiyesi' : 'Wallet balance'}</span><b>−${walletApplied.toFixed(2)}</b></p>}{!exchange && <p><span>{t('checkout.delivery')}</span><b>{shipping ? `$${shipping}` : t('cart.complimentary')}</b></p>}<div><span>{t('cart.total')} <small>{exchange?.currency || 'USD'}</small></span><strong>${total.toFixed(2)}</strong></div></div>
             <div className="summary-trust"><LockKeyhole size={14} /> {t('checkout.trust')}</div>
           </div>
         </aside>

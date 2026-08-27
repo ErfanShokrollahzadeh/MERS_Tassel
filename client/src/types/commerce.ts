@@ -182,6 +182,49 @@ export type OrderItem = {
   surpriseInstructions?: string | null;
 };
 
+export type WalletTransaction = {
+  id: number;
+  type: 'exchange_credit' | 'checkout_debit' | 'order_reversal' | 'admin_adjustment';
+  amount: number;
+  balanceAfter: number;
+  description: string;
+  referenceType: string;
+  referenceId: string;
+  createdAt: string;
+};
+
+export type Wallet = {
+  balance: number;
+  currency: string;
+  transactions: WalletTransaction[];
+};
+
+export type ExchangeStatus = 'pending_verification' | 'approved' | 'rejected' | 'cancelled' | 'completed';
+
+export type ExchangeRequest = {
+  id: number;
+  orderItemId: number;
+  originalProductName: string;
+  newProductVariantId: number;
+  newProductName: string;
+  newProductSlug: string;
+  newProductColor: string;
+  oldProductValue: number;
+  newProductValue: number;
+  difference: number;
+  walletCredit: number;
+  amountDue: number;
+  currency: string;
+  invoiceIntact: boolean;
+  packagingIntact: boolean;
+  customerNote?: string | null;
+  adminNote?: string | null;
+  status: ExchangeStatus;
+  createdAt: string;
+  reviewedAt?: string | null;
+  settlementOrderNumber?: string | null;
+};
+
 export type Order = {
   id: number;
   number: string;
@@ -194,6 +237,7 @@ export type Order = {
   discountTotal: number;
   couponDiscountTotal: number;
   tradeInCredit: number;
+  walletCredit: number;
   shippingTotal: number;
   total: number;
   couponCode?: string | null;
@@ -204,6 +248,9 @@ export type Order = {
   itemCount: number;
   createdAt: string;
   paidAt?: string | null;
+  deliveredAt?: string | null;
+  exchangeEligibleUntil?: string | null;
+  returnEligibleUntil?: string | null;
 };
 
 export type SiteSettings = {

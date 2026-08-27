@@ -1,5 +1,6 @@
 using MersTassel.Application.Common;
 using MersTassel.Application.DTOs;
+using MersTassel.Domain.Entities;
 
 namespace MersTassel.Application.Interfaces;
 
@@ -84,6 +85,24 @@ public interface ITradeInService
     Task<CartDto> ApplyAsync(string userId, ApplyTradeInRequest request, UploadedFile image, CancellationToken ct = default);
     Task<CartDto> RemoveAsync(string userId, CancellationToken ct = default);
     Task<TradeInDto> UpdateStatusAsync(int id, UpdateTradeInStatusRequest request, CancellationToken ct = default);
+}
+
+public interface IWalletService
+{
+    Task<WalletDto> GetAsync(string userId, string currency = "USD", CancellationToken ct = default);
+    Task<decimal> ApplyToOrderAsync(string userId, string currency, decimal maximumAmount, string orderNumber, CancellationToken ct = default);
+    Task<StoreWalletTransaction?> CreditExchangeDifferenceAsync(ExchangeRequest exchange, CancellationToken ct = default);
+    Task<StoreWalletTransaction?> CreditTradeInRemainderAsync(TradeInRequest tradeIn, CancellationToken ct = default);
+    Task ReverseOrderDebitAsync(Order order, CancellationToken ct = default);
+}
+
+public interface IExchangeService
+{
+    Task<ExchangeRequestDto> CreateAsync(string userId, CreateExchangeRequest request, CancellationToken ct = default);
+    Task<IReadOnlyList<ExchangeRequestDto>> ListForUserAsync(string userId, CancellationToken ct = default);
+    Task<IReadOnlyList<ExchangeRequestDto>> ListAllAsync(CancellationToken ct = default);
+    Task<OrderDto> CreateSettlementOrderAsync(string userId, int exchangeId, ExchangeCheckoutRequest request, CancellationToken ct = default);
+    Task<ExchangeRequestDto> UpdateStatusAsync(int id, UpdateExchangeStatusRequest request, CancellationToken ct = default);
 }
 
 public interface ISiteSettingsService

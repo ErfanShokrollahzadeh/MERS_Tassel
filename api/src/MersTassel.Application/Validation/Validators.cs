@@ -288,6 +288,32 @@ public class UpdateOrderStatusRequestValidator : AbstractValidator<UpdateOrderSt
     }
 }
 
+public class CreateExchangeRequestValidator : AbstractValidator<CreateExchangeRequest>
+{
+    public CreateExchangeRequestValidator()
+    {
+        RuleFor(x => x.OrderItemId).GreaterThan(0);
+        RuleFor(x => x.NewProductVariantId).GreaterThan(0);
+        RuleFor(x => x.InvoiceIntact).Equal(true)
+            .WithMessage("Keep the original invoice or receipt for an exchange.");
+        RuleFor(x => x.PackagingIntact).Equal(true)
+            .WithMessage("The original product box and packaging must be intact for an exchange.");
+        RuleFor(x => x.CustomerNote).MaximumLength(1000);
+    }
+}
+
+public class UpdateExchangeStatusRequestValidator : AbstractValidator<UpdateExchangeStatusRequest>
+{
+    private static readonly string[] Allowed = ["approved", "rejected", "cancelled", "completed"];
+
+    public UpdateExchangeStatusRequestValidator()
+    {
+        RuleFor(x => x.Status).NotEmpty().Must(value => Allowed.Contains(value.ToLowerInvariant()))
+            .WithMessage($"Status must be one of: {string.Join(", ", Allowed)}.");
+        RuleFor(x => x.AdminNote).MaximumLength(1000);
+    }
+}
+
 public class UpdateUserRoleRequestValidator : AbstractValidator<UpdateUserRoleRequest>
 {
     private static readonly string[] Allowed = ["Admin", "Staff", "Customer"];

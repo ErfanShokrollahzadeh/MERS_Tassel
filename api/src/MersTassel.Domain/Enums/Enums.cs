@@ -59,3 +59,20 @@ public enum TradeInHandoffMethod
     Pickup = 0,
     DropOff = 1,
 }
+
+public enum WalletTransactionType
+{
+    ExchangeCredit = 0,
+    CheckoutDebit = 1,
+    OrderReversal = 2,
+    AdminAdjustment = 3,
+}
+
+public enum ExchangeRequestStatus
+{
+    PendingVerification = 0,
+    Approved = 1,
+    Rejected = 2,
+    Cancelled = 3,
+    Completed = 4,
+}

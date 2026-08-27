@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { BarChart3, Bell, ChevronLeft, CircleHelp, Command, LayoutDashboard, Megaphone, Menu, Moon, Package, Search, Settings, ShoppingBag, Sun, TicketCheck, Users, X } from 'lucide-react';
+import { ArrowLeftRight, BarChart3, Bell, ChevronLeft, CircleHelp, Command, LayoutDashboard, Megaphone, Menu, Moon, Package, Search, Settings, ShoppingBag, Sun, TicketCheck, Users, X } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 
 const links = [
   { href: '/admin', label: 'Overview', icon: LayoutDashboard },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+  { href: '/admin/exchanges', label: 'Exchanges', icon: ArrowLeftRight },
   { href: '/admin/products', label: 'Products', icon: Package },
   { href: '/admin/settings', label: 'Site settings', icon: Settings },
   { href: '/admin/users', label: 'People & roles', icon: Users },

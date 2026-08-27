@@ -135,7 +135,74 @@ public class CheckoutRequest
     public string Delivery { get; set; } = "standard";
 
     public string Locale { get; set; } = "en";
+    public bool UseWalletBalance { get; set; }
     public ShippingAddressDto? ShippingAddress { get; set; }
+}
+
+public class WalletDto
+{
+    public decimal Balance { get; set; }
+    public string Currency { get; set; } = "USD";
+    public IReadOnlyList<WalletTransactionDto> Transactions { get; set; } = [];
+}
+
+public class WalletTransactionDto
+{
+    public int Id { get; set; }
+    public string Type { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public decimal BalanceAfter { get; set; }
+    public string Description { get; set; } = string.Empty;
+    public string ReferenceType { get; set; } = string.Empty;
+    public string ReferenceId { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+public class CreateExchangeRequest
+{
+    public int OrderItemId { get; set; }
+    public int NewProductVariantId { get; set; }
+    public bool InvoiceIntact { get; set; }
+    public bool PackagingIntact { get; set; }
+    public string? CustomerNote { get; set; }
+}
+
+public class UpdateExchangeStatusRequest
+{
+    public string Status { get; set; } = string.Empty;
+    public string? AdminNote { get; set; }
+}
+
+public class ExchangeCheckoutRequest
+{
+    public string Email { get; set; } = string.Empty;
+    public string Locale { get; set; } = "en";
+    public bool UseWalletBalance { get; set; }
+}
+
+public class ExchangeRequestDto
+{
+    public int Id { get; set; }
+    public int OrderItemId { get; set; }
+    public string OriginalProductName { get; set; } = string.Empty;
+    public int NewProductVariantId { get; set; }
+    public string NewProductName { get; set; } = string.Empty;
+    public string NewProductSlug { get; set; } = string.Empty;
+    public string NewProductColor { get; set; } = string.Empty;
+    public decimal OldProductValue { get; set; }
+    public decimal NewProductValue { get; set; }
+    public decimal Difference { get; set; }
+    public decimal WalletCredit { get; set; }
+    public decimal AmountDue { get; set; }
+    public string Currency { get; set; } = "USD";
+    public bool InvoiceIntact { get; set; }
+    public bool PackagingIntact { get; set; }
+    public string? CustomerNote { get; set; }
+    public string? AdminNote { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? ReviewedAt { get; set; }
+    public string? SettlementOrderNumber { get; set; }
 }
 
 public class TradeInEstimateRequest
@@ -206,6 +273,7 @@ public class OrderDto
     public decimal DiscountTotal { get; set; }
     public decimal CouponDiscountTotal { get; set; }
     public decimal TradeInCredit { get; set; }
+    public decimal WalletCredit { get; set; }
     public decimal ShippingTotal { get; set; }
     public decimal Total { get; set; }
     public string? CouponCode { get; set; }
@@ -216,6 +284,9 @@ public class OrderDto
     public int ItemCount { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? PaidAt { get; set; }
+    public DateTimeOffset? DeliveredAt { get; set; }
+    public DateTimeOffset? ExchangeEligibleUntil { get; set; }
+    public DateTimeOffset? ReturnEligibleUntil { get; set; }
 }
 
 public class OrderItemDto

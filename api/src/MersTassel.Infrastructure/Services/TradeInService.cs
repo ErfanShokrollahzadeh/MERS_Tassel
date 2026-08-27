@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MersTassel.Infrastructure.Services;
 
-public class TradeInService(AppDbContext db, IFileStorageService storage) : ITradeInService
+public class TradeInService(AppDbContext db, IFileStorageService storage, IWalletService wallets) : ITradeInService
 {
     private static readonly IReadOnlyDictionary<string, decimal> CategoryCredits =
         new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
@@ -56,7 +56,7 @@ public class TradeInService(AppDbContext db, IFileStorageService storage) : ITra
         }
 
         var targetPrice = target?.Price ?? subtotal;
-        var estimate = Math.Min(subtotal, CalculateEstimate(request.Category, request.Condition, targetPrice));
+        var estimate = CalculateEstimate(request.Category, request.Condition, targetPrice);
         var newImagePath = await storage.SaveAsync(image.Content, image.FileName, "trade-ins", ct);
         var previousImagePath = cart.TradeIn?.ImagePath;
 
@@ -121,11 +121,15 @@ public class TradeInService(AppDbContext db, IFileStorageService storage) : ITra
         UpdateTradeInStatusRequest request,
         CancellationToken ct = default)
     {
-        var tradeIn = await db.TradeInRequests.FirstOrDefaultAsync(entry => entry.Id == id, ct)
+        var tradeIn = await db.TradeInRequests
+            .Include(entry => entry.Order)
+            .FirstOrDefaultAsync(entry => entry.Id == id, ct)
             ?? throw new NotFoundException($"No trade-in found with id {id}.");
 
         tradeIn.Status = ParseStatus(request.Status);
         tradeIn.AdminNote = string.IsNullOrWhiteSpace(request.AdminNote) ? null : request.AdminNote.Trim();
+        if (tradeIn.Status == TradeInStatus.Approved)
+            await wallets.CreditTradeInRemainderAsync(tradeIn, ct);
         await db.SaveChangesAsync(ct);
         return ToDto(tradeIn)!;
     }

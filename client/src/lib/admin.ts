@@ -4,6 +4,8 @@ import type {
   Category,
   Coupon,
   Dashboard,
+  ExchangeRequest,
+  ExchangeStatus,
   Order,
   OrderStatus,
   TradeIn,
@@ -198,6 +200,14 @@ export function updateTradeInStatus(id: number, status: TradeInStatus, adminNote
   return api.patch<TradeIn>(`/admin/trade-ins/${id}/status`, { status, adminNote }, { auth: true });
 }
 
+export function fetchAdminExchanges() {
+  return api.get<ExchangeRequest[]>('/admin/exchanges', { auth: true });
+}
+
+export function updateExchangeStatus(id: number, status: Exclude<ExchangeStatus, 'pending_verification'>, adminNote?: string) {
+  return api.patch<ExchangeRequest>(`/admin/exchanges/${id}/status`, { status, adminNote }, { auth: true });
+}
+
 // ── Promotions ──────────────────────────────────────────────────────────────
 
 export type CouponDraft = {
@@ -282,6 +292,7 @@ export const adminKeys = {
   products: (query: AdminProductQuery = {}) => ['admin', 'products', query] as const,
   categories: () => ['admin', 'categories'] as const,
   orders: (query: AdminOrderQuery = {}) => ['admin', 'orders', query] as const,
+  exchanges: () => ['admin', 'exchanges'] as const,
   users: (query: { search?: string; page?: number } = {}) => ['admin', 'users', query] as const,
   settings: () => ['admin', 'settings'] as const,
   promotions: () => ['admin', 'promotions'] as const,

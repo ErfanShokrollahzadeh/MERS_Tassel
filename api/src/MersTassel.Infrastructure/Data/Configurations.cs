@@ -268,6 +268,55 @@ public class TradeInRequestConfiguration : IEntityTypeConfiguration<TradeInReque
     }
 }
 
+public class StoreWalletConfiguration : IEntityTypeConfiguration<StoreWallet>
+{
+    public void Configure(EntityTypeBuilder<StoreWallet> b)
+    {
+        b.ToTable("StoreWallets");
+        b.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+        b.Property(x => x.ConcurrencyStamp).HasMaxLength(32).IsRequired().IsConcurrencyToken();
+        b.HasIndex(x => new { x.UserId, x.Currency }).IsUnique();
+        b.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class StoreWalletTransactionConfiguration : IEntityTypeConfiguration<StoreWalletTransaction>
+{
+    public void Configure(EntityTypeBuilder<StoreWalletTransaction> b)
+    {
+        b.ToTable("StoreWalletTransactions");
+        b.Property(x => x.Type).HasConversion<string>().HasMaxLength(24);
+        b.Property(x => x.Description).HasMaxLength(300).IsRequired();
+        b.Property(x => x.ReferenceType).HasMaxLength(40).IsRequired();
+        b.Property(x => x.ReferenceId).HasMaxLength(80).IsRequired();
+        b.Property(x => x.IdempotencyKey).HasMaxLength(120).IsRequired();
+        b.HasIndex(x => x.IdempotencyKey).IsUnique();
+        b.HasIndex(x => new { x.WalletId, x.CreatedAt });
+        b.HasOne(x => x.Wallet).WithMany(x => x.Transactions).HasForeignKey(x => x.WalletId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class ExchangeRequestConfiguration : IEntityTypeConfiguration<ExchangeRequest>
+{
+    public void Configure(EntityTypeBuilder<ExchangeRequest> b)
+    {
+        b.ToTable("ExchangeRequests");
+        b.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+        b.Property(x => x.CustomerNote).HasMaxLength(1000);
+        b.Property(x => x.AdminNote).HasMaxLength(1000);
+        b.Property(x => x.Status).HasConversion<string>().HasMaxLength(24);
+        b.HasIndex(x => x.UserId);
+        b.HasIndex(x => x.OrderItemId);
+        b.HasIndex(x => x.Status);
+        b.HasIndex(x => x.IsDelete);
+        b.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne(x => x.OrderItem).WithMany().HasForeignKey(x => x.OrderItemId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne(x => x.NewProductVariant).WithMany().HasForeignKey(x => x.NewProductVariantId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne(x => x.WalletTransaction).WithMany().HasForeignKey(x => x.WalletTransactionId).OnDelete(DeleteBehavior.SetNull);
+        b.HasOne(x => x.SettlementOrder).WithMany().HasForeignKey(x => x.SettlementOrderId).OnDelete(DeleteBehavior.SetNull);
+    }
+}
+
 public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
 {
     public void Configure(EntityTypeBuilder<OrderItem> b)
