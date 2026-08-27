@@ -7,6 +7,7 @@ import { CartDrawer } from '@/components/CartDrawer';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useI18n } from '@/i18n/I18nProvider';
 import { TradeInModal } from '@/components/TradeInModal';
+import { CookiePreferencesCenter } from '@/components/CookiePreferencesCenter';
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -26,6 +27,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
       {!isAuth && !isCheckout && <StoreFooter />}
       <CartDrawer />
       <TradeInModal />
+      <CookiePreferencesCenter />
     </div>
   );
 }
