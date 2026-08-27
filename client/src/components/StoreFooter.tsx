@@ -6,6 +6,7 @@ import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { SocialContactLinks } from '@/components/SocialContactLinks';
 import { useSiteSettings } from '@/lib/useSiteSettings';
 import { NewsletterForm } from '@/components/NewsletterForm';
+import { openCookieSettings } from '@/lib/cookiePreferences';
 
 export function StoreFooter() {
   const { t } = useI18n();
@@ -33,6 +34,12 @@ export function StoreFooter() {
       </div>
       <div className="container-wide footer-bottom">
         <span>© {new Date().getFullYear()} {siteName}</span>
+        <nav className="footer-legal-links" aria-label={t('footer.legalNavigation')}>
+          <Link href="/legal">{t('footer.legal')}</Link>
+          <Link href="/privacy">{t('footer.privacyPolicy')}</Link>
+          <Link href="/cookies">{t('footer.cookiePolicy')}</Link>
+          <button type="button" onClick={openCookieSettings}>{t('footer.cookieSettings')}</button>
+        </nav>
         <div className="footer-bottom__meta">
           <span>{t('footer.location')}</span>
           <span>{t('footer.rights')}</span>

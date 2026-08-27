@@ -1,6 +1,6 @@
 import type { Locale } from '@/i18n/I18nProvider';
 
-export type InformationPageId = 'privacy' | 'invest' | 'shipping' | 'returns' | 'care';
+export type InformationPageId = 'privacy' | 'legal' | 'cookies' | 'invest' | 'shipping' | 'returns' | 'care';
 
 export type InformationPageContent = {
   eyebrow: string;
@@ -34,6 +34,48 @@ const en: Record<InformationPageId, InformationPageContent> = {
       { number: '03', title: 'Your privacy rights', copy: 'Contact the atelier to ask what we hold, update inaccurate details, unsubscribe from notes, or request deletion where retention is not legally required.' },
     ],
     ctaTitle: 'A question about your data?', ctaCopy: 'Our care team will answer privacy and account questions in clear, human language.', ctaLabel: 'Contact the care team', ctaHref: '/contact',
+  },
+  legal: {
+    eyebrow: 'Legal · Business · Transparency', title: 'The details,', accent: 'clearly stated.',
+    lede: 'This legal notice identifies the business behind MERSTassel and brings the storefront policies that govern browsing, ordering, delivery, returns, and customer care into one place.',
+    note: 'MERSTassel · Individual / sole-proprietor seller · Eskişehir, Türkiye.',
+    cards: [
+      { title: 'Business identity', copy: 'MERSTassel operates as an individual / sole-proprietor online seller based in Tepebaşı, Eskişehir, Türkiye.' },
+      { title: 'Clear store terms', copy: 'Prices, product information, delivery charges, and applicable conditions are presented before an order is confirmed.' },
+      { title: 'Consumer rights preserved', copy: 'Nothing in these site terms limits mandatory consumer rights available under applicable Turkish law.' },
+    ],
+    sectionLabel: 'Legal notice and storefront terms',
+    sections: [
+      { number: '01', title: 'Seller and contact information', copy: 'Trade name: MERSTassel. Legal status: individual / sole-proprietor seller. Business and return address: Yenibağlar Mahallesi, Beraberlik Sokak, Tepebaşı, Eskişehir, Türkiye. Email: merstassel@gmail.com. Telephone and WhatsApp: +90 552 848 2640.' },
+      { number: '02', title: 'Using this website', copy: 'You may browse the storefront and use account, bag, gift-box, contact, and checkout features for lawful personal shopping. Attempts to disrupt the service, gain unauthorized access, copy protected content at scale, or use the site fraudulently are prohibited.' },
+      { number: '03', title: 'Products, prices, and orders', copy: 'Product descriptions, availability, prices, promotions, delivery fees, and the order total are shown before checkout. An order is subject to server-side price and stock verification and the applicable distance-sales information presented during checkout. Mandatory rights concerning incorrect pricing, non-conforming goods, cancellation, and refunds remain unaffected.' },
+      { number: '04', title: 'Policies forming part of the store terms', copy: 'The Privacy Policy, Cookie Policy, Shipping and Delivery Terms, Return and Right of Withdrawal Policy, and product-specific care or exception notices form part of the storefront information. Please read the version displayed when placing an order.' },
+      { number: '05', title: 'Intellectual property', copy: 'Unless stated otherwise, the MERSTassel name, visual identity, photographs, videos, product text, artwork, page layouts, and original editorial material belong to MERSTassel or are used with permission. They may not be commercially reproduced or presented as another business’s work without written permission.' },
+      { number: '06', title: 'Applicable rules and disputes', copy: 'The storefront is operated from Türkiye. Mandatory Turkish consumer-protection rules apply where relevant. Please contact us first so we can try to resolve a concern. Consumers may also use the competent Consumer Arbitration Committee, mandatory mediation where applicable, and the Consumer Courts under current procedural and jurisdictional rules.' },
+      { number: '07', title: 'Updates', copy: 'We may update this notice when the store, contact details, services, or legal requirements change. The current version is published on this page. Changes do not remove rights already acquired under a confirmed order.' },
+    ],
+    ctaTitle: 'Need a policy clarified?', ctaCopy: 'Send us your question and we will point you to the relevant order or storefront term.', ctaLabel: 'Contact MERSTassel', ctaHref: '/contact',
+  },
+  cookies: {
+    eyebrow: 'Cookies · Choice · Control', title: 'A quieter', accent: 'digital footprint.',
+    lede: 'This policy explains the small browser files and similar storage technologies used by MERSTassel, why they are needed, and how you can control optional categories.',
+    note: 'Necessary storage stays on for security and core shopping features. Optional categories require your choice.',
+    cards: [
+      { title: 'Necessary by design', copy: 'Security, language, account session, bag, and consent choices need limited browser storage to work reliably.' },
+      { title: 'Optional means optional', copy: 'Analytics and marketing storage remain disabled unless you choose to allow them.' },
+      { title: 'Change your mind', copy: 'Open Cookie Settings in the footer at any time to review, accept, or withdraw optional consent.' },
+    ],
+    sectionLabel: 'How cookies and local storage are used',
+    sections: [
+      { number: '01', title: 'What these technologies are', copy: 'Cookies are small text files saved by a browser. Local storage performs a similar device-level function. They can remember a language, maintain a secure session, preserve a shopping bag, or store a consent choice.' },
+      { number: '02', title: 'Strictly necessary', copy: 'Necessary technologies support sign-in, security, fraud prevention, checkout continuity, saved bag behavior, language and theme preferences, and your cookie decision. Because the site cannot provide these requested functions reliably without them, they cannot be switched off in our settings panel.' },
+      { number: '03', title: 'Analytics', copy: 'If analytics is introduced and you allow it, aggregated usage information may help us understand page performance and improve navigation. Analytics storage is not activated through our consent system before permission is given.' },
+      { number: '04', title: 'Marketing', copy: 'If advertising or campaign measurement is introduced and you allow it, marketing technologies may help measure promotions or personalize communications. Marketing storage is not activated through our consent system before permission is given.' },
+      { number: '05', title: 'Your current choices', copy: 'On your first visit, you can accept all optional categories, keep only necessary storage, or review each category. Your choice is saved on this device. Use Cookie Settings in the footer whenever you wish to change it.' },
+      { number: '06', title: 'Browser controls and deletion', copy: 'You can also block or delete cookies and site data through your browser. Removing necessary site data may sign you out, clear local preferences, or interrupt bag and checkout continuity. Browser controls are separate from the MERSTassel settings panel.' },
+      { number: '07', title: 'Third-party services and updates', copy: 'Payment, embedded media, analytics, or social services may apply their own technologies when those services are used and legally permitted. We will update this policy and the settings panel when the categories or purposes materially change.' },
+    ],
+    ctaTitle: 'A question about browser data?', ctaCopy: 'We can explain which site feature uses a preference and how to reset it.', ctaLabel: 'Ask the care team', ctaHref: '/contact',
   },
   invest: {
     eyebrow: 'Partnership · Purpose · Patience', title: 'Grow slowly.', accent: 'Build something lasting.',
@@ -135,6 +177,48 @@ const tr: Record<InformationPageId, InformationPageContent> = {
       { number: '03', title: 'Gizlilik haklarınız', copy: 'Hakkınızda tuttuğumuz bilgileri öğrenmek, yanlış verileri düzeltmek, notlardan çıkmak veya yasal olarak saklanması gerekmeyen verileri sildirmek için bize ulaşabilirsiniz.' },
     ],
     ctaTitle: 'Verileriniz hakkında bir sorunuz mu var?', ctaCopy: 'Destek ekibimiz gizlilik ve hesap sorularını açık, insani bir dille yanıtlar.', ctaLabel: 'Destek ekibine ulaşın', ctaHref: '/contact',
+  },
+  legal: {
+    eyebrow: 'Yasal · İşletme · Şeffaflık', title: 'Tüm ayrıntılar,', accent: 'açıkça belirtilir.',
+    lede: 'Bu yasal bildirim, MERSTassel’in arkasındaki işletmeyi tanıtır ve gezinme, sipariş, teslimat, iade ve müşteri desteğini düzenleyen mağaza politikalarını tek yerde toplar.',
+    note: 'MERSTassel · Bireysel / şahıs satıcı · Eskişehir, Türkiye.',
+    cards: [
+      { title: 'İşletme kimliği', copy: 'MERSTassel, Tepebaşı, Eskişehir, Türkiye merkezli bireysel / şahıs çevrim içi satıcı olarak faaliyet gösterir.' },
+      { title: 'Açık mağaza koşulları', copy: 'Fiyatlar, ürün bilgileri, teslimat ücretleri ve geçerli koşullar sipariş onayından önce gösterilir.' },
+      { title: 'Tüketici hakları korunur', copy: 'Bu site koşullarındaki hiçbir hüküm, yürürlükteki Türk hukukunun tanıdığı emredici tüketici haklarını sınırlamaz.' },
+    ],
+    sectionLabel: 'Yasal bildirim ve mağaza koşulları',
+    sections: [
+      { number: '01', title: 'Satıcı ve iletişim bilgileri', copy: 'Ticari ad: MERSTassel. Hukuki statü: bireysel / şahıs satıcı. İşletme ve iade adresi: Yenibağlar Mahallesi, Beraberlik Sokak, Tepebaşı, Eskişehir, Türkiye. E-posta: merstassel@gmail.com. Telefon ve WhatsApp: +90 552 848 2640.' },
+      { number: '02', title: 'Web sitesinin kullanımı', copy: 'Mağazayı inceleyebilir; hesap, çanta, hediye kutusu, iletişim ve ödeme özelliklerini hukuka uygun kişisel alışveriş amacıyla kullanabilirsiniz. Hizmeti aksatmaya, yetkisiz erişim sağlamaya, korunan içeriği toplu olarak kopyalamaya veya siteyi hileli biçimde kullanmaya yönelik girişimler yasaktır.' },
+      { number: '03', title: 'Ürünler, fiyatlar ve siparişler', copy: 'Ürün açıklamaları, stok, fiyat, kampanya, teslimat ücreti ve sipariş toplamı ödeme öncesinde gösterilir. Sipariş; sunucu tarafında fiyat ve stok doğrulamasına ve ödeme sırasında sunulan mesafeli satış bilgilendirmesine tabidir. Hatalı fiyat, ayıplı mal, iptal ve iadeye ilişkin emredici haklar saklıdır.' },
+      { number: '04', title: 'Mağaza koşullarının parçası olan politikalar', copy: 'Gizlilik Politikası, Çerez Politikası, Teslimat ve Kargo Koşulları, İade ve Cayma Hakkı Politikası ile ürüne özel bakım veya istisna bildirimleri mağaza bilgilendirmesinin parçasıdır. Sipariş verirken yayımlanan sürümü inceleyin.' },
+      { number: '05', title: 'Fikrî mülkiyet', copy: 'Aksi belirtilmedikçe MERSTassel adı, görsel kimliği, fotoğrafları, videoları, ürün metinleri, çizimleri, sayfa düzenleri ve özgün editoryal içerikleri MERSTassel’e aittir veya izinle kullanılır. Yazılı izin olmadan ticari olarak çoğaltılamaz ya da başka bir işletmenin çalışması gibi sunulamaz.' },
+      { number: '06', title: 'Uygulanacak kurallar ve uyuşmazlıklar', copy: 'Mağaza Türkiye’den işletilir ve ilgili durumlarda emredici Türk tüketici koruma hükümleri uygulanır. Bir sorunu önce bizimle çözmeye çalışmak için iletişime geçebilirsiniz. Tüketiciler ayrıca güncel görev ve usul kurallarına göre yetkili Tüketici Hakem Heyetine, uygulanabildiği ölçüde zorunlu arabuluculuğa ve Tüketici Mahkemelerine başvurabilir.' },
+      { number: '07', title: 'Güncellemeler', copy: 'Mağaza, iletişim bilgileri, hizmetler veya yasal gereklilikler değiştiğinde bu bildirimi güncelleyebiliriz. Güncel sürüm bu sayfada yayımlanır. Değişiklikler, onaylanmış bir sipariş kapsamında önceden kazanılmış hakları ortadan kaldırmaz.' },
+    ],
+    ctaTitle: 'Bir koşulu açıklamamızı ister misiniz?', ctaCopy: 'Sorunuzu gönderin; sizi ilgili sipariş veya mağaza koşuluna yönlendirelim.', ctaLabel: 'MERSTassel ile iletişime geçin', ctaHref: '/contact',
+  },
+  cookies: {
+    eyebrow: 'Çerezler · Seçim · Kontrol', title: 'Daha sakin bir', accent: 'dijital iz.',
+    lede: 'Bu politika, MERSTassel’in kullandığı küçük tarayıcı dosyalarını ve benzer saklama teknolojilerini, neden gerekli olduklarını ve isteğe bağlı kategorileri nasıl kontrol edebileceğinizi açıklar.',
+    note: 'Güvenlik ve temel alışveriş özellikleri için gerekli depolama açık kalır. İsteğe bağlı kategoriler seçiminizi gerektirir.',
+    cards: [
+      { title: 'Gerektiği kadar', copy: 'Güvenlik, dil, hesap oturumu, çanta ve izin tercihleri sınırlı tarayıcı depolamasıyla güvenilir biçimde çalışır.' },
+      { title: 'İsteğe bağlı gerçekten isteğe bağlıdır', copy: 'Analiz ve pazarlama depolaması siz izin vermedikçe kapalı kalır.' },
+      { title: 'Kararınızı değiştirin', copy: 'İsteğe bağlı izninizi incelemek, vermek veya geri çekmek için alt bilgideki Çerez Ayarlarını istediğiniz zaman açın.' },
+    ],
+    sectionLabel: 'Çerezler ve yerel depolama nasıl kullanılır',
+    sections: [
+      { number: '01', title: 'Bu teknolojiler nedir?', copy: 'Çerezler tarayıcının kaydettiği küçük metin dosyalarıdır. Yerel depolama da cihaz düzeyinde benzer bir işlev görür. Dil seçimini hatırlayabilir, güvenli oturumu sürdürebilir, alışveriş çantasını koruyabilir veya izin tercihini saklayabilir.' },
+      { number: '02', title: 'Kesinlikle gerekli', copy: 'Gerekli teknolojiler; giriş, güvenlik, dolandırıcılığı önleme, ödeme sürekliliği, kayıtlı çanta davranışı, dil ve tema tercihleri ile çerez kararınızı destekler. Site, talep ettiğiniz bu işlevleri bunlar olmadan güvenilir biçimde sunamayacağı için ayarlar panelimizden kapatılamaz.' },
+      { number: '03', title: 'Analiz', copy: 'Analiz hizmeti eklenir ve izin verirseniz toplulaştırılmış kullanım bilgileri sayfa performansını anlamamıza ve gezinmeyi iyileştirmemize yardımcı olabilir. İzin verilmeden analiz depolaması onay sistemimiz üzerinden etkinleştirilmez.' },
+      { number: '04', title: 'Pazarlama', copy: 'Reklam veya kampanya ölçümü eklenir ve izin verirseniz pazarlama teknolojileri tanıtımları ölçmeye veya iletişimi kişiselleştirmeye yardımcı olabilir. İzin verilmeden pazarlama depolaması onay sistemimiz üzerinden etkinleştirilmez.' },
+      { number: '05', title: 'Mevcut seçimleriniz', copy: 'İlk ziyaretinizde tüm isteğe bağlı kategorileri kabul edebilir, yalnızca gerekli depolamayı kullanabilir veya her kategoriyi inceleyebilirsiniz. Seçiminiz bu cihazda saklanır. Değiştirmek için alt bilgideki Çerez Ayarlarını kullanın.' },
+      { number: '06', title: 'Tarayıcı kontrolleri ve silme', copy: 'Çerezleri ve site verilerini tarayıcınızdan da engelleyebilir veya silebilirsiniz. Gerekli site verilerinin silinmesi oturumunuzu kapatabilir, yerel tercihleri temizleyebilir ya da çanta ve ödeme sürekliliğini kesintiye uğratabilir. Tarayıcı kontrolleri MERSTassel ayarlar panelinden ayrıdır.' },
+      { number: '07', title: 'Üçüncü taraf hizmetleri ve güncellemeler', copy: 'Ödeme, gömülü medya, analiz veya sosyal hizmetler; bu hizmetler kullanıldığında ve hukuken izin verildiğinde kendi teknolojilerini uygulayabilir. Kategori veya amaçlarda önemli değişiklik olursa bu politikayı ve ayarlar panelini güncelleriz.' },
+    ],
+    ctaTitle: 'Tarayıcı verileri hakkında sorunuz mu var?', ctaCopy: 'Hangi site özelliğinin bir tercihi kullandığını ve nasıl sıfırlanacağını açıklayabiliriz.', ctaLabel: 'Destek ekibine sorun', ctaHref: '/contact',
   },
   invest: {
     eyebrow: 'Ortaklık · Amaç · Sabır', title: 'Yavaş büyüyün.', accent: 'Kalıcı bir şey kurun.',

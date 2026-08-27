@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, CircleDollarSign, ClipboardCheck, Droplets, Eye, Gem, HandHeart, Handshake, LockKeyhole, PackageCheck, RotateCcw, Scale, ShieldCheck, Sparkles, Sprout, TrendingUp, Truck } from 'lucide-react';
+import { ArrowRight, Building2, CircleDollarSign, ClipboardCheck, Cookie, Droplets, Eye, FileCheck2, Gem, HandHeart, Handshake, LockKeyhole, PackageCheck, RotateCcw, Scale, Settings2, ShieldCheck, Sparkles, Sprout, TrendingUp, Truck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useI18n } from '@/i18n/I18nProvider';
 import { informationPage, type InformationPageId } from '@/content/informationPages';
@@ -9,6 +9,8 @@ import { useSiteSettings } from '@/lib/useSiteSettings';
 
 const visuals = {
   privacy: { hero: ShieldCheck, cards: [Eye, LockKeyhole, ShieldCheck] },
+  legal: { hero: Scale, cards: [Building2, FileCheck2, ShieldCheck] },
+  cookies: { hero: Cookie, cards: [LockKeyhole, Settings2, ShieldCheck] },
   invest: { hero: Sprout, cards: [HandHeart, TrendingUp, Handshake] },
   shipping: { hero: PackageCheck, cards: [Sparkles, Truck, RotateCcw] },
   returns: { hero: RotateCcw, cards: [ClipboardCheck, Truck, CircleDollarSign] },
