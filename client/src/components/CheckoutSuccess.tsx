@@ -8,12 +8,13 @@ import { useCartStore } from '@/stores/cart';
 import { useI18n } from '@/i18n/I18nProvider';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
 import type { Order } from '@/types/commerce';
+import { formatMoney } from '@/lib/money';
 
 export function CheckoutSuccess({ sessionId }: { sessionId: string }) {
   const clear = useCartStore((state) => state.clear);
   const cleared = useRef(false);
   const [order, setOrder] = useState<Order | null>(null);
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [error, setError] = useState('');
 
   useEffect(() => { if (!sessionId) setError(t('success.missing')); }, [sessionId, t]);
@@ -67,7 +68,7 @@ export function CheckoutSuccess({ sessionId }: { sessionId: string }) {
           <PackageCheck />
           <div>
             <strong>{paid ? t('success.started') : t('success.payment', { status: paymentLabel })}</strong>
-            <span>{t(order.itemCount === 1 ? 'success.piece' : 'success.pieces', { count: order.itemCount })} · ${order.total.toFixed(0)} {order.currency.toUpperCase()}</span>
+            <span>{t(order.itemCount === 1 ? 'success.piece' : 'success.pieces', { count: order.itemCount })} · {formatMoney(order.total, locale)}</span>
           </div>
         </div>
       )}

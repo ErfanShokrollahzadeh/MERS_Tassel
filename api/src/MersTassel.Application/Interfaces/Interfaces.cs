@@ -89,7 +89,7 @@ public interface ITradeInService
 
 public interface IWalletService
 {
-    Task<WalletDto> GetAsync(string userId, string currency = "USD", CancellationToken ct = default);
+    Task<WalletDto> GetAsync(string userId, string currency = "TRY", CancellationToken ct = default);
     Task<decimal> ApplyToOrderAsync(string userId, string currency, decimal maximumAmount, string orderNumber, CancellationToken ct = default);
     Task<StoreWalletTransaction?> CreditExchangeDifferenceAsync(ExchangeRequest exchange, CancellationToken ct = default);
     Task<StoreWalletTransaction?> CreditTradeInRemainderAsync(TradeInRequest tradeIn, CancellationToken ct = default);

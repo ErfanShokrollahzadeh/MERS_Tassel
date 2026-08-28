@@ -18,6 +18,7 @@ import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { useAuthStore } from '@/stores/auth';
 import { PromoCode } from '@/components/PromoCode';
 import { TradeInWidget } from '@/components/TradeInWidget';
+import { formatMoney, STORE_CURRENCY } from '@/lib/money';
 
 type CheckoutFields = { email: string };
 
@@ -54,14 +55,14 @@ export default function CheckoutPage() {
   const [exchangeId, setExchangeId] = useState<number | null>(null);
   const exchanges = useQuery({ queryKey: commerceKeys.exchanges(), queryFn: fetchMyExchanges, enabled: Boolean(user) && exchangeId !== null });
   const exchange = exchanges.data?.find((entry) => entry.id === exchangeId);
-  const walletCurrency = exchange?.currency || 'USD';
+  const walletCurrency = exchange?.currency || STORE_CURRENCY;
   const wallet = useQuery({ queryKey: commerceKeys.wallet(walletCurrency), queryFn: () => fetchWallet(walletCurrency), enabled: Boolean(user) });
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CheckoutFields>({ resolver: zodResolver(schema) });
 
   const discount = Number.isFinite(storedDiscount) ? storedDiscount : 0;
   const payableBeforeWallet = exchange ? exchange.amountDue : Math.max(0, subtotal - discount);
   const walletApplied = useWallet ? Math.min(wallet.data?.balance || 0, payableBeforeWallet) : 0;
-  const shipping = exchange ? 0 : delivery === 'express' ? 18 : subtotal >= 120 ? 0 : 9;
+  const shipping = exchange ? 0 : delivery === 'express' ? 60 : subtotal >= 500 ? 0 : 30;
   const total = Math.max(0, payableBeforeWallet - walletApplied + shipping);
 
   useEffect(() => {
@@ -128,18 +129,18 @@ export default function CheckoutPage() {
 
           <section className="form-section"><div className="form-section__heading"><span>01</span><div><h2>{t('checkout.contact')}</h2><p>{t('checkout.contactCopy')}</p></div></div><Field label={t('checkout.email')} error={errors.email?.message}><input type="email" autoComplete="email" placeholder={t('common.emailPlaceholder')} {...register('email')} /></Field></section>
 
-          {exchange ? <section className="form-section"><div className="form-section__heading"><span>02</span><div><h2>{locale === 'tr' ? 'Değişim farkı' : 'Exchange difference'}</h2><p>{locale === 'tr' ? 'Onaylanan yeni ürün için yalnızca kalan farkı ödersiniz. Teslimat düzenlemesi atölye ekibi tarafından yapılır.' : 'You pay only the approved difference for the replacement. The atelier team coordinates delivery.'}</p></div></div><div className="payment-handoff"><div><ArrowRight /><span><strong>{exchange.originalProductName} → {exchange.newProductName}</strong><small>{exchange.newProductColor}</small></span></div><ShieldCheck /><p>{locale === 'tr' ? 'Atölye tarafından doğrulandı' : 'Verified by the atelier'}</p></div></section> : <section className="form-section"><div className="form-section__heading"><span>02</span><div><h2>{t('checkout.delivery')}</h2><p>{t('checkout.deliveryCopy')}</p></div></div><div className="delivery-options"><label className={delivery === 'standard' ? 'active' : ''}><input type="radio" name="delivery" checked={delivery === 'standard'} onChange={() => setDelivery('standard')} /><Truck /><span><strong>{t('checkout.standard')}</strong><small>{t('checkout.standardTime')}</small></span><b>{subtotal >= 120 ? t('cart.complimentary') : '$9'}</b></label><label className={delivery === 'express' ? 'active' : ''}><input type="radio" name="delivery" checked={delivery === 'express'} onChange={() => setDelivery('express')} /><PackageCheck /><span><strong>{t('checkout.express')}</strong><small>{t('checkout.expressTime')}</small></span><b>$18</b></label></div></section>}
+          {exchange ? <section className="form-section"><div className="form-section__heading"><span>02</span><div><h2>{locale === 'tr' ? 'Değişim farkı' : 'Exchange difference'}</h2><p>{locale === 'tr' ? 'Onaylanan yeni ürün için yalnızca kalan farkı ödersiniz. Teslimat düzenlemesi atölye ekibi tarafından yapılır.' : 'You pay only the approved difference for the replacement. The atelier team coordinates delivery.'}</p></div></div><div className="payment-handoff"><div><ArrowRight /><span><strong>{exchange.originalProductName} → {exchange.newProductName}</strong><small>{exchange.newProductColor}</small></span></div><ShieldCheck /><p>{locale === 'tr' ? 'Atölye tarafından doğrulandı' : 'Verified by the atelier'}</p></div></section> : <section className="form-section"><div className="form-section__heading"><span>02</span><div><h2>{t('checkout.delivery')}</h2><p>{t('checkout.deliveryCopy')}</p></div></div><div className="delivery-options"><label className={delivery === 'standard' ? 'active' : ''}><input type="radio" name="delivery" checked={delivery === 'standard'} onChange={() => setDelivery('standard')} /><Truck /><span><strong>{t('checkout.standard')}</strong><small>{t('checkout.standardTime')}</small></span><b>{subtotal >= 500 ? t('cart.complimentary') : formatMoney(30, locale)}</b></label><label className={delivery === 'express' ? 'active' : ''}><input type="radio" name="delivery" checked={delivery === 'express'} onChange={() => setDelivery('express')} /><PackageCheck /><span><strong>{t('checkout.express')}</strong><small>{t('checkout.expressTime')}</small></span><b>{formatMoney(60, locale)}</b></label></div></section>}
 
           <section className="form-section"><div className="form-section__heading"><span>03</span><div><h2>{t('checkout.payment')}</h2><p>{t('checkout.paymentCopy')}</p></div></div><div className="payment-handoff"><div><CreditCard /><span><strong>{t('checkout.methods')}</strong><small>{t('checkout.methodsCopy')}</small></span></div><ShieldCheck /><p>{t('checkout.neverStores')}</p></div></section>
 
-          <button className="button button--primary button--block checkout-submit" type="submit" disabled={(!exchange && !items.length) || (exchangeId !== null && !exchange) || isSubmitting}>{isSubmitting ? t('checkout.opening') : t('checkout.continue', { amount: total.toFixed(0) })} <LockKeyhole size={14} /></button>
+          <button className="button button--primary button--block checkout-submit" type="submit" disabled={(!exchange && !items.length) || (exchangeId !== null && !exchange) || isSubmitting}>{isSubmitting ? t('checkout.opening') : t('checkout.continue', { amount: formatMoney(total, locale) })} <LockKeyhole size={14} /></button>
           <p className="checkout-legal">{t('checkout.legal')}</p>
         </form>
 
         <aside className="order-summary">
           <div className="order-summary__inner">
             <span className="eyebrow">{t('cart.eyebrow')}</span><h2>{t('checkout.summary')}</h2>
-            {exchange ? <div className="exchange-checkout-line"><span className="eyebrow">{locale === 'tr' ? 'ONAYLANAN DEĞİŞİM' : 'APPROVED EXCHANGE'}</span><strong>{exchange.newProductName}</strong><small>{exchange.newProductColor}</small><p><span>{locale === 'tr' ? 'Yeni ürün' : 'New product'}</span><b>${exchange.newProductValue.toFixed(2)}</b></p><p><span>{locale === 'tr' ? 'Eski ürün kredisi' : 'Original item credit'}</span><b>−${exchange.oldProductValue.toFixed(2)}</b></p></div> : items.length ? (
+            {exchange ? <div className="exchange-checkout-line"><span className="eyebrow">{locale === 'tr' ? 'ONAYLANAN DEĞİŞİM' : 'APPROVED EXCHANGE'}</span><strong>{exchange.newProductName}</strong><small>{exchange.newProductColor}</small><p><span>{locale === 'tr' ? 'Yeni ürün' : 'New product'}</span><b>{formatMoney(exchange.newProductValue, locale)}</b></p><p><span>{locale === 'tr' ? 'Eski ürün kredisi' : 'Original item credit'}</span><b>−{formatMoney(exchange.oldProductValue, locale)}</b></p></div> : items.length ? (
               <div className="summary-lines">
                 {items.map((item) => {
                   const name = locale === 'tr' && item.productNameTr ? item.productNameTr : item.productName;
@@ -155,7 +156,7 @@ export default function CheckoutPage() {
                     <div key={item.id} className="summary-line">
                       <div className="summary-line__media"><MediaImage src={item.image || ''} alt="" sizes="68px" /><span>{item.quantity}</span></div>
                       <section><strong>{name}</strong><small>{surpriseDetails || finish}</small></section>
-                      <b>${item.lineTotal.toFixed(0)}</b>
+                      <b>{formatMoney(item.lineTotal, locale)}</b>
                     </div>
                   );
                 })}
@@ -163,14 +164,14 @@ export default function CheckoutPage() {
             ) : (
               <div className="summary-empty"><p>{t('checkout.empty')}</p><Link href="/products">{t('checkout.browse')}</Link></div>
             )}
-            {!exchange && <PromoCode currency="USD" />}
+            {!exchange && <PromoCode />}
             {!exchange && <TradeInWidget source="checkout" compact />}
             <section className="checkout-wallet">
-              <div><WalletCards /><span><strong>{locale === 'tr' ? 'Mağaza cüzdanı' : 'Store wallet'}</strong><small>{locale === 'tr' ? 'Kullanılabilir bakiye' : 'Available balance'} · ${(wallet.data?.balance || 0).toFixed(2)}</small></span></div>
+              <div><WalletCards /><span><strong>{locale === 'tr' ? 'Mağaza cüzdanı' : 'Store wallet'}</strong><small>{locale === 'tr' ? 'Kullanılabilir bakiye' : 'Available balance'} · {formatMoney(wallet.data?.balance || 0, locale)}</small></span></div>
               <label><input type="checkbox" checked={useWallet} onChange={(event) => setUseWallet(event.target.checked)} disabled={!wallet.data?.balance} /><span>{locale === 'tr' ? 'Bakiyeyi bu siparişe uygula' : 'Apply wallet balance to this order'}</span></label>
-              {walletApplied > 0 && <p>{locale === 'tr' ? 'Bu siparişte kullanılacak' : 'Applied to this order'} <b>−${walletApplied.toFixed(2)}</b></p>}
+              {walletApplied > 0 && <p>{locale === 'tr' ? 'Bu siparişte kullanılacak' : 'Applied to this order'} <b>−{formatMoney(walletApplied, locale)}</b></p>}
             </section>
-            <div className="summary-totals summary-totals--checkout"><p><span>{exchange ? (locale === 'tr' ? 'Değişim farkı' : 'Exchange difference') : t('cart.subtotal')}</span><b>${(exchange ? exchange.amountDue : subtotal).toFixed(0)}</b></p>{!exchange && couponDiscount > 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Promosyon indirimi' : 'Promo discount'}</span><b>−${couponDiscount.toFixed(2)}</b></p>}{!exchange && tradeInCredit > 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Takas kredisi' : 'Trade-in credit'}</span><b>−${tradeInCredit.toFixed(2)}</b></p>}{!exchange && discount > 0 && couponDiscount === 0 && tradeInCredit === 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Toplam indirim' : 'Total discount'}</span><b>−${discount.toFixed(2)}</b></p>}{walletApplied > 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Cüzdan bakiyesi' : 'Wallet balance'}</span><b>−${walletApplied.toFixed(2)}</b></p>}{!exchange && <p><span>{t('checkout.delivery')}</span><b>{shipping ? `$${shipping}` : t('cart.complimentary')}</b></p>}<div><span>{t('cart.total')} <small>{exchange?.currency || 'USD'}</small></span><strong>${total.toFixed(2)}</strong></div></div>
+            <div className="summary-totals summary-totals--checkout"><p><span>{exchange ? (locale === 'tr' ? 'Değişim farkı' : 'Exchange difference') : t('cart.subtotal')}</span><b>{formatMoney(exchange ? exchange.amountDue : subtotal, locale)}</b></p>{!exchange && couponDiscount > 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Promosyon indirimi' : 'Promo discount'}</span><b>−{formatMoney(couponDiscount, locale)}</b></p>}{!exchange && tradeInCredit > 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Takas kredisi' : 'Trade-in credit'}</span><b>−{formatMoney(tradeInCredit, locale)}</b></p>}{!exchange && discount > 0 && couponDiscount === 0 && tradeInCredit === 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Toplam indirim' : 'Total discount'}</span><b>−{formatMoney(discount, locale)}</b></p>}{walletApplied > 0 && <p className="summary-totals__discount"><span>{locale === 'tr' ? 'Cüzdan bakiyesi' : 'Wallet balance'}</span><b>−{formatMoney(walletApplied, locale)}</b></p>}{!exchange && <p><span>{t('checkout.delivery')}</span><b>{shipping ? formatMoney(shipping, locale) : t('cart.complimentary')}</b></p>}<div><span>{t('cart.total')} <small>{STORE_CURRENCY}</small></span><strong>{formatMoney(total, locale)}</strong></div></div>
             <div className="summary-trust"><LockKeyhole size={14} /> {t('checkout.trust')}</div>
           </div>
         </aside>

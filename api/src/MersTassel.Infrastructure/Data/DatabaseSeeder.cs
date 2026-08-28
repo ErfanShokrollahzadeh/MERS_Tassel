@@ -343,7 +343,7 @@ public class DatabaseSeeder(
                 DimensionsTr = seed.DimensionsTr,
                 Price = seed.Price,
                 CompareAtPrice = seed.CompareAt,
-                Currency = "USD",
+                Currency = "TRY",
                 Sku = $"MT-{seed.Slug.ToUpperInvariant()}",
                 Rating = seed.Rating,
                 ReviewCount = seed.Reviews,

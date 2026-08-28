@@ -15,9 +15,9 @@ public class OrderService(AppDbContext db, IWalletService wallets) : IOrderServi
     /// <summary>Window a reservation holds stock before an unpaid order releases it.</summary>
     public static readonly TimeSpan ReservationWindow = TimeSpan.FromMinutes(30);
 
-    private const decimal ExpressShipping = 18m;
-    private const decimal StandardShipping = 9m;
-    private const decimal FreeShippingThreshold = 120m;
+    private const decimal ExpressShipping = 60m;
+    private const decimal StandardShipping = 30m;
+    private const decimal FreeShippingThreshold = 500m;
 
     public async Task<OrderDto> CheckoutAsync(string userId, CheckoutRequest request, CancellationToken ct = default)
     {

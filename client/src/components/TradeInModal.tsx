@@ -12,6 +12,7 @@ import { useCartStore } from '@/stores/cart';
 import { useToastStore } from '@/stores/toast';
 import { useTradeInModalStore } from '@/stores/tradeIn';
 import type { TradeInCondition, TradeInEstimate, TradeInHandoffMethod } from '@/types/commerce';
+import { formatMoney } from '@/lib/money';
 
 const copy = {
   en: {
@@ -94,9 +95,7 @@ export function TradeInModal() {
     return () => { document.body.style.overflow = overflow; document.removeEventListener('keydown', onKey); };
   }, [close, isOpen]);
 
-  const money = (amount: number) => new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-US', {
-    style: 'currency', currency: estimate?.currency || 'USD', maximumFractionDigits: 2,
-  }).format(amount);
+  const money = (amount: number) => formatMoney(amount, locale);
 
   const calculate = async () => {
     if (!category || !brandModel.trim() || !image) { setError(text.missing); return; }

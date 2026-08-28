@@ -9,11 +9,12 @@ import { useToastStore } from '@/stores/toast';
 import type { Order, OrderStatus } from '@/types/commerce';
 import type { TradeInStatus } from '@/types/commerce';
 import { MediaImage } from '@/components/MediaImage';
+import { formatMoney } from '@/lib/money';
 
 const PAGE_SIZE = 15;
 const STATUSES: OrderStatus[] = ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'];
 const TRADE_IN_STATUSES: TradeInStatus[] = ['pending_verification', 'approved', 'rejected', 'cancelled'];
-const money = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+const money = (value: number) => formatMoney(value, 'tr');
 
 export default function OrdersPage() {
   const [search, setSearch] = useState('');

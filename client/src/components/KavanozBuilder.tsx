@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useCartStore } from '@/stores/cart';
 import { useToastStore } from '@/stores/toast';
 import type { Product, ProductVariant } from '@/types/commerce';
+import { formatMoney } from '@/lib/money';
 
 const MIN_ITEMS = 2;
 const MAX_ITEMS = 6;
@@ -158,10 +159,7 @@ export function KavanozBuilder() {
   const selectedSlugs = useMemo(() => new Set(selected.map((item) => item.product.slug)), [selected]);
   const hasJewelry = selected.some((item) => groupCategories.jewelry.includes(item.product.categorySlug));
   const total = selected.reduce((sum, item) => sum + priceFor(item), 0);
-  const currency = selected[0]?.product.price.currency || 'USD';
-  const money = useMemo(() => new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-US', {
-    style: 'currency', currency, maximumFractionDigits: 0,
-  }), [currency, locale]);
+  const money = (amount: number) => formatMoney(amount, locale, { maximumFractionDigits: 0 });
 
   const addProduct = (product: Product) => {
     if (selectedSlugs.has(product.slug)) {
@@ -274,7 +272,7 @@ export function KavanozBuilder() {
                         <div className="kavanoz-product__copy">
                           <span>{display.category}</span>
                           <h4>{display.name}</h4>
-                          <strong>{money.format(itemPrice)}</strong>
+                          <strong>{money(itemPrice)}</strong>
                           <button type="button" className="kavanoz-add" onClick={() => addProduct(product)} aria-pressed={isSelected}>
                             {isSelected ? <><X /> {text.remove}</> : <><Plus /> {text.add}</>}
                           </button>
@@ -318,7 +316,7 @@ export function KavanozBuilder() {
                       <div className="kavanoz-line" key={item.product.slug}>
                         <MediaImage src={item.product.image} alt="" sizes="58px" />
                         <div><strong>{display.name}</strong><label><span>{text.finish}</span><select value={item.color} onChange={(event) => changeFinish(item.product.slug, event.target.value)}>{availableVariants(item.product).map((variant) => <option value={variant.color} key={variant.id}>{locale === 'tr' && variant.colorTr ? variant.colorTr : variant.color}</option>)}</select></label></div>
-                        <span>{money.format(priceFor(item))}</span>
+                        <span>{money(priceFor(item))}</span>
                         <button type="button" onClick={() => removeProduct(item.product.slug)} aria-label={`${text.remove}: ${display.name}`}><X /></button>
                       </div>
                     );
@@ -329,7 +327,7 @@ export function KavanozBuilder() {
               <p className={error ? 'kavanoz-requirement kavanoz-requirement--error' : 'kavanoz-requirement'} role={error ? 'alert' : undefined}>
                 {error || text.requirement}
               </p>
-              <div className="kavanoz-total"><span>{text.total}</span><strong>{money.format(total)}</strong></div>
+              <div className="kavanoz-total"><span>{text.total}</span><strong>{money(total)}</strong></div>
               <button type="button" className="button button--primary button--block kavanoz-submit" onClick={submit} disabled={isAdding || products.isPending}>
                 {isAdding ? <>{text.adding}</> : user ? <><ShoppingBag /> {text.addBox}</> : <><ShoppingBag /> {text.signIn}</>}
               </button>

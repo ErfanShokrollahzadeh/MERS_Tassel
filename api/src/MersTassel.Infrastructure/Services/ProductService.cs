@@ -135,7 +135,7 @@ public class ProductService(AppDbContext db, IFileStorageService storage) : IPro
             DimensionsTr = Trim(request.DimensionsTr),
             Price = request.Price,
             CompareAtPrice = request.CompareAtPrice,
-            Currency = request.Currency.ToUpperInvariant(),
+            Currency = "TRY",
             Sku = string.IsNullOrWhiteSpace(request.Sku) ? GenerateSku(slug) : request.Sku.Trim(),
             IsFeatured = request.IsFeatured,
             IsNew = request.IsNew,
@@ -182,7 +182,7 @@ public class ProductService(AppDbContext db, IFileStorageService storage) : IPro
         product.DimensionsTr = Trim(request.DimensionsTr);
         product.Price = request.Price;
         product.CompareAtPrice = request.CompareAtPrice;
-        product.Currency = request.Currency.ToUpperInvariant();
+        product.Currency = "TRY";
         if (!string.IsNullOrWhiteSpace(request.Sku)) product.Sku = request.Sku.Trim();
         product.IsFeatured = request.IsFeatured;
         product.IsNew = request.IsNew;

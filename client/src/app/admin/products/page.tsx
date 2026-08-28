@@ -14,9 +14,10 @@ import { ProductEditor } from '@/components/admin/ProductEditor';
 import { EmptyState, ErrorState, TableSkeleton } from '@/components/DataStates';
 import { useToastStore } from '@/stores/toast';
 import type { Product } from '@/types/commerce';
+import { formatMoney } from '@/lib/money';
 
 const PAGE_SIZE = 10;
-const money = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+const money = (value: number) => formatMoney(value, 'tr');
 
 export default function ProductsAdminPage() {
   const [search, setSearch] = useState('');

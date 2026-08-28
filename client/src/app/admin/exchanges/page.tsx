@@ -6,8 +6,9 @@ import { adminKeys, fetchAdminExchanges, updateExchangeStatus } from '@/lib/admi
 import { EmptyState, ErrorState, TableSkeleton } from '@/components/DataStates';
 import { useToastStore } from '@/stores/toast';
 import type { ExchangeRequest, ExchangeStatus } from '@/types/commerce';
+import { formatMoney } from '@/lib/money';
 
-const money = (amount: number, currency: string) => new Intl.NumberFormat('tr-TR', { style: 'currency', currency }).format(amount);
+const money = (amount: number, _currency: string) => formatMoney(amount, 'tr');
 
 export default function AdminExchangesPage() {
   const queryClient = useQueryClient();
@@ -27,7 +28,7 @@ export default function AdminExchangesPage() {
 
   return <>
     <div className="admin-page-heading"><div><span className="admin-kicker">After-sales care</span><h1>Product exchanges</h1><p>Verify the sales document and packaging before approving wallet credit or collecting an amount due.</p></div></div>
-    <section className="inventory-stats"><div className="admin-card"><span>Total requests</span><strong>{exchanges.data?.length ?? '—'}</strong><small>All exchange records</small></div><div className="admin-card"><span>Pending verification</span><strong>{pending}</strong><small>Needs atelier review</small></div><div className="admin-card"><span>Approved wallet credit</span><strong>{money(credits, 'USD')}</strong><small>Posted through the immutable ledger</small></div></section>
+    <section className="inventory-stats"><div className="admin-card"><span>Total requests</span><strong>{exchanges.data?.length ?? '—'}</strong><small>All exchange records</small></div><div className="admin-card"><span>Pending verification</span><strong>{pending}</strong><small>Needs atelier review</small></div><div className="admin-card"><span>Approved wallet credit</span><strong>{money(credits, 'TRY')}</strong><small>Posted through the immutable ledger</small></div></section>
     <section className="admin-card table-card">
       {exchanges.isPending && <TableSkeleton rows={6} columns={7} />}
       {exchanges.isError && <ErrorState error={exchanges.error} onRetry={() => exchanges.refetch()} />}

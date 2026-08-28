@@ -28,7 +28,7 @@ public class ProductDto
     public string Dimensions { get; set; } = string.Empty;
     public string? DimensionsTr { get; set; }
 
-    public MoneyDto Price { get; set; } = new(0, "USD");
+    public MoneyDto Price { get; set; } = new(0, "TRY");
     public MoneyDto? CompareAt { get; set; }
 
     /// <summary>Primary image, relative (<c>/uploads/...</c>). Empty when the product has no media.</summary>

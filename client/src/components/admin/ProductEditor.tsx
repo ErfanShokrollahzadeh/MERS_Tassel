@@ -31,7 +31,7 @@ function draftFrom(product: Product | null): ProductDraft {
     return {
       name: '', nameTr: '', categoryId: 0, description: '', descriptionTr: '',
       story: '', storyTr: '', material: '', materialTr: '', dimensions: '', dimensionsTr: '',
-      price: 0, compareAtPrice: null, currency: 'USD', isFeatured: false, isNew: true, isActive: true,
+      price: 0, compareAtPrice: null, currency: 'TRY', isFeatured: false, isNew: true, isActive: true,
       seoTitle: '', metaDescription: '', variants: [emptyVariant()],
     };
   }
@@ -252,7 +252,7 @@ export function ProductEditor({
             <div className="editor-grid">
               <label>Price<input type="number" step="0.01" min="0" value={draft.price} onChange={(e) => setDraft({ ...draft, price: Number(e.target.value) })} />{field('price') && <small role="alert">{field('price')}</small>}</label>
               <label>Compare-at price<input type="number" step="0.01" min="0" value={draft.compareAtPrice ?? ''} onChange={(e) => setDraft({ ...draft, compareAtPrice: e.target.value === '' ? null : Number(e.target.value) })} />{field('compareAtPrice') && <small role="alert">{field('compareAtPrice')}</small>}</label>
-              <label>Currency<input value={draft.currency} maxLength={3} onChange={(e) => setDraft({ ...draft, currency: e.target.value.toUpperCase() })} /></label>
+              <label>Currency<input value="TRY" readOnly aria-readonly="true" /></label>
               <label>SKU<input value={draft.sku ?? ''} onChange={(e) => setDraft({ ...draft, sku: e.target.value })} placeholder="Generated if blank" /></label>
             </div>
           </section>

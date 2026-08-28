@@ -13,6 +13,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { colorName, colorSwatch, productCopy } from '@/i18n/catalog';
 import { useAuthStore } from '@/stores/auth';
 import { TradeInWidget } from '@/components/TradeInWidget';
+import { formatMoney } from '@/lib/money';
 
 export function ProductDetail({ product, related }: { product: Product; related: Product[] }) {
   const [activeImage, setActiveImage] = useState(0);
@@ -69,7 +70,7 @@ export function ProductDetail({ product, related }: { product: Product; related:
         <div className="pdp-info">
           <span className="eyebrow">{display.category} · {t('pdp.handmade')}</span><h1>{display.name}</h1>
           <div className="pdp-rating"><span><Star size={13} fill="currentColor" /> {product.rating}</span><a href="#reviews">{t('pdp.stories', { count: product.reviews })}</a></div>
-          <div className="pdp-price"><strong>${price}</strong>{product.compareAt && <><del>${product.compareAt.amount}</del><span>{t('pdp.saveAmount', { amount: product.compareAt.amount - price })}</span></>}</div>
+          <div className="pdp-price"><strong>{formatMoney(price, locale)}</strong>{product.compareAt && <><del>{formatMoney(product.compareAt.amount, locale)}</del><span>{t('pdp.saveAmount', { amount: formatMoney(product.compareAt.amount - price, locale) })}</span></>}</div>
           <p className="pdp-lede">{display.description}</p>
 
           {product.colors.length > 0 && (
@@ -102,7 +103,7 @@ export function ProductDetail({ product, related }: { product: Product; related:
               <button onClick={() => setQuantity(Math.min(Math.max(availableStock, 1), quantity + 1))} aria-label={t('cart.increase')}><Plus size={15} /></button>
             </div>
             <button className="button button--primary pdp-add" disabled={availableStock === 0} onClick={addSelected}>
-              {availableStock === 0 ? t('pdp.waitlist') : t('pdp.add', { amount: price * quantity })}
+              {availableStock === 0 ? t('pdp.waitlist') : t('pdp.add', { amount: formatMoney(price * quantity, locale) })}
             </button>
           </div>
 

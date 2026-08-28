@@ -56,8 +56,7 @@ internal static class CouponPricing
 
     private static string Money(decimal amount, string currency) => currency.ToUpperInvariant() switch
     {
-        "USD" => $"${amount.ToString("#,0.##", CultureInfo.GetCultureInfo("en-US"))}",
-        "TRY" => $"₺{amount.ToString("#,0.##", CultureInfo.GetCultureInfo("tr-TR"))}",
+        "TRY" => $"{amount.ToString("#,0.##", CultureInfo.GetCultureInfo("tr-TR"))} TL",
         "EUR" => $"€{amount.ToString("#,0.##", CultureInfo.GetCultureInfo("en-US"))}",
         _ => $"{amount.ToString("#,0.##", CultureInfo.InvariantCulture)} {currency.ToUpperInvariant()}",
     };

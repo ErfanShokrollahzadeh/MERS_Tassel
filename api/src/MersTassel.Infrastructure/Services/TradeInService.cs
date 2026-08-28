@@ -26,7 +26,7 @@ public class TradeInService(AppDbContext db, IFileStorageService storage, IWalle
         return Task.FromResult(new TradeInEstimateDto
         {
             EstimatedCredit = credit,
-            Currency = "USD",
+            Currency = "TRY",
             EstimatedPriceAfterTradeIn = request.TargetProductPrice.HasValue
                 ? Math.Max(0m, request.TargetProductPrice.Value - credit)
                 : null,

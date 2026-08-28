@@ -9,6 +9,7 @@ import { MediaImage } from '@/components/MediaImage';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useAuthStore } from '@/stores/auth';
 import { TradeInWidget } from '@/components/TradeInWidget';
+import { formatMoney } from '@/lib/money';
 
 const surpriseRecipientLabels = {
   en: { girlfriend: 'Girlfriend', boyfriend: 'Boyfriend', partner: 'Partner', friend: 'Friend', sister: 'Sister', brother: 'Brother', mother: 'Mother', father: 'Father' },
@@ -32,7 +33,7 @@ export function CartDrawer() {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
-  const estimatedShipping = subtotal >= 120 ? 0 : 9;
+  const estimatedShipping = subtotal >= 500 ? 0 : 30;
   const estimatedTax = totalAfterDiscount * .08;
   const { t, locale } = useI18n();
   const user = useAuthStore((state) => state.user);
@@ -97,7 +98,7 @@ export function CartDrawer() {
                           </div>
                         )}
                       </div>
-                      <div className="cart-line__end"><strong>${item.lineTotal.toFixed(0)}</strong><button onClick={() => remove(item.id)} aria-label={t('cart.remove', { name })}><Trash2 size={16} /></button></div>
+                      <div className="cart-line__end"><strong>{formatMoney(item.lineTotal, locale)}</strong><button onClick={() => remove(item.id)} aria-label={t('cart.remove', { name })}><Trash2 size={16} /></button></div>
                     </motion.article>
                   );
                 })}
@@ -119,7 +120,7 @@ export function CartDrawer() {
             })}</div>}
             <div className="drawer-tradein"><TradeInWidget source="cart" compact /></div>
             <footer className="drawer-footer">
-              <div className="cart-estimates"><p><span>{t('cart.subtotal')}</span><b>${subtotal.toFixed(0)}</b></p>{discountTotal > 0 && <p className="cart-estimates__discount"><span>{locale === 'tr' ? 'Toplam indirim' : 'Total savings'}</span><b>−${discountTotal.toFixed(2)}</b></p>}<p><span>{t('cart.delivery')}</span><b>{estimatedShipping ? `$${estimatedShipping}` : t('cart.complimentary')}</b></p><p><span>{t('cart.tax')}</span><b>${estimatedTax.toFixed(0)}</b></p><div><span>{t('cart.total')}</span><strong>${(totalAfterDiscount + estimatedShipping + estimatedTax).toFixed(0)}</strong></div></div>
+              <div className="cart-estimates"><p><span>{t('cart.subtotal')}</span><b>{formatMoney(subtotal, locale)}</b></p>{discountTotal > 0 && <p className="cart-estimates__discount"><span>{locale === 'tr' ? 'Toplam indirim' : 'Total savings'}</span><b>−{formatMoney(discountTotal, locale)}</b></p>}<p><span>{t('cart.delivery')}</span><b>{estimatedShipping ? formatMoney(estimatedShipping, locale) : t('cart.complimentary')}</b></p><p><span>{t('cart.tax')}</span><b>{formatMoney(estimatedTax, locale)}</b></p><div><span>{t('cart.total')}</span><strong>{formatMoney(totalAfterDiscount + estimatedShipping + estimatedTax, locale)}</strong></div></div>
               <small className="estimate-note">{t('cart.taxNote')}</small>
               <Link href="/checkout" className="button button--primary button--block" onClick={close}>{t('cart.checkout')}</Link>
               <button className="text-button" onClick={close}>{t('common.continueShopping')}</button>
