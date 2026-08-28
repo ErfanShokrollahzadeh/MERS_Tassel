@@ -9,7 +9,7 @@ namespace MersTassel.Infrastructure.Services;
 
 public class WalletService(AppDbContext db) : IWalletService
 {
-    public async Task<WalletDto> GetAsync(string userId, string currency = "USD", CancellationToken ct = default)
+    public async Task<WalletDto> GetAsync(string userId, string currency = "TRY", CancellationToken ct = default)
     {
         currency = NormalizeCurrency(currency);
         var wallet = await db.StoreWallets
@@ -177,8 +177,7 @@ public class WalletService(AppDbContext db) : IWalletService
         }).ToList(),
     };
 
-    private static string NormalizeCurrency(string currency) =>
-        string.IsNullOrWhiteSpace(currency) ? "USD" : currency.Trim().ToUpperInvariant()[..Math.Min(3, currency.Trim().Length)];
+    private static string NormalizeCurrency(string _currency) => "TRY";
 
     private static string ToApi(WalletTransactionType type) => type switch
     {

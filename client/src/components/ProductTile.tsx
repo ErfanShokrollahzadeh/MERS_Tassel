@@ -9,6 +9,7 @@ import { MediaImage } from '@/components/MediaImage';
 import { useI18n } from '@/i18n/I18nProvider';
 import { productCopy } from '@/i18n/catalog';
 import { useAuthStore } from '@/stores/auth';
+import { formatMoney } from '@/lib/money';
 
 export function ProductTile({ product, priority = false }: { product: Product; priority?: boolean }) {
   const add = useCartStore((state) => state.add);
@@ -36,13 +37,13 @@ export function ProductTile({ product, priority = false }: { product: Product; p
         <Link href={`/products/${product.slug}`} aria-label={t('product.view', { name: display.name })}>
           <MediaImage src={product.image} alt={display.name} sizes="(max-width: 720px) 50vw, (max-width: 1050px) 50vw, 25vw" priority={priority} />
         </Link>
-        <div className="product-badges">{product.isNew && <span className="badge">{t('product.new')}</span>}{sale && <span className="badge badge--dark">{t('product.save', { amount: product.compareAt!.amount - product.price.amount })}</span>}{product.stock === 0 && <span className="badge badge--muted">{t('product.soldOut')}</span>}</div>
+        <div className="product-badges">{product.isNew && <span className="badge">{t('product.new')}</span>}{sale && <span className="badge badge--dark">{t('product.save', { amount: formatMoney(product.compareAt!.amount - product.price.amount, locale) })}</span>}{product.stock === 0 && <span className="badge badge--muted">{t('product.soldOut')}</span>}</div>
         <button className="tile-heart" aria-label={t('product.savePiece', { name: display.name })}><Heart size={18} /></button>
         <button className="quick-add" onClick={addProtected} disabled={product.stock === 0}><Plus size={16} /> {product.stock === 0 ? t('product.unavailable') : t('product.quickAdd')}</button>
       </div>
       <div className="product-tile__body">
         <div><p>{display.category}</p><Link href={`/products/${product.slug}`}><h3>{display.name}</h3></Link></div>
-        <div className="product-price"><strong>${product.price.amount}</strong>{sale && <del>${product.compareAt!.amount}</del>}<ArrowUpRight size={16} /></div>
+        <div className="product-price"><strong>{formatMoney(product.price.amount, locale)}</strong>{sale && <del>{formatMoney(product.compareAt!.amount, locale)}</del>}<ArrowUpRight size={16} /></div>
       </div>
     </article>
   );

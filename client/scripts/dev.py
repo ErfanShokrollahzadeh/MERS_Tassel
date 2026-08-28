@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run the .NET API and the Next.js storefront together for local development."""
 
+import json
 import os
 import signal
 import subprocess
@@ -31,6 +32,16 @@ def stop_children(*_args):
                 pass
 
 
+def api_is_healthy(timeout: float = 0.75) -> bool:
+    """Return true only when the service already bound to 5080 is our healthy API."""
+    try:
+        with urlopen(API_HEALTH_URL, timeout=timeout) as response:
+            payload = json.load(response)
+            return response.status == 200 and payload.get('status') == 'ok'
+    except (HTTPError, URLError, TimeoutError, OSError, ValueError):
+        return False
+
+
 def wait_for_api(api: subprocess.Popen, timeout: int = API_STARTUP_TIMEOUT_SECONDS) -> bool:
     """Wait until migrations, seeding, and the API listener are actually ready.
 
@@ -46,13 +57,9 @@ def wait_for_api(api: subprocess.Popen, timeout: int = API_STARTUP_TIMEOUT_SECON
             print(f'The API exited during startup (code {api.returncode}).', file=sys.stderr)
             return False
 
-        try:
-            with urlopen(API_HEALTH_URL, timeout=0.75) as response:
-                if response.status == 200:
-                    print('API ready. Starting the storefront.', flush=True)
-                    return True
-        except (HTTPError, URLError, TimeoutError, OSError):
-            pass
+        if api_is_healthy():
+            print('API ready. Starting the storefront.', flush=True)
+            return True
 
         time.sleep(0.25)
 
@@ -81,15 +88,21 @@ def main():
         'ASPNETCORE_URLS': 'http://localhost:5080',
     })
 
-    api = subprocess.Popen(
-        [str(dotnet), 'run', '--no-launch-profile'],
-        cwd=API_DIR, env=api_env, start_new_session=True,
-    )
-    children.append(api)
-
     try:
-        if not wait_for_api(api):
-            return api.returncode or 1
+        if api_is_healthy():
+            # IDE launch profiles often start the API separately. Reuse that healthy process
+            # instead of racing a second Kestrel instance for port 5080. Because it is not our
+            # child process, this launcher also leaves it running when the storefront stops.
+            print(f'API already running at {API_HEALTH_URL}. Reusing it.', flush=True)
+        else:
+            api = subprocess.Popen(
+                [str(dotnet), 'run', '--no-launch-profile'],
+                cwd=API_DIR, env=api_env, start_new_session=True,
+            )
+            children.append(api)
+
+            if not wait_for_api(api):
+                return api.returncode or 1
 
         storefront = subprocess.Popen(
             ['npm', 'run', 'dev:next'], cwd=CLIENT_DIR, start_new_session=True,

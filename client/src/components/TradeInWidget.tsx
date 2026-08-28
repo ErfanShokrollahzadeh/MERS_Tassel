@@ -7,6 +7,7 @@ import { MediaImage } from '@/components/MediaImage';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useCartStore } from '@/stores/cart';
 import { useTradeInModalStore, type TradeInSource, type TradeInTarget } from '@/stores/tradeIn';
+import { formatMoney } from '@/lib/money';
 
 const copy = {
   en: {
@@ -43,7 +44,7 @@ export function TradeInWidget({ source, target, compact = false }: { source: Tra
     return () => { active = false; };
   }, [target]);
 
-  const money = (amount: number) => new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-US', { style: 'currency', currency: tradeIn?.currency || 'USD', maximumFractionDigits: 2 }).format(amount);
+  const money = (amount: number) => formatMoney(amount, locale);
 
   const remove = async () => {
     setRemoving(true);

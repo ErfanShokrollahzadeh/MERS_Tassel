@@ -7,10 +7,11 @@ import { adminKeys, fetchAdminUsers, updateUserRole } from '@/lib/admin';
 import { EmptyState, ErrorState, TableSkeleton } from '@/components/DataStates';
 import { useToastStore } from '@/stores/toast';
 import { useAuthStore } from '@/stores/auth';
+import { formatMoney } from '@/lib/money';
 
 const PAGE_SIZE = 15;
 const ROLES = ['Admin', 'Staff', 'Customer'] as const;
-const money = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+const money = (value: number) => formatMoney(value, 'tr');
 
 export default function UsersPage() {
   const [search, setSearch] = useState('');

@@ -5,7 +5,7 @@ namespace MersTassel.Application.DTOs;
 public class CartDto
 {
     public int Id { get; set; }
-    public string Currency { get; set; } = "USD";
+    public string Currency { get; set; } = "TRY";
     public IReadOnlyList<CartItemDto> Items { get; set; } = [];
     public decimal Subtotal { get; set; }
     public decimal DiscountTotal { get; set; }
@@ -142,7 +142,7 @@ public class CheckoutRequest
 public class WalletDto
 {
     public decimal Balance { get; set; }
-    public string Currency { get; set; } = "USD";
+    public string Currency { get; set; } = "TRY";
     public IReadOnlyList<WalletTransactionDto> Transactions { get; set; } = [];
 }
 
@@ -194,7 +194,7 @@ public class ExchangeRequestDto
     public decimal Difference { get; set; }
     public decimal WalletCredit { get; set; }
     public decimal AmountDue { get; set; }
-    public string Currency { get; set; } = "USD";
+    public string Currency { get; set; } = "TRY";
     public bool InvoiceIntact { get; set; }
     public bool PackagingIntact { get; set; }
     public string? CustomerNote { get; set; }
@@ -222,7 +222,7 @@ public class ApplyTradeInRequest : TradeInEstimateRequest
 public class TradeInEstimateDto
 {
     public decimal EstimatedCredit { get; set; }
-    public string Currency { get; set; } = "USD";
+    public string Currency { get; set; } = "TRY";
     public decimal? EstimatedPriceAfterTradeIn { get; set; }
     public string Status { get; set; } = "estimate";
 }
@@ -268,7 +268,7 @@ public class OrderDto
     public string Status { get; set; } = string.Empty;
 
     public string PaymentStatus { get; set; } = string.Empty;
-    public string Currency { get; set; } = "USD";
+    public string Currency { get; set; } = "TRY";
     public decimal Subtotal { get; set; }
     public decimal DiscountTotal { get; set; }
     public decimal CouponDiscountTotal { get; set; }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Check,
@@ -16,6 +16,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { useAuthStore } from '@/stores/auth';
 import { useCartStore } from '@/stores/cart';
 import { useToastStore } from '@/stores/toast';
+import { formatMoney } from '@/lib/money';
 
 type RecipientKey = 'girlfriend' | 'boyfriend' | 'partner' | 'friend' | 'sister' | 'brother' | 'mother' | 'father';
 type VibeKey = 'cute' | 'elegant' | 'minimalist' | 'casual' | 'jewelry-heavy' | 'accessories';
@@ -157,9 +158,7 @@ export function SurpriseBoxBuilder() {
   const [error, setError] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
 
-  const money = useMemo(() => new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-US', {
-    style: 'currency', currency: 'USD', maximumFractionDigits: 0,
-  }), [locale]);
+  const money = (amount: number) => formatMoney(amount, locale, { maximumFractionDigits: 0 });
 
   const toggleVibe = (vibe: VibeKey) => {
     if (selectedVibes.includes(vibe)) {
@@ -241,7 +240,7 @@ export function SurpriseBoxBuilder() {
                   <div className="surprise-box-art__seal"><Gift /><small>MERS</small><strong>Surprise</strong></div>
                 </div>
               </div>
-              <div className="surprise-price-seal"><span>{text.seal}</span><strong>{money.format(budget)}</strong></div>
+              <div className="surprise-price-seal"><span>{text.seal}</span><strong>{money(budget)}</strong></div>
             </div>
 
             <div className="surprise-promises">
@@ -271,7 +270,7 @@ export function SurpriseBoxBuilder() {
                   <button key={option.value} type="button" className={budget === option.value ? 'surprise-budget surprise-budget--selected' : 'surprise-budget'} onClick={() => { setBudget(option.value); setError(null); }} aria-pressed={budget === option.value}>
                     {option.value === 50 && <small>{text.popular}</small>}
                     <span>{text[option.tier]}</span>
-                    <strong>{money.format(option.value)}</strong>
+                    <strong>{money(option.value)}</strong>
                     <i>{budget === option.value ? <Check /> : null}</i>
                   </button>
                 ))}
@@ -305,14 +304,14 @@ export function SurpriseBoxBuilder() {
             </fieldset>
 
             <aside className="surprise-summary" aria-live="polite">
-              <div className="surprise-summary__head"><div><span>{text.summary}</span><strong>{money.format(budget)}</strong></div><Gift /></div>
+              <div className="surprise-summary__head"><div><span>{text.summary}</span><strong>{money(budget)}</strong></div><Gift /></div>
               <dl>
                 <div><dt>{text.recipient}</dt><dd>{recipient ? text.recipients[recipient] : text.waiting}</dd></div>
                 <div><dt>{text.mood}</dt><dd>{selectedVibes.length ? selectedVibes.map((value) => text.vibes[value]).join(' · ') : text.waiting}</dd></div>
                 <div><dt><Clock3 /> {text.curation}</dt><dd>{text.curationTime}</dd></div>
                 <div><dt><PackageCheck /> {text.delivery}</dt><dd>{text.deliveryTime}</dd></div>
               </dl>
-              <div className="surprise-total"><span>{text.total}</span><strong>{money.format(budget)}</strong></div>
+              <div className="surprise-total"><span>{text.total}</span><strong>{money(budget)}</strong></div>
               {error && <p className="kavanoz-error" role="alert">{error}</p>}
               <button type="submit" className="button button--primary button--block surprise-submit" disabled={isAdding}>
                 {isAdding ? text.adding : user ? text.add : text.signIn} <ShoppingBag />

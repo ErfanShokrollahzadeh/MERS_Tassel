@@ -8,6 +8,7 @@ import { commerceKeys, createExchange } from '@/lib/commerce';
 import { ApiError } from '@/lib/apiClient';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { OrderItem, Product } from '@/types/commerce';
+import { formatMoney } from '@/lib/money';
 
 type Props = {
   item: OrderItem | null;
@@ -15,8 +16,8 @@ type Props = {
   onClose: () => void;
 };
 
-function money(amount: number, currency: string, locale: 'en' | 'tr') {
-  return new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-US', { style: 'currency', currency }).format(amount);
+function money(amount: number, _currency: string, locale: 'en' | 'tr') {
+  return formatMoney(amount, locale);
 }
 
 export function ExchangeRequestModal({ item, currency, onClose }: Props) {

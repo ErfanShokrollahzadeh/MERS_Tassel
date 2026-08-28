@@ -14,6 +14,7 @@ import { PanelSkeleton } from '@/components/DataStates';
 import { ExchangePolicyNotice } from '@/components/ExchangePolicyNotice';
 import { ExchangeRequestModal } from '@/components/ExchangeRequestModal';
 import type { OrderItem } from '@/types/commerce';
+import { formatMoney, STORE_CURRENCY } from '@/lib/money';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function AccountPage() {
     queryFn: () => fetchMyOrders(),
     enabled: Boolean(user),
   });
-  const wallet = useQuery({ queryKey: commerceKeys.wallet('USD'), queryFn: () => fetchWallet('USD'), enabled: Boolean(user) });
+  const wallet = useQuery({ queryKey: commerceKeys.wallet(STORE_CURRENCY), queryFn: () => fetchWallet(STORE_CURRENCY), enabled: Boolean(user) });
   const exchanges = useQuery({ queryKey: commerceKeys.exchanges(), queryFn: fetchMyExchanges, enabled: Boolean(user) });
 
   useEffect(() => {
@@ -48,7 +49,7 @@ export default function AccountPage() {
   if (!hasHydrated || !user) return <div className="account-loading">{t('common.loading')}</div>;
 
   const dateFormat = new Intl.DateTimeFormat(locale === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' });
-  const money = (amount: number, currency = 'USD') => new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-US', { style: 'currency', currency }).format(amount);
+  const money = (amount: number, _currency: string = STORE_CURRENCY) => formatMoney(amount, locale);
   const tr = locale === 'tr';
 
   return (
@@ -72,7 +73,7 @@ export default function AccountPage() {
           <section className="account-card wallet-card">
             <header>
               <div><span className="account-icon"><WalletCards /></span><div><span className="eyebrow">{tr ? 'MAĞAZA CÜZDANI' : 'STORE WALLET'}</span><h2>{tr ? 'Kullanılabilir bakiyeniz' : 'Your available balance'}</h2></div></div>
-              <strong className="wallet-card__balance">{wallet.isPending ? '—' : money(wallet.data?.balance || 0, wallet.data?.currency || 'USD')}</strong>
+              <strong className="wallet-card__balance">{wallet.isPending ? '—' : money(wallet.data?.balance || 0, wallet.data?.currency || STORE_CURRENCY)}</strong>
             </header>
             <div className="wallet-card__body">
               <p>{tr ? 'Onaylanan değişim ve takas farkları burada güvenle saklanır. Bakiyenizi ödeme adımında tek dokunuşla kullanabilirsiniz.' : 'Approved exchange and trade-in differences are stored here securely. Apply your balance with one tap at checkout.'}</p>
@@ -100,11 +101,11 @@ export default function AccountPage() {
                     <article key={item.id}>
                       <MediaImage src={item.image || ''} alt="" sizes="58px" />
                       <div><strong>{name}</strong><span>{finish} · {t('account.quantity', { count: item.quantity })}</span></div>
-                      <b>${item.lineTotal.toFixed(0)}</b>
+                      <b>{money(item.lineTotal)}</b>
                     </article>
                   );
                 })}
-                <footer><span>{t('account.bagSummary', { count })}</span><strong>${subtotal.toFixed(0)}</strong></footer>
+                <footer><span>{t('account.bagSummary', { count })}</span><strong>{money(subtotal)}</strong></footer>
               </div>
             ) : (
               <div className="account-empty"><p>{t('account.emptyBag')}</p><Link href="/products">{t('common.explore')} <ArrowRight /></Link></div>
@@ -142,7 +143,7 @@ export default function AccountPage() {
           </section> : null}
         </main>
       </div>
-      <ExchangeRequestModal item={exchangeItem?.item || null} currency={exchangeItem?.currency || 'USD'} onClose={() => setExchangeItem(null)} />
+      <ExchangeRequestModal item={exchangeItem?.item || null} currency={exchangeItem?.currency || STORE_CURRENCY} onClose={() => setExchangeItem(null)} />
     </div>
   );
 }

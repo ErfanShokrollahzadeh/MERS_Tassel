@@ -14,7 +14,7 @@ public class WalletController(IWalletService wallets, ICurrentUser currentUser) 
 {
     [HttpGet]
     public async Task<ActionResult<ApiResponse<WalletDto>>> Get(
-        [FromQuery] string currency = "USD",
+        [FromQuery] string currency = "TRY",
         CancellationToken ct = default)
     {
         var userId = currentUser.UserId ?? throw new ForbiddenException("Sign in to view store credit.");

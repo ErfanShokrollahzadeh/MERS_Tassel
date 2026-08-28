@@ -1,5 +1,6 @@
 import { api, ApiError } from '@/lib/apiClient';
 import type { Cart, ExchangeRequest, Order, TradeInEstimate, Wallet } from '@/types/commerce';
+import { STORE_CURRENCY } from '@/lib/money';
 
 // ── Bag ─────────────────────────────────────────────────────────────────────
 
@@ -111,7 +112,7 @@ export function fetchOrder(number: string) {
 
 // ── Wallet & exchanges ─────────────────────────────────────────────────────
 
-export function fetchWallet(currency = 'USD') {
+export function fetchWallet(currency: string = STORE_CURRENCY) {
   return api.get<Wallet>(`/wallet?currency=${encodeURIComponent(currency)}`, { auth: true });
 }
 
@@ -165,6 +166,6 @@ export const commerceKeys = {
   cart: () => ['cart'] as const,
   orders: () => ['orders'] as const,
   order: (number: string) => ['order', number] as const,
-  wallet: (currency = 'USD') => ['wallet', currency] as const,
+  wallet: (currency: string = STORE_CURRENCY) => ['wallet', currency] as const,
   exchanges: () => ['exchanges'] as const,
 };

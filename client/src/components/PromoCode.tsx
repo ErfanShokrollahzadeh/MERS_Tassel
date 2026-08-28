@@ -5,6 +5,7 @@ import { Check, LoaderCircle, Tag, X } from 'lucide-react';
 import { ApiError } from '@/lib/apiClient';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useCartStore } from '@/stores/cart';
+import { formatMoney } from '@/lib/money';
 
 const copy = {
   en: {
@@ -25,7 +26,7 @@ const copy = {
   },
 } as const;
 
-export function PromoCode({ currency = 'USD' }: { currency?: string }) {
+export function PromoCode() {
   const { locale } = useI18n();
   const text = copy[locale];
   const subtotal = useCartStore((state) => state.subtotal);
@@ -37,9 +38,7 @@ export function PromoCode({ currency = 'USD' }: { currency?: string }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const money = (amount: number) => new Intl.NumberFormat(locale === 'tr' ? 'tr-TR' : 'en-US', {
-    style: 'currency', currency, maximumFractionDigits: 2,
-  }).format(amount);
+  const money = (amount: number) => formatMoney(amount, locale);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();

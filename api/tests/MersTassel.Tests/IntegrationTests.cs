@@ -131,7 +131,7 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
             .First(i => i.GetProperty("slug").GetString() == "lale-pearl-tassel");
 
         seeded.GetProperty("image").GetString().Should().StartWith("/uploads/products/");
-        seeded.GetProperty("price").GetProperty("currency").GetString().Should().Be("USD");
+        seeded.GetProperty("price").GetProperty("currency").GetString().Should().Be("TRY");
     }
 
     [Fact]
@@ -483,7 +483,7 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
             { new StringContent("Silk"), "Material" },
             { new StringContent("10 cm"), "Dimensions" },
             { new StringContent(price.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Price" },
-            { new StringContent("USD"), "Currency" },
+            { new StringContent("TRY"), "Currency" },
             { new StringContent("true"), "IsActive" },
             { new StringContent("""[{"title":"Gold","color":"Gold","stock":5}]"""), "VariantsJson" },
         };
@@ -568,7 +568,7 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
             { new StringContent("0"), "CategoryId" },
             { new StringContent(""), "Description" },
             { new StringContent("-5"), "Price" },
-            { new StringContent("USD"), "Currency" },
+            { new StringContent("TRY"), "Currency" },
         };
 
         var response = await admin.PostAsync("/api/v1/admin/products", form);
@@ -750,7 +750,7 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         applied.StatusCode.Should().Be(HttpStatusCode.OK);
         var cart = (await applied.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
         cart.GetProperty("coupon").GetProperty("code").GetString().Should().Be(code);
-        cart.GetProperty("coupon").GetProperty("badge").GetString().Should().Be("$10 OFF");
+        cart.GetProperty("coupon").GetProperty("badge").GetString().Should().Be("10 TL OFF");
         cart.GetProperty("discountTotal").GetDecimal().Should().Be(10m);
         cart.GetProperty("totalAfterDiscount").GetDecimal()
             .Should().Be(cart.GetProperty("subtotal").GetDecimal() - 10m);
@@ -815,7 +815,7 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         minimum.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var body = await minimum.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
         body!.Code.Should().Be("minimum_spend");
-        body.Message.Should().Contain("$10,000");
+        body.Message.Should().Contain("10.000 TL");
     }
 
     [Fact]
@@ -842,9 +842,9 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         order.GetProperty("paymentStatus").GetString().Should().Be("unpaid");
         order.GetProperty("itemCount").GetInt32().Should().Be(2);
 
-        // Subtotal 268 clears the free-delivery threshold.
-        order.GetProperty("shippingTotal").GetDecimal().Should().Be(0);
-        order.GetProperty("total").GetDecimal().Should().Be(268m);
+        // Subtotal 268 remains below the 500 TL free-delivery threshold.
+        order.GetProperty("shippingTotal").GetDecimal().Should().Be(30m);
+        order.GetProperty("total").GetDecimal().Should().Be(298m);
 
         (await StockOfAsync("ada-layered-chain")).Should().Be(before - 2);
 
@@ -905,7 +905,7 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
             $"/api/v1/admin/exchanges/{creditExchange.GetProperty("id").GetInt32()}/status",
             new { status = "approved", adminNote = "Invoice and original box verified." });
         approvedCredit.StatusCode.Should().Be(HttpStatusCode.OK);
-        var walletAfterCredit = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/wallet?currency=USD", Json);
+        var walletAfterCredit = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/wallet?currency=TRY", Json);
         walletAfterCredit!.Data!.GetProperty("balance").GetDecimal().Should().Be(88m);
         walletAfterCredit.Data.GetProperty("transactions").EnumerateArray().Should().ContainSingle();
 
@@ -932,7 +932,7 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         settlementOrder.GetProperty("total").GetDecimal().Should().Be(0m);
         settlementOrder.GetProperty("paymentStatus").GetString().Should().Be("paid");
 
-        var emptyWallet = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/wallet?currency=USD", Json);
+        var emptyWallet = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/wallet?currency=TRY", Json);
         emptyWallet!.Data!.GetProperty("balance").GetDecimal().Should().Be(0m);
         emptyWallet.Data.GetProperty("transactions").EnumerateArray().Should().HaveCount(2);
     }

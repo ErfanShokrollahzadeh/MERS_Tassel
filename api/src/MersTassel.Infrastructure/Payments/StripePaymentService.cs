@@ -15,7 +15,7 @@ public class StripeOptions
 {
     public string SecretKey { get; set; } = string.Empty;
     public string WebhookSecret { get; set; } = string.Empty;
-    public string Currency { get; set; } = "usd";
+    public string Currency { get; set; } = "try";
     public string FrontendUrl { get; set; } = "http://localhost:3000";
 }
 

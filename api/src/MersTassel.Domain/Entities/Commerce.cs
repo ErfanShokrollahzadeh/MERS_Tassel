@@ -10,7 +10,7 @@ public class Cart : SoftDeletableEntity
 
     public string Email { get; set; } = string.Empty;
     public CartStatus Status { get; set; } = CartStatus.Open;
-    public string Currency { get; set; } = "USD";
+    public string Currency { get; set; } = "TRY";
 
     public int? CouponId { get; set; }
     public Coupon? Coupon { get; set; }
@@ -67,7 +67,7 @@ public class Order : SoftDeletableEntity
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
     public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;
 
-    public string Currency { get; set; } = "USD";
+    public string Currency { get; set; } = "TRY";
     public decimal Subtotal { get; set; }
     public decimal DiscountTotal { get; set; }
     public decimal TradeInCredit { get; set; }
@@ -99,7 +99,7 @@ public class StoreWallet
     public int Id { get; set; }
     public string UserId { get; set; } = string.Empty;
     public AppUser User { get; set; } = null!;
-    public string Currency { get; set; } = "USD";
+    public string Currency { get; set; } = "TRY";
     public decimal Balance { get; set; }
     public string ConcurrencyStamp { get; set; } = Guid.NewGuid().ToString("N");
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
@@ -140,7 +140,7 @@ public class ExchangeRequest : SoftDeletableEntity
     public decimal Difference { get; set; }
     public decimal WalletCredit { get; set; }
     public decimal AmountDue { get; set; }
-    public string Currency { get; set; } = "USD";
+    public string Currency { get; set; } = "TRY";
     public bool InvoiceIntact { get; set; }
     public bool PackagingIntact { get; set; }
     public string? CustomerNote { get; set; }
@@ -176,7 +176,7 @@ public class TradeInRequest : SoftDeletableEntity
     public string? TargetProductName { get; set; }
     public decimal? TargetProductPrice { get; set; }
     public decimal EstimatedCredit { get; set; }
-    public string Currency { get; set; } = "USD";
+    public string Currency { get; set; } = "TRY";
     public TradeInHandoffMethod HandoffMethod { get; set; }
     public TradeInStatus Status { get; set; } = TradeInStatus.PendingVerification;
     public string? AdminNote { get; set; }

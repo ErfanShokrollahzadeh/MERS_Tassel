@@ -97,6 +97,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         // matching filter EF warns that the required principal can be filtered away — and a
         // deactivated account's tokens should stop working anyway, so filter on the owner.
         builder.Entity<RefreshToken>().HasQueryFilter(t => !t.User.IsDelete);
+
+        // Wallets also require a user. Mirror the principal filter so EF never materializes
+        // an orphaned wallet for a soft-deleted account and does not emit model warning 10622.
+        builder.Entity<StoreWallet>().HasQueryFilter(w => !w.User.IsDelete);
+        builder.Entity<StoreWalletTransaction>().HasQueryFilter(t => !t.Wallet.User.IsDelete);
     }
 
     public override int SaveChanges()

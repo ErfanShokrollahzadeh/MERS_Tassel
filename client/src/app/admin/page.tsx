@@ -8,9 +8,9 @@ import { adminKeys, fetchDashboard } from '@/lib/admin';
 import { ErrorState, PanelSkeleton, TableSkeleton } from '@/components/DataStates';
 import { mediaUrl } from '@/lib/apiClient';
 import type { Dashboard } from '@/types/commerce';
+import { formatMoney } from '@/lib/money';
 
-const money = (value: number) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
+const money = (value: number) => formatMoney(value, 'tr', { maximumFractionDigits: 0 });
 
 function Trend({ value }: { value: number }) {
   const up = value >= 0;
@@ -78,7 +78,7 @@ export default function AdminOverview() {
                         <defs><linearGradient id="revenue-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#8f506f" stopOpacity={.3} /><stop offset="1" stopColor="#8f506f" stopOpacity={0} /></linearGradient></defs>
                         <CartesianGrid vertical={false} stroke="var(--line)" />
                         <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--ink-faint)' }} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--ink-faint)' }} tickFormatter={(v) => `$${v}`} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--ink-faint)' }} tickFormatter={(v) => `${v} TL`} />
                         <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, fontSize: 11 }} formatter={(value) => money(Number(value ?? 0))} />
                         <Area type="monotone" dataKey="revenue" stroke="#8f506f" strokeWidth={2.4} fill="url(#revenue-fill)" />
                       </AreaChart>

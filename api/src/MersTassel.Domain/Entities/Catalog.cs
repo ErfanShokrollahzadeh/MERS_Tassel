@@ -44,7 +44,7 @@ public class Product : SoftDeletableEntity
     /// <summary>Struck-through reference price. Null when the piece is not on sale.</summary>
     public decimal? CompareAtPrice { get; set; }
 
-    public string Currency { get; set; } = "USD";
+    public string Currency { get; set; } = "TRY";
     public string Sku { get; set; } = string.Empty;
 
     public double Rating { get; set; }

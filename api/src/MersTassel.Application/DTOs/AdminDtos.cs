@@ -24,7 +24,7 @@ public class ProductWriteRequest
 
     public decimal Price { get; set; }
     public decimal? CompareAtPrice { get; set; }
-    public string Currency { get; set; } = "USD";
+    public string Currency { get; set; } = "TRY";
     public string? Sku { get; set; }
 
     public bool IsFeatured { get; set; }
