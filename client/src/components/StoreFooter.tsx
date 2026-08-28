@@ -9,7 +9,7 @@ import { NewsletterForm } from '@/components/NewsletterForm';
 import { openCookieSettings } from '@/lib/cookiePreferences';
 
 export function StoreFooter() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { data: settings } = useSiteSettings();
 
   const siteName = settings?.siteName ?? 'MERS Tassel';
@@ -35,6 +35,7 @@ export function StoreFooter() {
       <div className="container-wide footer-bottom">
         <span>© {new Date().getFullYear()} {siteName}</span>
         <nav className="footer-legal-links" aria-label={t('footer.legalNavigation')}>
+          <Link href="/terms">{locale === 'tr' ? 'Kullanım Koşulları' : 'Terms of Service'}</Link>
           <Link href="/legal">{t('footer.legal')}</Link>
           <Link href="/privacy">{t('footer.privacyPolicy')}</Link>
           <Link href="/cookies">{t('footer.cookiePolicy')}</Link>
