@@ -22,6 +22,18 @@ export type ProductMedia = {
   isPrimary: boolean;
 };
 
+export type ProductModelAsset = {
+  id: number;
+  variantId?: number | null;
+  glbPath: string;
+  usdzPath?: string | null;
+  posterPath?: string | null;
+  alt: string;
+  placement: 'floor' | 'wall';
+  scaleMode: 'fixed';
+  dimensionsMm: { width: number; height: number; depth: number };
+};
+
 /**
  * Mirrors the API's ProductDto. Turkish copy travels on the record itself, so a product
  * created in the admin panel is localizable without touching the frontend.
@@ -59,6 +71,7 @@ export type Product = {
   metaDescription: string;
   variants: ProductVariant[];
   mediaItems: ProductMedia[];
+  modelAssets: ProductModelAsset[];
   createdAt: string;
   updatedAt: string;
 };

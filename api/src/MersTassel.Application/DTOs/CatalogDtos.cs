@@ -52,6 +52,7 @@ public class ProductDto
 
     public IReadOnlyList<ProductVariantDto> Variants { get; set; } = [];
     public IReadOnlyList<ProductMediaDto> MediaItems { get; set; } = [];
+    public IReadOnlyList<ProductModelAssetDto> ModelAssets { get; set; } = [];
 
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
@@ -82,6 +83,26 @@ public class ProductMediaDto
     public string Alt { get; set; } = string.Empty;
     public int SortOrder { get; set; }
     public bool IsPrimary { get; set; }
+}
+
+public class ProductModelAssetDto
+{
+    public int Id { get; set; }
+    public int? VariantId { get; set; }
+    public string GlbPath { get; set; } = string.Empty;
+    public string? UsdzPath { get; set; }
+    public string? PosterPath { get; set; }
+    public string Alt { get; set; } = string.Empty;
+    public string Placement { get; set; } = "floor";
+    public string ScaleMode { get; set; } = "fixed";
+    public ModelDimensionsDto DimensionsMm { get; set; } = new();
+}
+
+public class ModelDimensionsDto
+{
+    public decimal Width { get; set; }
+    public decimal Height { get; set; }
+    public decimal Depth { get; set; }
 }
 
 public class CategoryDto

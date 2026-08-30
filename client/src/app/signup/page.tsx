@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useCallback, useState, type FormEvent, type MouseEvent } from 'react';
 import { MediaImage } from '@/components/MediaImage';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
+import { TermsDialog } from '@/components/TermsDialog';
 import { useI18n } from '@/i18n/I18nProvider';
 import { ApiError, signup } from '@/lib/auth';
 import { useSiteSettings } from '@/lib/useSiteSettings';
@@ -16,13 +17,19 @@ export default function SignupPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
   const setSession = useAuthStore((state) => state.setSession);
   const router = useRouter();
   const { t, locale } = useI18n();
   const settings = useSiteSettings();
+  const termsLabel = locale === 'tr'
+    ? { prefix: 'Kayıt olarak', link: 'Kullanım Koşullarını kabul edersiniz' }
+    : { prefix: 'By registering, you accept the', link: 'Terms of Service' };
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!termsAccepted) return;
     setSubmitting(true);
     setError('');
     setFieldErrors({});
@@ -53,6 +60,17 @@ export default function SignupPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const closeTerms = useCallback(() => setTermsOpen(false), []);
+  const acceptTerms = useCallback(() => {
+    setTermsAccepted(true);
+    setTermsOpen(false);
+  }, []);
+  const openTerms = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    setTermsOpen(true);
   };
 
   const art = settings.data?.heroImagePath;
@@ -87,12 +105,16 @@ export default function SignupPage() {
           </div>
           <label>{t('checkout.email')}<input name="email" type="email" required autoComplete="email" />{fieldError('email') && <small role="alert">{fieldError('email')}</small>}</label>
           <label>{t('auth.password')}<input name="password" type="password" required minLength={8} autoComplete="new-password" />{fieldError('password') && <small role="alert">{fieldError('password')}</small>}</label>
-          <label className="auth-consent"><input type="checkbox" /> {t('auth.consent')}</label>
+          <label className="auth-consent">
+            <input name="acceptedTerms" type="checkbox" checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} required />
+            <span>{termsLabel.prefix} <Link href="/terms" onClick={openTerms}>{termsLabel.link}</Link>.</span>
+          </label>
           {error && <p className="auth-error" role="alert">{error}</p>}
-          <button type="submit" className="button button--primary button--block" disabled={submitting}>{submitting ? t('auth.creating') : t('auth.createAccount')} <ArrowRight /></button>
+          <button type="submit" className="button button--primary button--block" disabled={!termsAccepted || submitting} aria-disabled={!termsAccepted || submitting}>{submitting ? t('auth.creating') : t('auth.createAccount')} <ArrowRight /></button>
         </form>
         <span className="auth-switch">{t('auth.already')} <Link href="/login">{t('auth.signIn')}</Link></span>
       </main>
+      <TermsDialog open={termsOpen} onClose={closeTerms} onAccept={acceptTerms} />
     </div>
   );
 }

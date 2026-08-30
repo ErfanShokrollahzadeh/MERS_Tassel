@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Microsoft.AspNetCore.StaticFiles;
 
 // The runtime image uses the application itself as its healthcheck client. This avoids adding
 // curl (and an operating-system package manager layer) to the final production image.
@@ -191,9 +192,17 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Uploaded filenames are GUIDs and never reused, so they can be cached indefinitely.
+// Uploaded filenames are GUIDs and never reused, so they can be cached indefinitely. Extend
+// the framework MIME map instead of replacing it, otherwise existing JPEG/PNG/WebP media would
+// be served as application/octet-stream.
+var uploadsContentTypes = new FileExtensionContentTypeProvider();
+uploadsContentTypes.Mappings[".glb"] = "model/gltf-binary";
+uploadsContentTypes.Mappings[".gltf"] = "model/gltf+json";
+uploadsContentTypes.Mappings[".usdz"] = "model/vnd.usdz+zip";
+
 app.UseStaticFiles(new StaticFileOptions
 {
+    ContentTypeProvider = uploadsContentTypes,
     OnPrepareResponse = ctx =>
     {
         if (ctx.Context.Request.Path.StartsWithSegments("/uploads"))

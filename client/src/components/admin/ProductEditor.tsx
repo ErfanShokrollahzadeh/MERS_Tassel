@@ -1,13 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ImagePlus, Loader2, Plus, Star, Trash2, X } from 'lucide-react';
+import { Box, ImagePlus, Loader2, Plus, Star, Trash2, X } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   adminKeys,
   createProduct,
+  addProductModel,
+  deleteProductModel,
   deleteProductMedia,
   reorderProductMedia,
+  updateProductModel,
   updateProduct,
   type ProductDraft,
   type VariantDraft,
@@ -87,6 +90,19 @@ export function ProductEditor({
   const [dragging, setDragging] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const fileInput = useRef<HTMLInputElement>(null);
+  const glbInput = useRef<HTMLInputElement>(null);
+  const usdzInput = useRef<HTMLInputElement>(null);
+  const posterInput = useRef<HTMLInputElement>(null);
+  const [modelFiles, setModelFiles] = useState<{ glb?: File; usdz?: File; poster?: File }>({});
+  const [modelDraft, setModelDraft] = useState({
+    variantId: null as number | null,
+    alt: product?.modelAssets?.[0]?.alt ?? '',
+    placement: (product?.modelAssets?.[0]?.placement ?? 'floor') as 'floor' | 'wall',
+    scaleMode: 'fixed' as const,
+    widthMm: product?.modelAssets?.[0]?.dimensionsMm.width ?? 0,
+    heightMm: product?.modelAssets?.[0]?.dimensionsMm.height ?? 0,
+    depthMm: product?.modelAssets?.[0]?.dimensionsMm.depth ?? 0,
+  });
 
   const queryClient = useQueryClient();
   const showToast = useToastStore((state) => state.show);
@@ -146,6 +162,28 @@ export function ProductEditor({
     onSuccess: () => { invalidate(); showToast({ tone: 'success', title: 'Cover image updated', message: '' }); },
   });
 
+  const saveModel = useMutation({
+    mutationFn: () => {
+      if (!product) throw new Error('Save the product before adding a 3D model.');
+      // A product can have one default model plus a model per finish. Match the selected
+      // finish instead of always overwriting the first (usually default) asset.
+      const existing = product.modelAssets?.find((model) => model.variantId === modelDraft.variantId);
+      return existing
+        ? updateProductModel(product.id, existing.id, modelDraft, modelFiles.glb, modelFiles.usdz, modelFiles.poster)
+        : modelFiles.glb
+          ? addProductModel(product.id, modelDraft, modelFiles.glb, modelFiles.usdz, modelFiles.poster)
+          : Promise.reject(new Error('Choose a GLB file first.'));
+    },
+    onSuccess: () => { invalidate(); showToast({ tone: 'success', title: '3D model saved', message: 'The model is ready for the storefront after validation.' }); onClose(); },
+    onError: (error) => showToast({ tone: 'error', title: 'Could not save 3D model', message: error instanceof Error ? error.message : 'Check the model files and dimensions.' }),
+  });
+
+  const removeModel = useMutation({
+    mutationFn: (modelId: number) => deleteProductModel(product!.id, modelId),
+    onSuccess: () => { invalidate(); showToast({ tone: 'success', title: '3D model removed', message: '' }); onClose(); },
+    onError: (error) => showToast({ tone: 'error', title: 'Could not remove 3D model', message: error instanceof Error ? error.message : '' }),
+  });
+
   const acceptFiles = (incoming: FileList | null) => {
     if (!incoming) return;
     const images = Array.from(incoming).filter((file) => file.type.startsWith('image/'));
@@ -156,6 +194,16 @@ export function ProductEditor({
   };
 
   const field = (name: string) => errors[name]?.[0];
+
+  const chooseModelFile = (kind: 'glb' | 'usdz' | 'poster', file?: File) => {
+    if (!file) return;
+    const valid = kind === 'glb' ? /\.glb$/i.test(file.name) : kind === 'usdz' ? /\.usdz$/i.test(file.name) : file.type.startsWith('image/');
+    if (!valid) {
+      showToast({ tone: 'error', title: 'Unsupported model file', message: kind === 'glb' ? 'Choose a glTF binary .glb file.' : kind === 'usdz' ? 'Choose an Apple Quick Look .usdz file.' : 'Choose a JPEG, PNG or WebP poster.' });
+      return;
+    }
+    setModelFiles((current) => ({ ...current, [kind]: file }));
+  };
 
   const setVariant = (index: number, patch: Partial<VariantDraft>) =>
     setDraft((current) => ({
@@ -277,6 +325,50 @@ export function ProductEditor({
             ))}
             <button type="button" className="add-option" onClick={() => setDraft({ ...draft, variants: [...draft.variants, emptyVariant()] })}><Plus size={14} /> Add finish</button>
             {field('variants') && <small role="alert" className="editor-error">{field('variants')}</small>}
+          </section>
+
+          <section className="editor-section editor-model-section">
+            <h3><Box size={15} /> 3D &amp; AR</h3>
+            {!isEdit ? <p className="editor-hint">Publish the product first, then add its GLB/USDZ model from the editor.</p> : (
+              <>
+                {(product?.modelAssets ?? []).map((model) => (
+                  <div className="model-asset-row" key={model.id}>
+                    <div><strong>{model.variantId ? `Finish #${model.variantId}` : 'Product default'}</strong><small>ready · {model.dimensionsMm.width} × {model.dimensionsMm.height} × {model.dimensionsMm.depth} mm</small></div>
+                    <button type="button" className="icon-button" onClick={() => removeModel.mutate(model.id)} disabled={removeModel.isPending}><Trash2 size={14} /></button>
+                  </div>
+                ))}
+                <label>Alternative text<input value={modelDraft.alt} onChange={(e) => setModelDraft({ ...modelDraft, alt: e.target.value })} placeholder="Handmade pearl necklace in gold" /></label>
+                <div className="editor-grid">
+                  <label>Finish<select value={modelDraft.variantId ?? ''} onChange={(e) => {
+                    const variantId = e.target.value ? Number(e.target.value) : null;
+                    const selected = product?.modelAssets?.find((model) => model.variantId === variantId);
+                    setModelDraft(selected ? {
+                      variantId,
+                      alt: selected.alt,
+                      placement: selected.placement,
+                      scaleMode: 'fixed',
+                      widthMm: selected.dimensionsMm.width,
+                      heightMm: selected.dimensionsMm.height,
+                      depthMm: selected.dimensionsMm.depth,
+                    } : { ...modelDraft, variantId });
+                    setModelFiles({});
+                  }}><option value="">Product default</option>{draft.variants.filter((variant) => variant.id).map((variant) => <option key={variant.id} value={variant.id}>{variant.color || variant.title}</option>)}</select></label>
+                  <label>Placement<select value={modelDraft.placement} onChange={(e) => setModelDraft({ ...modelDraft, placement: e.target.value as 'floor' | 'wall' })}><option value="floor">Floor</option><option value="wall">Wall</option></select></label>
+                  <label>Width (mm)<input type="number" min="1" value={modelDraft.widthMm || ''} onChange={(e) => setModelDraft({ ...modelDraft, widthMm: Number(e.target.value) })} /></label>
+                  <label>Height (mm)<input type="number" min="1" value={modelDraft.heightMm || ''} onChange={(e) => setModelDraft({ ...modelDraft, heightMm: Number(e.target.value) })} /></label>
+                  <label>Depth (mm)<input type="number" min="1" value={modelDraft.depthMm || ''} onChange={(e) => setModelDraft({ ...modelDraft, depthMm: Number(e.target.value) })} /></label>
+                </div>
+                <div className="model-upload-grid">
+                  <button type="button" className="upload-zone upload-zone--compact" onClick={() => glbInput.current?.click()}><Box size={18} /><strong>{modelFiles.glb?.name ?? 'Choose GLB model'}</strong><span>Required · up to 15 MB</span></button>
+                  <button type="button" className="upload-zone upload-zone--compact" onClick={() => usdzInput.current?.click()}><strong>{modelFiles.usdz?.name ?? 'Choose USDZ model'}</strong><span>Required for iOS AR</span></button>
+                  <button type="button" className="upload-zone upload-zone--compact" onClick={() => posterInput.current?.click()}><ImagePlus size={18} /><strong>{modelFiles.poster?.name ?? 'Choose poster'}</strong><span>Optional · JPEG/PNG/WebP</span></button>
+                </div>
+                <input ref={glbInput} type="file" accept=".glb,model/gltf-binary" hidden onChange={(e) => chooseModelFile('glb', e.target.files?.[0])} />
+                <input ref={usdzInput} type="file" accept=".usdz,model/vnd.usdz+zip" hidden onChange={(e) => chooseModelFile('usdz', e.target.files?.[0])} />
+                <input ref={posterInput} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => chooseModelFile('poster', e.target.files?.[0])} />
+                <div className="model-section-actions"><small className="editor-hint">Models use fixed scale. Enter the real physical dimensions.</small><button type="button" className="admin-button admin-button--secondary" onClick={() => saveModel.mutate()} disabled={saveModel.isPending}>{saveModel.isPending && <Loader2 size={14} className="spin" />}{saveModel.isPending ? 'Validating…' : 'Save 3D model'}</button></div>
+              </>
+            )}
           </section>
 
           <section className="editor-section">

@@ -125,6 +125,38 @@ public class ProductMediaConfiguration : IEntityTypeConfiguration<ProductMedia>
     }
 }
 
+public class ProductModelAssetConfiguration : IEntityTypeConfiguration<ProductModelAsset>
+{
+    public void Configure(EntityTypeBuilder<ProductModelAsset> b)
+    {
+        b.ToTable("ProductModelAssets");
+        b.Property(x => x.GlbPath).HasMaxLength(500).IsRequired();
+        b.Property(x => x.UsdzPath).HasMaxLength(500);
+        b.Property(x => x.PosterPath).HasMaxLength(500);
+        b.Property(x => x.Alt).HasMaxLength(240).IsRequired();
+        b.Property(x => x.Placement).HasMaxLength(16).IsRequired();
+        b.Property(x => x.ScaleMode).HasMaxLength(16).IsRequired();
+        b.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        b.Property(x => x.ValidationMessage).HasMaxLength(1000);
+        b.Property(x => x.GlbBytes).IsRequired();
+        // Include the soft-delete flag in the uniqueness key so an archived asset can be
+        // replaced without a provider-specific filtered-index predicate.
+        b.HasIndex(x => new { x.ProductId, x.VariantId, x.IsDelete }).IsUnique();
+        b.HasIndex(x => x.Status);
+        b.HasIndex(x => x.IsDelete);
+
+        b.HasOne(x => x.Product)
+            .WithMany(p => p.ModelAssets)
+            .HasForeignKey(x => x.ProductId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        b.HasOne(x => x.Variant)
+            .WithMany()
+            .HasForeignKey(x => x.VariantId)
+            .OnDelete(DeleteBehavior.SetNull);
+    }
+}
+
 public class CartConfiguration : IEntityTypeConfiguration<Cart>
 {
     public void Configure(EntityTypeBuilder<Cart> b)

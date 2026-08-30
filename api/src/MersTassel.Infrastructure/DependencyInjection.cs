@@ -100,6 +100,7 @@ public static class DependencyInjection
 
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
+        services.AddScoped<IProductModelStorageService, LocalProductModelStorageService>();
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ICartService, CartService>();
