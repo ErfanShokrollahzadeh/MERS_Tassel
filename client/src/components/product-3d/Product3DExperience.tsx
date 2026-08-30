@@ -8,6 +8,7 @@ import { detectDeviceCapabilities, type DeviceCapabilities } from './deviceCapab
 import { ArFallbackDialog } from './ArFallbackDialog';
 import { ArQrDialog } from './ArQrDialog';
 import { useI18n } from '@/i18n/I18nProvider';
+import { SurfacePlacementPicker, type SurfacePlacement } from './SurfacePlacementPicker';
 
 type ViewerElement = HTMLElement & {
   activateAR?: () => Promise<void>;
@@ -32,12 +33,16 @@ export function Product3DExperience({ asset, productName, productSlug, fallbackP
   const [arError, setArError] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [capabilities, setCapabilities] = useState<DeviceCapabilities>(() => detectDeviceCapabilities());
+  const supportedPlacements = (asset.supportedPlacements?.length ? asset.supportedPlacements : [asset.placement]) as SurfacePlacement[];
+  const [placement, setPlacement] = useState<SurfacePlacement>(asset.placement);
   const { t } = useI18n();
 
   useEffect(() => {
     let cancelled = false;
     void import('@google/model-viewer').then(() => { if (!cancelled) setViewerReady(true); }).catch(() => { if (!cancelled) setFailed(true); });
     setCapabilities(detectDeviceCapabilities());
+    const requested = new URLSearchParams(window.location.search).get('placement');
+    if ((requested === 'floor' || requested === 'wall') && supportedPlacements.includes(requested)) setPlacement(requested);
     return () => { cancelled = true; };
   }, []);
 
@@ -101,7 +106,7 @@ export function Product3DExperience({ asset, productName, productSlug, fallbackP
           ar
           ar-modes="webxr scene-viewer quick-look"
           ar-scale="fixed"
-          ar-placement={asset.placement}
+          ar-placement={placement}
           shadow-intensity="0.8"
           shadow-softness="0.9"
           environment-image="neutral"
@@ -118,12 +123,13 @@ export function Product3DExperience({ asset, productName, productSlug, fallbackP
         <button type="button" onClick={reset}><RefreshCcw size={14} /> {t('model.reset')}</button>
       </div>
       <div className="product-3d__actions">
+        <SurfacePlacementPicker value={placement} options={supportedPlacements} onChange={setPlacement} />
         {capabilities.isMobile ? <button type="button" className="button button--primary" onClick={() => void activateAr()} disabled={!viewerReady || !loaded || failed}><Camera size={17} /> {t('model.viewAr')}</button> : <button type="button" className="button button--primary" onClick={() => setQrOpen(true)}><Smartphone size={17} /> {t('model.scanQr')}</button>}
         {capabilities.isMobile && !hasUsdz && capabilities.isIOS && <small className="product-3d__hint">{t('model.iosMissing')}</small>}
         {capabilities.isMobile && !capabilities.isSecureContext && <small className="product-3d__hint">{t('model.httpsRequired')}</small>}
       </div>
       {arError && <ArFallbackDialog capabilities={capabilities} onClose={() => setArError(false)} />}
-      {qrOpen && <ArQrDialog slug={productSlug} productName={productName} onClose={() => setQrOpen(false)} />}
+      {qrOpen && <ArQrDialog slug={productSlug} productName={productName} placement={placement} onClose={() => setQrOpen(false)} />}
     </div>
   );
 }

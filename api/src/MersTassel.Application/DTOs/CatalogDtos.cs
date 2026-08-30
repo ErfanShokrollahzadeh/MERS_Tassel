@@ -94,6 +94,7 @@ public class ProductModelAssetDto
     public string? PosterPath { get; set; }
     public string Alt { get; set; } = string.Empty;
     public string Placement { get; set; } = "floor";
+    public IReadOnlyList<string> SupportedPlacements { get; set; } = ["floor"];
     public string ScaleMode { get; set; } = "fixed";
     public ModelDimensionsDto DimensionsMm { get; set; } = new();
 }

@@ -27,8 +27,9 @@ COPY api/seed-assets/ /seed-assets/
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends libgssapi-krb5-2 \
     && rm -rf /var/lib/apt/lists/* \
-    && mkdir -p /app/wwwroot/uploads /app/keys \
+    && mkdir -p /app/wwwroot/uploads /app/keys /model-data \
     && chown -R "$APP_UID:$APP_UID" /app /seed-assets
+RUN chown -R "$APP_UID:$APP_UID" /model-data
 
 ENV ASPNETCORE_HTTP_PORTS=8080 \
     DOTNET_EnableDiagnostics=0 \

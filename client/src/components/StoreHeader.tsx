@@ -10,6 +10,7 @@ import { useI18n, type TranslationKey } from '@/i18n/I18nProvider';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { useAuthStore } from '@/stores/auth';
 import { useTradeInModalStore } from '@/stores/tradeIn';
+import { favoritesCount, useFavoritesStore } from '@/stores/favorites';
 
 const links = [
   { href: '/', key: 'nav.home' },
@@ -32,6 +33,8 @@ export function StoreHeader() {
   const openCart = useCartStore((state) => state.open);
   const user = useAuthStore((state) => state.user);
   const openTradeIn = useTradeInModalStore((state) => state.open);
+  const savedCount = useFavoritesStore(favoritesCount);
+  const openFavorites = useFavoritesStore((state) => state.open);
   const { t, locale } = useI18n();
 
   useEffect(() => {
@@ -101,6 +104,7 @@ export function StoreHeader() {
           ))}
           <Link className="admin-mobile-link" href="/products?focus=search" onClick={() => setMenuOpen(false)}>{t('header.search')}</Link>
           <Link className="admin-mobile-link" href={user ? '/account' : '/login'} onClick={() => setMenuOpen(false)}>{t('header.account')}</Link>
+          <button className="admin-mobile-link mobile-saved-link" onClick={() => { setMenuOpen(false); openFavorites(); }}><Heart size={16} /> {t('header.saved')}{savedCount > 0 && ` (${savedCount})`}</button>
           <Link className="admin-mobile-link" href="/admin">{t('nav.admin')}</Link>
           <div className="header-language-mobile"><LanguageSwitch /></div>
         </nav>
@@ -110,7 +114,10 @@ export function StoreHeader() {
           <button type="button" className="icon-button hide-mobile" onClick={toggleSearch} aria-label={t(searchOpen ? 'header.closeSearch' : 'header.search')} aria-expanded={searchOpen} aria-controls="store-search-panel">
             {searchOpen ? <X size={19} /> : <Search size={19} />}
           </button>
-          <button className="icon-button hide-mobile" aria-label={t('header.saved')}><Heart size={19} /></button>
+          <button className="icon-button hide-mobile saved-button" onClick={openFavorites} aria-label={t('header.saved')}>
+            <Heart size={19} fill={savedCount ? 'currentColor' : 'none'} />
+            <AnimatePresence mode="popLayout">{savedCount > 0 && <motion.span key={savedCount} className="cart-count saved-count" initial={{ scale: .55, rotate: -12 }} animate={{ scale: [1, 1.28, 1], rotate: 0 }} exit={{ scale: 0 }} transition={{ duration: .34 }}>{savedCount}</motion.span>}</AnimatePresence>
+          </button>
           <button className="icon-button hide-mobile" onClick={toggleTheme} aria-label={t(dark ? 'header.light' : 'header.dark')}>
             {dark ? <Sun size={19} /> : <Moon size={19} />}
           </button>

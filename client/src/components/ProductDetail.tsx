@@ -15,6 +15,7 @@ import { useAuthStore } from '@/stores/auth';
 import { TradeInWidget } from '@/components/TradeInWidget';
 import { formatMoney } from '@/lib/money';
 import { Product3DExperience } from '@/components/product-3d/Product3DExperience';
+import { useFavoritesStore } from '@/stores/favorites';
 
 export function ProductDetail({ product, related }: { product: Product; related: Product[] }) {
   const [activeImage, setActiveImage] = useState(0);
@@ -29,6 +30,8 @@ export function ProductDetail({ product, related }: { product: Product; related:
   const searchParams = useSearchParams();
   const { t, locale } = useI18n();
   const display = productCopy(product, locale);
+  const favorite = useFavoritesStore((state) => state.items.some((item) => item.slug === product.slug));
+  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
 
   // Stock is per finish, so the stepper and the sold-out state follow the selected variant.
   const selectedVariant = product.variants.find((variant) => variant.color === color);
@@ -74,7 +77,7 @@ export function ProductDetail({ product, related }: { product: Product; related:
                   <MediaImage src={images[activeImage]} alt={`${display.name}, ${t('pdp.viewIndex', { index: activeImage + 1 })}`} sizes="(max-width: 900px) 100vw, 55vw" priority={activeImage === 0} />
                 </motion.div>
               </AnimatePresence>
-              <button className="pdp-save" aria-label={t('product.savePiece', { name: display.name })}><Heart size={18} /></button>
+              <button type="button" className={`pdp-save${favorite ? ' pdp-save--active' : ''}`} onClick={() => toggleFavorite(product)} aria-label={t(favorite ? 'product.removeSavedPiece' : 'product.savePiece', { name: display.name })} aria-pressed={favorite}><Heart size={18} fill={favorite ? 'currentColor' : 'none'} /></button>
               <span>{t('pdp.exploreDetail')}</span>
             </>}
           </div>

@@ -68,6 +68,7 @@ public static class CatalogMapping
                 PosterPath = m.PosterPath,
                 Alt = m.Alt,
                 Placement = m.Placement,
+                SupportedPlacements = m.SupportedPlacements.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
                 ScaleMode = "fixed",
                 DimensionsMm = new ModelDimensionsDto { Width = m.WidthMm, Height = m.HeightMm, Depth = m.DepthMm },
             }).ToList(),

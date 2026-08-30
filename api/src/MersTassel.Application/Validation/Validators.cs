@@ -92,6 +92,10 @@ public class ProductModelWriteRequestValidator : AbstractValidator<ProductModelW
         RuleFor(x => x.Alt).NotEmpty().MaximumLength(240);
         RuleFor(x => x.Placement).Must(value => value is "floor" or "wall")
             .WithMessage("Placement must be 'floor' or 'wall'.");
+        RuleFor(x => x.SupportedPlacements)
+            .Must(value => value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                .All(placement => placement is "floor" or "wall"))
+            .WithMessage("Supported placements may contain only 'floor' and 'wall'.");
         RuleFor(x => x.ScaleMode).Equal("fixed")
             .WithMessage("AR models must use fixed scale for accurate dimensions.");
         RuleFor(x => x.WidthMm).GreaterThan(0).LessThanOrEqualTo(5000);

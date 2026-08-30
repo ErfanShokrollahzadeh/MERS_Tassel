@@ -60,6 +60,7 @@ public class Product : SoftDeletableEntity
     public ICollection<ProductVariant> Variants { get; set; } = new List<ProductVariant>();
     public ICollection<ProductMedia> Media { get; set; } = new List<ProductMedia>();
     public ICollection<ProductModelAsset> ModelAssets { get; set; } = new List<ProductModelAsset>();
+    public ICollection<ProductModelGenerationJob> ModelGenerationJobs { get; set; } = new List<ProductModelGenerationJob>();
 }
 
 public class ProductVariant : SoftDeletableEntity
@@ -111,6 +112,8 @@ public class ProductModelAsset : SoftDeletableEntity
     public string? PosterPath { get; set; }
     public string Alt { get; set; } = string.Empty;
     public string Placement { get; set; } = "floor";
+    /// <summary>Comma-separated validated values: floor, wall, or floor,wall.</summary>
+    public string SupportedPlacements { get; set; } = "floor";
     public string ScaleMode { get; set; } = "fixed";
     public decimal WidthMm { get; set; }
     public decimal HeightMm { get; set; }
