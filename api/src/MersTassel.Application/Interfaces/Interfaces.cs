@@ -14,6 +14,52 @@ public interface IProductModelStorageService
     Task DeleteAsync(string? relativePath, CancellationToken ct = default);
 }
 
+public interface IModelGenerationStorageService
+{
+    Task<string> SaveCaptureAsync(Stream content, string fileName, long length, CancellationToken ct = default);
+    Task<string> SaveDraftAsync(Stream content, string extension, CancellationToken ct = default);
+    Task<Stream> OpenReadAsync(string privatePath, CancellationToken ct = default);
+    Task DeleteAsync(string? privatePath, CancellationToken ct = default);
+}
+
+public interface IProductModelGenerationService
+{
+    Task<CreateModelGenerationJobResult> CreateAsync(int productId, string userId, CreateModelGenerationJobRequest request, CancellationToken ct = default);
+    Task<IReadOnlyList<ModelGenerationJobDto>> ListAsync(int productId, CancellationToken ct = default);
+    Task<ModelGenerationJobDto> GetAsync(int jobId, CancellationToken ct = default);
+    Task<ModelCaptureSessionDto> GetCaptureSessionAsync(int jobId, string token, CancellationToken ct = default);
+    Task<ModelGenerationJobDto> UploadCaptureAsync(int jobId, ModelCaptureUploadRequest request, IReadOnlyList<UploadedFile> images, CancellationToken ct = default);
+    Task<ModelGenerationJobDto> RetryAsync(int jobId, CancellationToken ct = default);
+    Task<ModelGenerationJobDto> CancelAsync(int jobId, CancellationToken ct = default);
+    Task<ModelGenerationJobDto> RejectAsync(int jobId, string userId, ModelGenerationRejectRequest request, CancellationToken ct = default);
+    Task<ModelGenerationJobDto> ApproveAsync(int jobId, string userId, ModelGenerationReviewRequest request, CancellationToken ct = default);
+}
+
+public interface IProductModelGenerationProcessor
+{
+    Task ProcessNextAsync(CancellationToken ct = default);
+}
+
+public interface IModelGeometryProcessor
+{
+    bool IsConfigured { get; }
+    Task<ModelGeometryProcessingResult> NormalizeAsync(string privateGlbPath, decimal widthMm, decimal heightMm, decimal depthMm, string placement, CancellationToken ct = default);
+}
+
+public record ModelGeometryProcessingResult(string OutputPath, string ValidationReportJson);
+
+public interface IProductModelGenerationProvider
+{
+    bool IsConfigured { get; }
+    Task<string> SubmitAsync(IReadOnlyList<Stream> images, CancellationToken ct = default);
+    Task<ModelGenerationProviderProgress> GetProgressAsync(string providerJobId, CancellationToken ct = default);
+    Task<GeneratedModelDownload> DownloadAsync(string providerJobId, CancellationToken ct = default);
+    Task CancelAsync(string providerJobId, CancellationToken ct = default);
+}
+
+public record ModelGenerationProviderProgress(string Status, int ProgressPercent, string Stage, string? Error);
+public record GeneratedModelDownload(Stream Glb, Stream? Poster);
+
 /// <summary>
 /// Local disk storage for uploaded media. Implementations must validate content, not just
 /// the file name, and must never delete a physical file before its database row is committed.

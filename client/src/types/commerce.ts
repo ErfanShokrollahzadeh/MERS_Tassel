@@ -30,6 +30,7 @@ export type ProductModelAsset = {
   posterPath?: string | null;
   alt: string;
   placement: 'floor' | 'wall';
+  supportedPlacements: Array<'floor' | 'wall'>;
   scaleMode: 'fixed';
   dimensionsMm: { width: number; height: number; depth: number };
 };

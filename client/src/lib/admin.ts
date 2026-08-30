@@ -144,6 +144,7 @@ export type ProductModelDraft = {
   variantId?: number | null;
   alt: string;
   placement: 'floor' | 'wall';
+  supportedPlacements: Array<'floor' | 'wall'>;
   scaleMode: 'fixed';
   widthMm: number;
   heightMm: number;
@@ -155,6 +156,7 @@ function modelForm(draft: ProductModelDraft, glb?: File | null, usdz?: File | nu
   if (draft.variantId) form.append('VariantId', String(draft.variantId));
   form.append('Alt', draft.alt);
   form.append('Placement', draft.placement);
+  form.append('SupportedPlacements', draft.supportedPlacements.join(','));
   form.append('ScaleMode', draft.scaleMode);
   form.append('WidthMm', String(draft.widthMm));
   form.append('HeightMm', String(draft.heightMm));
@@ -175,6 +177,61 @@ export function updateProductModel(id: number, modelId: number, draft: ProductMo
 
 export function deleteProductModel(id: number, modelId: number) {
   return api.delete<Product>(`/admin/products/${id}/models/${modelId}`, { auth: true });
+}
+
+export type ModelGenerationStatus = 'draft_capture' | 'queued' | 'reconstructing' | 'optimizing' | 'awaiting_review' | 'approved' | 'failed' | 'cancelled';
+export type ModelGenerationJob = {
+  id: number;
+  productId: number;
+  productName: string;
+  variantId?: number | null;
+  provider: string;
+  status: ModelGenerationStatus;
+  progressPercent: number;
+  stage: string;
+  widthMm: number;
+  heightMm: number;
+  depthMm: number;
+  captureCount: number;
+  supportedPlacements: Array<'floor' | 'wall'>;
+  defaultPlacement: 'floor' | 'wall';
+  validationReportJson?: string | null;
+  failureCode?: string | null;
+  failureMessage?: string | null;
+  canRetry: boolean;
+  canApprove: boolean;
+  createdAt: string;
+  completedAt?: string | null;
+};
+
+export type CreateModelGenerationResult = {
+  job: ModelGenerationJob;
+  captureToken: string;
+  expiresAt: string;
+};
+
+export function fetchModelGenerationJobs(productId: number) {
+  return api.get<ModelGenerationJob[]>(`/admin/products/${productId}/model-generation-jobs`, { auth: true, cache: 'no-store' });
+}
+
+export function createModelGenerationJob(productId: number, variantId?: number | null) {
+  return api.post<CreateModelGenerationResult>(`/admin/products/${productId}/model-generation-jobs`, { variantId: variantId ?? null, provider: 'meshy' }, { auth: true });
+}
+
+export function retryModelGenerationJob(jobId: number) {
+  return api.post<ModelGenerationJob>(`/admin/model-generation-jobs/${jobId}/retry`, {}, { auth: true });
+}
+
+export function cancelModelGenerationJob(jobId: number) {
+  return api.post<ModelGenerationJob>(`/admin/model-generation-jobs/${jobId}/cancel`, {}, { auth: true });
+}
+
+export function approveModelGenerationJob(jobId: number) {
+  return api.post<ModelGenerationJob>(`/admin/model-generation-jobs/${jobId}/approve`, { scaleVerified: true }, { auth: true });
+}
+
+export function rejectModelGenerationJob(jobId: number, reason: string) {
+  return api.post<ModelGenerationJob>(`/admin/model-generation-jobs/${jobId}/reject`, { reason }, { auth: true });
 }
 
 // ── Categories ──────────────────────────────────────────────────────────────

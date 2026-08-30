@@ -29,6 +29,12 @@ const API_ORIGIN = resolveApiOrigin();
 const nextConfig = {
   async rewrites() {
     return [
+      // The secure mobile capture page uses this same-origin proxy. That matters when the
+      // admin opens the page on a phone: a browser's `localhost` is the phone itself, not the
+      // development computer. Keeping capture requests relative lets Next forward them to the
+      // API from either a LAN hostname or the production Vercel origin without exposing the
+      // private API host in the QR code.
+      { source: '/api/v1/:path*', destination: `${API_ORIGIN}/api/v1/:path*` },
       // Uploaded media is proxied through this origin instead of being linked directly at the
       // API. Keeping the URL relative means <Image> takes its local-path code path, which
       // avoids three separate ways images used to break in development: remotePatterns having

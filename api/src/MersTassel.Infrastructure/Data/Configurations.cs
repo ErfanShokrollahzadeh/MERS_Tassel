@@ -135,6 +135,7 @@ public class ProductModelAssetConfiguration : IEntityTypeConfiguration<ProductMo
         b.Property(x => x.PosterPath).HasMaxLength(500);
         b.Property(x => x.Alt).HasMaxLength(240).IsRequired();
         b.Property(x => x.Placement).HasMaxLength(16).IsRequired();
+        b.Property(x => x.SupportedPlacements).HasMaxLength(30).IsRequired();
         b.Property(x => x.ScaleMode).HasMaxLength(16).IsRequired();
         b.Property(x => x.Status).HasMaxLength(20).IsRequired();
         b.Property(x => x.ValidationMessage).HasMaxLength(1000);
@@ -153,6 +154,43 @@ public class ProductModelAssetConfiguration : IEntityTypeConfiguration<ProductMo
         b.HasOne(x => x.Variant)
             .WithMany()
             .HasForeignKey(x => x.VariantId)
+            .OnDelete(DeleteBehavior.SetNull);
+    }
+}
+
+public class ProductModelGenerationJobConfiguration : IEntityTypeConfiguration<ProductModelGenerationJob>
+{
+    public void Configure(EntityTypeBuilder<ProductModelGenerationJob> b)
+    {
+        b.ToTable("ProductModelGenerationJobs");
+        b.Property(x => x.RequestedByUserId).HasMaxLength(450).IsRequired();
+        b.Property(x => x.ReviewedByUserId).HasMaxLength(450);
+        b.Property(x => x.Provider).HasMaxLength(50).IsRequired();
+        b.Property(x => x.ProviderJobId).HasMaxLength(200);
+        b.Property(x => x.CaptureMethod).HasMaxLength(20).IsRequired();
+        b.Property(x => x.CapturePathsJson).IsRequired();
+        b.Property(x => x.SupportedPlacements).HasMaxLength(30).IsRequired();
+        b.Property(x => x.DefaultPlacement).HasMaxLength(10).IsRequired();
+        b.Property(x => x.Status).HasMaxLength(30).IsRequired();
+        b.Property(x => x.Stage).HasMaxLength(120).IsRequired();
+        b.Property(x => x.DraftGlbPath).HasMaxLength(500);
+        b.Property(x => x.DraftPosterPath).HasMaxLength(500);
+        b.Property(x => x.FailureCode).HasMaxLength(80);
+        b.Property(x => x.FailureMessage).HasMaxLength(2000);
+        b.Property(x => x.CaptureTokenHash).HasMaxLength(64).IsRequired();
+        b.HasIndex(x => new { x.ProductId, x.Status });
+        b.HasIndex(x => x.ProviderJobId);
+        b.HasIndex(x => x.IsDelete);
+
+        b.HasOne(x => x.Product).WithMany(x => x.ModelGenerationJobs)
+            .HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne(x => x.Variant).WithMany().HasForeignKey(x => x.VariantId)
+            .OnDelete(DeleteBehavior.SetNull);
+        b.HasOne(x => x.RequestedByUser).WithMany().HasForeignKey(x => x.RequestedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+        b.HasOne(x => x.ReviewedByUser).WithMany().HasForeignKey(x => x.ReviewedByUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+        b.HasOne(x => x.ApprovedModelAsset).WithMany().HasForeignKey(x => x.ApprovedModelAssetId)
             .OnDelete(DeleteBehavior.SetNull);
     }
 }

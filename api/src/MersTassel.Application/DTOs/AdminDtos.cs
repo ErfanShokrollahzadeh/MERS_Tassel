@@ -135,8 +135,74 @@ public class ProductModelWriteRequest
     public int? VariantId { get; set; }
     public string Alt { get; set; } = string.Empty;
     public string Placement { get; set; } = "floor";
+    public string SupportedPlacements { get; set; } = "floor";
     public string ScaleMode { get; set; } = "fixed";
     public decimal WidthMm { get; set; }
     public decimal HeightMm { get; set; }
     public decimal DepthMm { get; set; }
 }
+
+public class CreateModelGenerationJobRequest
+{
+    public int? VariantId { get; set; }
+    public string Provider { get; set; } = "meshy";
+}
+
+public class ModelCaptureUploadRequest
+{
+    public string Token { get; set; } = string.Empty;
+    public decimal CalibrationReferenceMm { get; set; }
+    public decimal WidthMm { get; set; }
+    public decimal HeightMm { get; set; }
+    public decimal DepthMm { get; set; }
+    public string SupportedPlacements { get; set; } = "floor";
+    public string DefaultPlacement { get; set; } = "floor";
+}
+
+public class ModelGenerationReviewRequest
+{
+    public bool ScaleVerified { get; set; }
+    public string? Notes { get; set; }
+}
+
+public class ModelGenerationRejectRequest
+{
+    public string Reason { get; set; } = string.Empty;
+}
+
+public class ModelGenerationJobDto
+{
+    public int Id { get; set; }
+    public int ProductId { get; set; }
+    public string ProductName { get; set; } = string.Empty;
+    public int? VariantId { get; set; }
+    public string Provider { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public int ProgressPercent { get; set; }
+    public string Stage { get; set; } = string.Empty;
+    public decimal WidthMm { get; set; }
+    public decimal HeightMm { get; set; }
+    public decimal DepthMm { get; set; }
+    public int CaptureCount { get; set; }
+    public IReadOnlyList<string> SupportedPlacements { get; set; } = [];
+    public string DefaultPlacement { get; set; } = "floor";
+    public string? ValidationReportJson { get; set; }
+    public string? FailureCode { get; set; }
+    public string? FailureMessage { get; set; }
+    public bool CanRetry { get; set; }
+    public bool CanApprove { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? CompletedAt { get; set; }
+}
+
+public class ModelCaptureSessionDto
+{
+    public int JobId { get; set; }
+    public int ProductId { get; set; }
+    public string ProductName { get; set; } = string.Empty;
+    public string? ProductImage { get; set; }
+    public DateTimeOffset ExpiresAt { get; set; }
+    public bool IsUsed { get; set; }
+}
+
+public record CreateModelGenerationJobResult(ModelGenerationJobDto Job, string CaptureToken, DateTimeOffset ExpiresAt);

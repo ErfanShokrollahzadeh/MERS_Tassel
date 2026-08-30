@@ -101,6 +101,14 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
         services.AddScoped<IProductModelStorageService, LocalProductModelStorageService>();
+        services.AddScoped<IModelGenerationStorageService, ModelGenerationStorage>();
+        services.AddScoped<IProductModelGenerationService, ProductModelGenerationService>();
+        services.AddScoped<IProductModelGenerationProcessor, ProductModelGenerationProcessor>();
+        services.AddHttpClient<IProductModelGenerationProvider, MeshyProductModelGenerationProvider>(client =>
+            client.Timeout = TimeSpan.FromMinutes(3));
+        services.AddHttpClient<IModelGeometryProcessor, HttpModelGeometryProcessor>(client =>
+            client.Timeout = TimeSpan.FromMinutes(3));
+        services.AddHostedService<ProductModelGenerationWorker>();
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ICartService, CartService>();

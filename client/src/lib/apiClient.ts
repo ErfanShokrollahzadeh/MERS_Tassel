@@ -40,6 +40,15 @@ export const API_BASE_URL = resolveApiBase();
 export const API_URL = `${API_BASE_URL}/api/v1`;
 
 /**
+ * Browser requests stay on the storefront origin and use the Next proxy. This avoids CORS and
+ * keeps a phone capture/admin session working when the configured API host is `localhost` on a
+ * different computer. Server-rendered calls still target the configured API origin directly.
+ */
+function requestUrl(path: string) {
+  return typeof window !== 'undefined' ? `/api/v1${path}` : `${API_URL}${path}`;
+}
+
+/**
  * URL for rendering stored media.
  *
  * Deliberately relative: `/uploads/...` is proxied to the API by the rewrite in
@@ -148,7 +157,7 @@ async function refreshAccessToken(): Promise<string | null> {
 
   refreshInFlight = (async () => {
     try {
-      const response = await fetch(`${API_URL}/auth/refresh`, {
+      const response = await fetch(requestUrl('/auth/refresh'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh }),
@@ -190,7 +199,7 @@ async function send<T>(path: string, options: RequestOptions, accessOverride?: s
 
   let response: Response;
   try {
-    response = await fetch(`${API_URL}${path}`, {
+    response = await fetch(requestUrl(path), {
       method,
       headers,
       body: form ?? (body !== undefined ? JSON.stringify(body) : undefined),

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { productArUrl } from './modelUrls';
 import { useI18n } from '@/i18n/I18nProvider';
 
-export function ArQrDialog({ slug, productName, onClose }: { slug: string; productName: string; onClose: () => void }) {
+export function ArQrDialog({ slug, productName, placement, onClose }: { slug: string; productName: string; placement: 'floor' | 'wall'; onClose: () => void }) {
   const { t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
@@ -13,7 +13,7 @@ export function ArQrDialog({ slug, productName, onClose }: { slug: string; produ
   onCloseRef.current = onClose;
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
-  const url = productArUrl(slug);
+  const url = productArUrl(slug, placement);
 
   useEffect(() => {
     const dialog = dialogRef.current;

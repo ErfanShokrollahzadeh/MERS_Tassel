@@ -18,6 +18,7 @@ import {
 import { ApiError, mediaUrl } from '@/lib/apiClient';
 import { useToastStore } from '@/stores/toast';
 import type { Category, Product } from '@/types/commerce';
+import { ModelGenerationPanel } from '@/components/admin/ModelGenerationPanel';
 
 const emptyVariant = (): VariantDraft => ({
   title: '',
@@ -98,6 +99,7 @@ export function ProductEditor({
     variantId: null as number | null,
     alt: product?.modelAssets?.[0]?.alt ?? '',
     placement: (product?.modelAssets?.[0]?.placement ?? 'floor') as 'floor' | 'wall',
+    supportedPlacements: product?.modelAssets?.[0]?.supportedPlacements ?? ['floor'] as Array<'floor' | 'wall'>,
     scaleMode: 'fixed' as const,
     widthMm: product?.modelAssets?.[0]?.dimensionsMm.width ?? 0,
     heightMm: product?.modelAssets?.[0]?.dimensionsMm.height ?? 0,
@@ -329,7 +331,7 @@ export function ProductEditor({
 
           <section className="editor-section editor-model-section">
             <h3><Box size={15} /> 3D &amp; AR</h3>
-            {!isEdit ? <p className="editor-hint">Publish the product first, then add its GLB/USDZ model from the editor.</p> : (
+            {!isEdit ? <p className="editor-hint">Publish the product first, then add its GLB model (and an optional USDZ file for iOS Quick Look) from the editor.</p> : (
               <>
                 {(product?.modelAssets ?? []).map((model) => (
                   <div className="model-asset-row" key={model.id}>
@@ -346,6 +348,7 @@ export function ProductEditor({
                       variantId,
                       alt: selected.alt,
                       placement: selected.placement,
+                      supportedPlacements: selected.supportedPlacements ?? [selected.placement],
                       scaleMode: 'fixed',
                       widthMm: selected.dimensionsMm.width,
                       heightMm: selected.dimensionsMm.height,
@@ -353,20 +356,22 @@ export function ProductEditor({
                     } : { ...modelDraft, variantId });
                     setModelFiles({});
                   }}><option value="">Product default</option>{draft.variants.filter((variant) => variant.id).map((variant) => <option key={variant.id} value={variant.id}>{variant.color || variant.title}</option>)}</select></label>
-                  <label>Placement<select value={modelDraft.placement} onChange={(e) => setModelDraft({ ...modelDraft, placement: e.target.value as 'floor' | 'wall' })}><option value="floor">Floor</option><option value="wall">Wall</option></select></label>
+                  <label>Default placement<select value={modelDraft.placement} onChange={(e) => { const placement = e.target.value as 'floor' | 'wall'; setModelDraft({ ...modelDraft, placement, supportedPlacements: modelDraft.supportedPlacements.includes(placement) ? modelDraft.supportedPlacements : [...modelDraft.supportedPlacements, placement] }); }}><option value="floor">Desk / floor</option><option value="wall">Wall</option></select></label>
                   <label>Width (mm)<input type="number" min="1" value={modelDraft.widthMm || ''} onChange={(e) => setModelDraft({ ...modelDraft, widthMm: Number(e.target.value) })} /></label>
                   <label>Height (mm)<input type="number" min="1" value={modelDraft.heightMm || ''} onChange={(e) => setModelDraft({ ...modelDraft, heightMm: Number(e.target.value) })} /></label>
                   <label>Depth (mm)<input type="number" min="1" value={modelDraft.depthMm || ''} onChange={(e) => setModelDraft({ ...modelDraft, depthMm: Number(e.target.value) })} /></label>
                 </div>
+                <div className="model-placement-options"><span>Supported surfaces</span><label><input type="checkbox" checked={modelDraft.supportedPlacements.includes('floor')} onChange={(e) => setModelDraft({ ...modelDraft, supportedPlacements: e.target.checked ? (modelDraft.supportedPlacements.includes('floor') ? modelDraft.supportedPlacements : [...modelDraft.supportedPlacements, 'floor']) : modelDraft.supportedPlacements.filter((value) => value !== 'floor') })} /> Desk / table / floor</label><label><input type="checkbox" checked={modelDraft.supportedPlacements.includes('wall')} onChange={(e) => setModelDraft({ ...modelDraft, supportedPlacements: e.target.checked ? (modelDraft.supportedPlacements.includes('wall') ? modelDraft.supportedPlacements : [...modelDraft.supportedPlacements, 'wall']) : modelDraft.supportedPlacements.filter((value) => value !== 'wall') })} /> Wall</label></div>
                 <div className="model-upload-grid">
                   <button type="button" className="upload-zone upload-zone--compact" onClick={() => glbInput.current?.click()}><Box size={18} /><strong>{modelFiles.glb?.name ?? 'Choose GLB model'}</strong><span>Required · up to 15 MB</span></button>
-                  <button type="button" className="upload-zone upload-zone--compact" onClick={() => usdzInput.current?.click()}><strong>{modelFiles.usdz?.name ?? 'Choose USDZ model'}</strong><span>Required for iOS AR</span></button>
+                  <button type="button" className="upload-zone upload-zone--compact" onClick={() => usdzInput.current?.click()}><strong>{modelFiles.usdz?.name ?? 'Choose USDZ model'}</strong><span>Optional · iOS Quick Look</span></button>
                   <button type="button" className="upload-zone upload-zone--compact" onClick={() => posterInput.current?.click()}><ImagePlus size={18} /><strong>{modelFiles.poster?.name ?? 'Choose poster'}</strong><span>Optional · JPEG/PNG/WebP</span></button>
                 </div>
                 <input ref={glbInput} type="file" accept=".glb,model/gltf-binary" hidden onChange={(e) => chooseModelFile('glb', e.target.files?.[0])} />
                 <input ref={usdzInput} type="file" accept=".usdz,model/vnd.usdz+zip" hidden onChange={(e) => chooseModelFile('usdz', e.target.files?.[0])} />
                 <input ref={posterInput} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => chooseModelFile('poster', e.target.files?.[0])} />
                 <div className="model-section-actions"><small className="editor-hint">Models use fixed scale. Enter the real physical dimensions.</small><button type="button" className="admin-button admin-button--secondary" onClick={() => saveModel.mutate()} disabled={saveModel.isPending}>{saveModel.isPending && <Loader2 size={14} className="spin" />}{saveModel.isPending ? 'Validating…' : 'Save 3D model'}</button></div>
+                <ModelGenerationPanel productId={product!.id} variantId={modelDraft.variantId} />
               </>
             )}
           </section>

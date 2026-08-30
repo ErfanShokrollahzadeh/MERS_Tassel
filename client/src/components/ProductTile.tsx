@@ -10,6 +10,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { productCopy } from '@/i18n/catalog';
 import { useAuthStore } from '@/stores/auth';
 import { formatMoney } from '@/lib/money';
+import { useFavoritesStore } from '@/stores/favorites';
 
 export function ProductTile({ product, priority = false }: { product: Product; priority?: boolean }) {
   const add = useCartStore((state) => state.add);
@@ -19,6 +20,8 @@ export function ProductTile({ product, priority = false }: { product: Product; p
   const { t, locale } = useI18n();
   const display = productCopy(product, locale);
   const sale = product.compareAt && product.compareAt.amount > product.price.amount;
+  const favorite = useFavoritesStore((state) => state.items.some((item) => item.slug === product.slug));
+  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
 
   const addProtected = () => {
     if (!user) {
@@ -38,7 +41,7 @@ export function ProductTile({ product, priority = false }: { product: Product; p
           <MediaImage src={product.image} alt={display.name} sizes="(max-width: 720px) 50vw, (max-width: 1050px) 50vw, 25vw" priority={priority} />
         </Link>
         <div className="product-badges">{product.isNew && <span className="badge">{t('product.new')}</span>}{sale && <span className="badge badge--dark">{t('product.save', { amount: formatMoney(product.compareAt!.amount - product.price.amount, locale) })}</span>}{product.stock === 0 && <span className="badge badge--muted">{t('product.soldOut')}</span>}</div>
-        <button className="tile-heart" aria-label={t('product.savePiece', { name: display.name })}><Heart size={18} /></button>
+        <button type="button" className={`tile-heart${favorite ? ' tile-heart--active' : ''}`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); toggleFavorite(product); }} aria-label={t(favorite ? 'product.removeSavedPiece' : 'product.savePiece', { name: display.name })} aria-pressed={favorite}><Heart size={18} fill={favorite ? 'currentColor' : 'none'} /></button>
         <button className="quick-add" onClick={addProtected} disabled={product.stock === 0}><Plus size={16} /> {product.stock === 0 ? t('product.unavailable') : t('product.quickAdd')}</button>
       </div>
       <div className="product-tile__body">
