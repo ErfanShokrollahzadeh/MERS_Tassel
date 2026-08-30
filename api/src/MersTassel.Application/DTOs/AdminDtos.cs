@@ -129,3 +129,14 @@ public class MediaReorderRequest
     /// <summary>Media ids in the order they should appear; the first becomes primary.</summary>
     public List<int> MediaIds { get; set; } = [];
 }
+
+public class ProductModelWriteRequest
+{
+    public int? VariantId { get; set; }
+    public string Alt { get; set; } = string.Empty;
+    public string Placement { get; set; } = "floor";
+    public string ScaleMode { get; set; } = "fixed";
+    public decimal WidthMm { get; set; }
+    public decimal HeightMm { get; set; }
+    public decimal DepthMm { get; set; }
+}

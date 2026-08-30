@@ -4,6 +4,16 @@ using MersTassel.Domain.Entities;
 
 namespace MersTassel.Application.Interfaces;
 
+public interface IProductModelStorageService
+{
+    void ValidateGlb(Stream content, string fileName, long length);
+    void ValidateUsdz(Stream content, string fileName, long length);
+    Task<string> SaveGlbAsync(Stream content, CancellationToken ct = default);
+    Task<string> SaveUsdzAsync(Stream content, CancellationToken ct = default);
+    Task<string> SavePosterAsync(Stream content, string fileName, CancellationToken ct = default);
+    Task DeleteAsync(string? relativePath, CancellationToken ct = default);
+}
+
 /// <summary>
 /// Local disk storage for uploaded media. Implementations must validate content, not just
 /// the file name, and must never delete a physical file before its database row is committed.
@@ -38,6 +48,9 @@ public interface IProductService
     Task<ProductDto> AddMediaAsync(int productId, IReadOnlyList<UploadedFile> images, CancellationToken ct = default);
     Task<ProductDto> RemoveMediaAsync(int productId, int mediaId, CancellationToken ct = default);
     Task<ProductDto> ReorderMediaAsync(int productId, IReadOnlyList<int> mediaIds, CancellationToken ct = default);
+    Task<ProductDto> AddModelAsync(int productId, ProductModelWriteRequest request, UploadedFile glb, UploadedFile? usdz, UploadedFile? poster, CancellationToken ct = default);
+    Task<ProductDto> UpdateModelAsync(int productId, int modelId, ProductModelWriteRequest request, UploadedFile? glb, UploadedFile? usdz, UploadedFile? poster, CancellationToken ct = default);
+    Task<ProductDto> RemoveModelAsync(int productId, int modelId, CancellationToken ct = default);
 }
 
 public interface ICategoryService

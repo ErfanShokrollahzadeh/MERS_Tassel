@@ -1051,6 +1051,99 @@ namespace MersTassel.PostgresMigrations.Migrations
                     b.ToTable("ProductMedia", (string)null);
                 });
 
+            modelBuilder.Entity("MersTassel.Domain.Entities.ProductModelAsset", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Alt")
+                        .IsRequired()
+                        .HasMaxLength(240)
+                        .HasColumnType("character varying(240)");
+
+                    b.Property<long>("CreatedAt")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeletedAt")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DepthMm")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("GlbBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("GlbPath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<long>("HeightMm")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isDelete");
+
+                    b.Property<string>("Placement")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("PosterPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ScaleMode")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("UpdatedAt")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("UsdzBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("UsdzPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ValidationMessage")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int?>("VariantId")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("WidthMm")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsDelete");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("VariantId");
+
+                    b.HasIndex("ProductId", "VariantId", "IsDelete")
+                        .IsUnique();
+
+                    b.ToTable("ProductModelAssets", (string)null);
+                });
+
             modelBuilder.Entity("MersTassel.Domain.Entities.ProductVariant", b =>
                 {
                     b.Property<int>("Id")
@@ -1722,6 +1815,24 @@ namespace MersTassel.PostgresMigrations.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("MersTassel.Domain.Entities.ProductModelAsset", b =>
+                {
+                    b.HasOne("MersTassel.Domain.Entities.Product", "Product")
+                        .WithMany("ModelAssets")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MersTassel.Domain.Entities.ProductVariant", "Variant")
+                        .WithMany()
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Variant");
+                });
+
             modelBuilder.Entity("MersTassel.Domain.Entities.ProductVariant", b =>
                 {
                     b.HasOne("MersTassel.Domain.Entities.Product", "Product")
@@ -1870,6 +1981,8 @@ namespace MersTassel.PostgresMigrations.Migrations
             modelBuilder.Entity("MersTassel.Domain.Entities.Product", b =>
                 {
                     b.Navigation("Media");
+
+                    b.Navigation("ModelAssets");
 
                     b.Navigation("Variants");
                 });

@@ -8,14 +8,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MersTassel.Infrastructure.Services;
 
-public class ProductService(AppDbContext db, IFileStorageService storage) : IProductService
+public class ProductService(AppDbContext db, IFileStorageService storage, IProductModelStorageService modelStorage) : IProductService
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private IQueryable<Product> BaseQuery() => db.Products
         .Include(p => p.Category)
         .Include(p => p.Variants)
-        .Include(p => p.Media);
+        .Include(p => p.Media)
+        .Include(p => p.ModelAssets);
 
     public async Task<PagedResult<ProductDto>> ListAsync(ProductQuery query, CancellationToken ct = default)
     {
@@ -159,6 +160,7 @@ public class ProductService(AppDbContext db, IFileStorageService storage) : IPro
         var product = await db.Products
             .Include(p => p.Variants)
             .Include(p => p.Media)
+            .Include(p => p.ModelAssets)
             .FirstOrDefaultAsync(p => p.Id == id, ct)
             ?? throw new NotFoundException($"No product found with id {id}.");
 
@@ -205,6 +207,7 @@ public class ProductService(AppDbContext db, IFileStorageService storage) : IPro
         var product = await db.Products
             .Include(p => p.Variants)
             .Include(p => p.Media)
+            .Include(p => p.ModelAssets)
             .FirstOrDefaultAsync(p => p.Id == id, ct)
             ?? throw new NotFoundException($"No product found with id {id}.");
 
@@ -215,6 +218,7 @@ public class ProductService(AppDbContext db, IFileStorageService storage) : IPro
         product.DeletedAt = now;
         foreach (var variant in product.Variants) { variant.IsDelete = true; variant.DeletedAt = now; }
         foreach (var media in product.Media) { media.IsDelete = true; media.DeletedAt = now; }
+        foreach (var model in product.ModelAssets) { model.IsDelete = true; model.DeletedAt = now; }
 
         await db.SaveChangesAsync(ct);
     }
@@ -284,6 +288,152 @@ public class ProductService(AppDbContext db, IFileStorageService storage) : IPro
 
         await db.SaveChangesAsync(ct);
         return await GetByIdAsync(productId, ct);
+    }
+
+    public async Task<ProductDto> AddModelAsync(int productId, ProductModelWriteRequest request, UploadedFile glb, UploadedFile? usdz, UploadedFile? poster, CancellationToken ct = default)
+    {
+        var product = await db.Products
+            .Include(p => p.Variants)
+            .Include(p => p.ModelAssets)
+            .FirstOrDefaultAsync(p => p.Id == productId, ct)
+            ?? throw new NotFoundException($"No product found with id {productId}.");
+
+        ValidateModelRequest(product, request);
+        if (request.VariantId.HasValue && product.Variants.All(v => v.Id != request.VariantId.Value || v.IsDelete))
+            throw new ValidationException(nameof(request.VariantId), "That finish does not belong to this product.");
+        if (product.ModelAssets.Any(m => !m.IsDelete && m.VariantId == request.VariantId))
+            throw new ConflictException("A 3D model already exists for this product finish.");
+
+        modelStorage.ValidateGlb(glb.Content, glb.FileName, glb.Length);
+        if (usdz is not null) modelStorage.ValidateUsdz(usdz.Content, usdz.FileName, usdz.Length);
+        var glbPath = await modelStorage.SaveGlbAsync(glb.Content, ct);
+        string? usdzPath = null;
+        string? posterPath = null;
+        try
+        {
+            if (usdz is not null) usdzPath = await modelStorage.SaveUsdzAsync(usdz.Content, ct);
+            if (poster is not null)
+            {
+                if (poster.Length > 10 * 1024 * 1024) throw new ValidationException("poster", "Poster must be 10 MB or smaller.");
+                posterPath = await modelStorage.SavePosterAsync(poster.Content, poster.FileName, ct);
+            }
+
+            product.ModelAssets.Add(new ProductModelAsset
+            {
+                VariantId = request.VariantId,
+                GlbPath = glbPath,
+                UsdzPath = usdzPath,
+                PosterPath = posterPath,
+                Alt = request.Alt.Trim(),
+                Placement = request.Placement,
+                ScaleMode = "fixed",
+                WidthMm = request.WidthMm,
+                HeightMm = request.HeightMm,
+                DepthMm = request.DepthMm,
+                // A GLB is enough for inline 3D and Android AR. Keep the asset public while
+                // clearly flagging the optional iOS Quick Look enhancement for the admin.
+                Status = "ready",
+                ValidationMessage = usdzPath is null ? "Add a USDZ file to enable iOS Quick Look." : null,
+                GlbBytes = glb.Length,
+                UsdzBytes = usdz?.Length,
+            });
+            await db.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            await modelStorage.DeleteAsync(glbPath, ct);
+            await modelStorage.DeleteAsync(usdzPath, ct);
+            await modelStorage.DeleteAsync(posterPath, ct);
+            throw;
+        }
+
+        return await GetByIdAsync(productId, ct);
+    }
+
+    public async Task<ProductDto> UpdateModelAsync(int productId, int modelId, ProductModelWriteRequest request, UploadedFile? glb, UploadedFile? usdz, UploadedFile? poster, CancellationToken ct = default)
+    {
+        var product = await db.Products
+            .Include(p => p.Variants)
+            .Include(p => p.ModelAssets)
+            .FirstOrDefaultAsync(p => p.Id == productId, ct)
+            ?? throw new NotFoundException($"No product found with id {productId}.");
+        var model = product.ModelAssets.FirstOrDefault(m => m.Id == modelId && !m.IsDelete)
+            ?? throw new NotFoundException($"No 3D model found with id {modelId}.");
+
+        ValidateModelRequest(product, request);
+        if (request.VariantId.HasValue && product.Variants.All(v => v.Id != request.VariantId.Value || v.IsDelete))
+            throw new ValidationException(nameof(request.VariantId), "That finish does not belong to this product.");
+        if (product.ModelAssets.Any(m => !m.IsDelete && m.Id != modelId && m.VariantId == request.VariantId))
+            throw new ConflictException("A 3D model already exists for this product finish.");
+
+        if (glb is not null) modelStorage.ValidateGlb(glb.Content, glb.FileName, glb.Length);
+        if (usdz is not null) modelStorage.ValidateUsdz(usdz.Content, usdz.FileName, usdz.Length);
+
+        var oldGlb = model.GlbPath;
+        var oldUsdz = model.UsdzPath;
+        var oldPoster = model.PosterPath;
+        string? newGlb = null;
+        string? newUsdz = null;
+        string? newPoster = null;
+        try
+        {
+            if (glb is not null) newGlb = await modelStorage.SaveGlbAsync(glb.Content, ct);
+            if (usdz is not null) newUsdz = await modelStorage.SaveUsdzAsync(usdz.Content, ct);
+            if (poster is not null)
+            {
+                if (poster.Length > 10 * 1024 * 1024) throw new ValidationException("poster", "Poster must be 10 MB or smaller.");
+                newPoster = await modelStorage.SavePosterAsync(poster.Content, poster.FileName, ct);
+            }
+
+            model.VariantId = request.VariantId;
+            model.GlbPath = newGlb ?? model.GlbPath;
+            model.UsdzPath = newUsdz ?? model.UsdzPath;
+            model.PosterPath = newPoster ?? model.PosterPath;
+            model.Alt = request.Alt.Trim();
+            model.Placement = request.Placement;
+            model.ScaleMode = "fixed";
+            model.WidthMm = request.WidthMm;
+            model.HeightMm = request.HeightMm;
+            model.DepthMm = request.DepthMm;
+            model.Status = "ready";
+            model.ValidationMessage = string.IsNullOrWhiteSpace(model.UsdzPath) ? "Add a USDZ file to enable iOS Quick Look." : null;
+            if (glb is not null) model.GlbBytes = glb.Length;
+            if (usdz is not null) model.UsdzBytes = usdz.Length;
+            await db.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            await modelStorage.DeleteAsync(newGlb, ct);
+            await modelStorage.DeleteAsync(newUsdz, ct);
+            await modelStorage.DeleteAsync(newPoster, ct);
+            throw;
+        }
+
+        if (newGlb is not null && oldGlb != newGlb) await modelStorage.DeleteAsync(oldGlb, ct);
+        if (newUsdz is not null && oldUsdz != newUsdz) await modelStorage.DeleteAsync(oldUsdz, ct);
+        if (newPoster is not null && oldPoster != newPoster) await modelStorage.DeleteAsync(oldPoster, ct);
+        return await GetByIdAsync(productId, ct);
+    }
+
+    public async Task<ProductDto> RemoveModelAsync(int productId, int modelId, CancellationToken ct = default)
+    {
+        var product = await db.Products.Include(p => p.ModelAssets).FirstOrDefaultAsync(p => p.Id == productId, ct)
+            ?? throw new NotFoundException($"No product found with id {productId}.");
+        var model = product.ModelAssets.FirstOrDefault(m => m.Id == modelId && !m.IsDelete)
+            ?? throw new NotFoundException($"No 3D model found with id {modelId}.");
+        var paths = new[] { model.GlbPath, model.UsdzPath, model.PosterPath };
+        model.IsDelete = true;
+        model.DeletedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(ct);
+        foreach (var path in paths) await modelStorage.DeleteAsync(path, ct);
+        return await GetByIdAsync(productId, ct);
+    }
+
+    private static void ValidateModelRequest(Product product, ProductModelWriteRequest request)
+    {
+        if (request.ScaleMode != "fixed") throw new ValidationException(nameof(request.ScaleMode), "AR models must use fixed scale.");
+        if (request.WidthMm <= 0 || request.HeightMm <= 0 || request.DepthMm <= 0)
+            throw new ValidationException("dimensions", "Width, height and depth must be greater than zero.");
     }
 
     private async Task AttachImagesAsync(Product product, IReadOnlyList<UploadedFile> images, CancellationToken ct)

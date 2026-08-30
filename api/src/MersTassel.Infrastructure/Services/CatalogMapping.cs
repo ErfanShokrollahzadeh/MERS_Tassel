@@ -14,6 +14,8 @@ public static class CatalogMapping
     {
         var activeVariants = p.Variants.Where(v => !v.IsDelete && v.IsActive).OrderBy(v => v.Id).ToList();
         var media = p.Media.Where(m => !m.IsDelete).OrderBy(m => m.SortOrder).ThenBy(m => m.Id).ToList();
+        var models = p.ModelAssets.Where(m => !m.IsDelete && m.Status == "ready")
+            .OrderBy(m => m.VariantId.HasValue).ThenBy(m => m.Id).ToList();
         var images = media.Select(m => m.ImagePath).ToList();
 
         return new ProductDto
@@ -56,6 +58,18 @@ public static class CatalogMapping
                 Alt = m.Alt,
                 SortOrder = m.SortOrder,
                 IsPrimary = m.IsPrimary,
+            }).ToList(),
+            ModelAssets = models.Select(m => new ProductModelAssetDto
+            {
+                Id = m.Id,
+                VariantId = m.VariantId,
+                GlbPath = m.GlbPath,
+                UsdzPath = m.UsdzPath,
+                PosterPath = m.PosterPath,
+                Alt = m.Alt,
+                Placement = m.Placement,
+                ScaleMode = "fixed",
+                DimensionsMm = new ModelDimensionsDto { Width = m.WidthMm, Height = m.HeightMm, Depth = m.DepthMm },
             }).ToList(),
             CreatedAt = p.CreatedAt,
             UpdatedAt = p.UpdatedAt,

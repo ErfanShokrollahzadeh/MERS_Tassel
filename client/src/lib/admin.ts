@@ -140,6 +140,43 @@ export function reorderProductMedia(id: number, mediaIds: number[]) {
   return api.put<Product>(`/admin/products/${id}/media/reorder`, { mediaIds }, { auth: true });
 }
 
+export type ProductModelDraft = {
+  variantId?: number | null;
+  alt: string;
+  placement: 'floor' | 'wall';
+  scaleMode: 'fixed';
+  widthMm: number;
+  heightMm: number;
+  depthMm: number;
+};
+
+function modelForm(draft: ProductModelDraft, glb?: File | null, usdz?: File | null, poster?: File | null) {
+  const form = new FormData();
+  if (draft.variantId) form.append('VariantId', String(draft.variantId));
+  form.append('Alt', draft.alt);
+  form.append('Placement', draft.placement);
+  form.append('ScaleMode', draft.scaleMode);
+  form.append('WidthMm', String(draft.widthMm));
+  form.append('HeightMm', String(draft.heightMm));
+  form.append('DepthMm', String(draft.depthMm));
+  if (glb) form.append('glb', glb);
+  if (usdz) form.append('usdz', usdz);
+  if (poster) form.append('poster', poster);
+  return form;
+}
+
+export function addProductModel(id: number, draft: ProductModelDraft, glb: File, usdz?: File | null, poster?: File | null) {
+  return api.postForm<Product>(`/admin/products/${id}/models`, modelForm(draft, glb, usdz, poster), { auth: true });
+}
+
+export function updateProductModel(id: number, modelId: number, draft: ProductModelDraft, glb?: File | null, usdz?: File | null, poster?: File | null) {
+  return api.putForm<Product>(`/admin/products/${id}/models/${modelId}`, modelForm(draft, glb, usdz, poster), { auth: true });
+}
+
+export function deleteProductModel(id: number, modelId: number) {
+  return api.delete<Product>(`/admin/products/${id}/models/${modelId}`, { auth: true });
+}
+
 // ── Categories ──────────────────────────────────────────────────────────────
 
 export type CategoryDraft = {

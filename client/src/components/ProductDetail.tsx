@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft, Check, ChevronDown, Heart, Minus, PackageCheck, Plus, RotateCcw, ShieldCheck, Star } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { ArrowLeft, Box, Check, ChevronDown, Heart, Minus, PackageCheck, Plus, RotateCcw, ShieldCheck, Star } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Product } from '@/types/commerce';
 import { useCartStore } from '@/stores/cart';
@@ -14,6 +14,7 @@ import { colorName, colorSwatch, productCopy } from '@/i18n/catalog';
 import { useAuthStore } from '@/stores/auth';
 import { TradeInWidget } from '@/components/TradeInWidget';
 import { formatMoney } from '@/lib/money';
+import { Product3DExperience } from '@/components/product-3d/Product3DExperience';
 
 export function ProductDetail({ product, related }: { product: Product; related: Product[] }) {
   const [activeImage, setActiveImage] = useState(0);
@@ -25,6 +26,7 @@ export function ProductDetail({ product, related }: { product: Product; related:
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { t, locale } = useI18n();
   const display = productCopy(product, locale);
 
@@ -32,6 +34,14 @@ export function ProductDetail({ product, related }: { product: Product; related:
   const selectedVariant = product.variants.find((variant) => variant.color === color);
   const availableStock = selectedVariant?.stock ?? product.stock;
   const price = selectedVariant?.price ?? product.price.amount;
+  const images = product.images.length ? product.images : [product.image].filter(Boolean);
+  const modelAssets = product.modelAssets ?? [];
+  const selectedModel = modelAssets.find((asset) => asset.variantId === selectedVariant?.id)
+    ?? modelAssets.find((asset) => asset.variantId == null);
+
+  useEffect(() => {
+    if (searchParams.get('ar') === '1' && selectedModel) setActiveImage(images.length);
+  }, [images.length, searchParams, selectedModel]);
 
   const addSelected = () => {
     if (!user) {
@@ -40,8 +50,6 @@ export function ProductDetail({ product, related }: { product: Product; related:
     }
     void add(product.slug, color, quantity);
   };
-
-  const images = product.images.length ? product.images : [product.image].filter(Boolean);
 
   return (
     <div className="pdp-page">
@@ -55,15 +63,20 @@ export function ProductDetail({ product, related }: { product: Product; related:
                 <MediaImage src={image} alt="" sizes="82px" />
               </button>
             ))}
+            {selectedModel && <button key="3d" className={activeImage === images.length ? 'active pdp-thumb--3d' : 'pdp-thumb--3d'} onClick={() => setActiveImage(images.length)} aria-label={`${display.name} · ${t('model.tab')}`}>
+              <Box size={18} /><span>{t('model.tab')}</span>
+            </button>}
           </div>
           <div className="pdp-main-image">
-            <AnimatePresence mode="wait">
-              <motion.div className="pdp-image-motion" key={images[activeImage]} initial={{ opacity: 0, scale: 1.02 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: .32 }}>
-                <MediaImage src={images[activeImage]} alt={`${display.name}, ${t('pdp.viewIndex', { index: activeImage + 1 })}`} sizes="(max-width: 900px) 100vw, 55vw" priority={activeImage === 0} />
-              </motion.div>
-            </AnimatePresence>
-            <button className="pdp-save" aria-label={t('product.savePiece', { name: display.name })}><Heart size={18} /></button>
-            <span>{t('pdp.exploreDetail')}</span>
+            {activeImage === images.length && selectedModel ? <Product3DExperience asset={selectedModel} productName={display.name} productSlug={product.slug} fallbackPoster={images[0]} autoFocus={searchParams.get('ar') === '1'} onViewPhotos={() => setActiveImage(0)} /> : <>
+              <AnimatePresence mode="wait">
+                <motion.div className="pdp-image-motion" key={images[activeImage]} initial={{ opacity: 0, scale: 1.02 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: .32 }}>
+                  <MediaImage src={images[activeImage]} alt={`${display.name}, ${t('pdp.viewIndex', { index: activeImage + 1 })}`} sizes="(max-width: 900px) 100vw, 55vw" priority={activeImage === 0} />
+                </motion.div>
+              </AnimatePresence>
+              <button className="pdp-save" aria-label={t('product.savePiece', { name: display.name })}><Heart size={18} /></button>
+              <span>{t('pdp.exploreDetail')}</span>
+            </>}
           </div>
         </div>
 
@@ -84,7 +97,7 @@ export function ProductDetail({ product, related }: { product: Product; related:
                     <button
                       key={option}
                       className={`${color === option ? 'active' : ''}${soldOut ? ' swatch--soldout' : ''}`}
-                      onClick={() => { setColor(option); setQuantity(1); }}
+                      onClick={() => { setColor(option); setQuantity(1); if (!modelAssets.some((asset) => asset.variantId === product.variants.find((v) => v.color === option)?.id) && !modelAssets.some((asset) => asset.variantId == null)) setActiveImage(0); }}
                       aria-label={t('pdp.choose', { option: colorName(option, product.variants, locale) })}
                     >
                       <i style={{ background: colorSwatch(option, product.variants) }} />

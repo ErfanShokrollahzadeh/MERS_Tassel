@@ -14,7 +14,8 @@ namespace MersTassel.Api.Controllers.Admin;
 [Tags("Admin · Catalog")]
 public class AdminProductsController(
     IProductService products,
-    IValidator<ProductWriteRequest> validator) : ApiControllerBase
+    IValidator<ProductWriteRequest> validator,
+    IValidator<ProductModelWriteRequest> modelValidator) : ApiControllerBase
 {
     /// <summary>Admin listing — unlike the public route this includes deactivated products.</summary>
     [HttpGet]
@@ -107,6 +108,52 @@ public class AdminProductsController(
     public async Task<ActionResult<ApiResponse<ProductDto>>> ReorderMedia(
         int id, MediaReorderRequest request, CancellationToken ct) =>
         Ok(ApiResponse<ProductDto>.Ok(await products.ReorderMediaAsync(id, request.MediaIds, ct)));
+
+    [HttpPost("{id:int}/models")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(45 * 1024 * 1024)]
+    public async Task<ActionResult<ApiResponse<ProductDto>>> AddModel(
+        int id,
+        [FromForm] ProductModelWriteRequest request,
+        [FromForm] IFormFile glb,
+        [FromForm] IFormFile? usdz,
+        [FromForm] IFormFile? poster,
+        CancellationToken ct)
+    {
+        await ValidateAsync(modelValidator, request, ct);
+        if (glb is null || glb.Length == 0)
+            throw new MersTassel.Application.Common.ValidationException("glb", "A GLB model is required.");
+
+        using var glbUpload = FormFileAdapter.Open(glb);
+        using var usdzUpload = FormFileAdapter.Open(usdz);
+        using var posterUpload = FormFileAdapter.Open(poster);
+        var saved = await products.AddModelAsync(id, request, glbUpload.Single!, usdzUpload.Single, posterUpload.Single, ct);
+        return StatusCode(StatusCodes.Status201Created, ApiResponse<ProductDto>.Ok(saved, "3D model saved."));
+    }
+
+    [HttpPut("{id:int}/models/{modelId:int}")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(45 * 1024 * 1024)]
+    public async Task<ActionResult<ApiResponse<ProductDto>>> UpdateModel(
+        int id,
+        int modelId,
+        [FromForm] ProductModelWriteRequest request,
+        [FromForm] IFormFile? glb,
+        [FromForm] IFormFile? usdz,
+        [FromForm] IFormFile? poster,
+        CancellationToken ct)
+    {
+        await ValidateAsync(modelValidator, request, ct);
+        using var glbUpload = FormFileAdapter.Open(glb);
+        using var usdzUpload = FormFileAdapter.Open(usdz);
+        using var posterUpload = FormFileAdapter.Open(poster);
+        var saved = await products.UpdateModelAsync(id, modelId, request, glbUpload.Single, usdzUpload.Single, posterUpload.Single, ct);
+        return Ok(ApiResponse<ProductDto>.Ok(saved, "3D model updated."));
+    }
+
+    [HttpDelete("{id:int}/models/{modelId:int}")]
+    public async Task<ActionResult<ApiResponse<ProductDto>>> RemoveModel(int id, int modelId, CancellationToken ct) =>
+        Ok(ApiResponse<ProductDto>.Ok(await products.RemoveModelAsync(id, modelId, ct), "3D model removed."));
 }
 
 /// <summary>

@@ -59,6 +59,7 @@ public class Product : SoftDeletableEntity
 
     public ICollection<ProductVariant> Variants { get; set; } = new List<ProductVariant>();
     public ICollection<ProductMedia> Media { get; set; } = new List<ProductMedia>();
+    public ICollection<ProductModelAsset> ModelAssets { get; set; } = new List<ProductModelAsset>();
 }
 
 public class ProductVariant : SoftDeletableEntity
@@ -90,4 +91,32 @@ public class ProductMedia : SoftDeletableEntity
     public string Alt { get; set; } = string.Empty;
     public int SortOrder { get; set; }
     public bool IsPrimary { get; set; }
+}
+
+/// <summary>
+/// Validated, publishable 3D representation of a product. Binary files remain in storage;
+/// this row contains only immutable public paths and the physical dimensions needed for AR.
+/// </summary>
+public class ProductModelAsset : SoftDeletableEntity
+{
+    public int ProductId { get; set; }
+    public Product Product { get; set; } = null!;
+
+    /// <summary>Optional finish-specific model. Null is the product-level fallback.</summary>
+    public int? VariantId { get; set; }
+    public ProductVariant? Variant { get; set; }
+
+    public string GlbPath { get; set; } = string.Empty;
+    public string? UsdzPath { get; set; }
+    public string? PosterPath { get; set; }
+    public string Alt { get; set; } = string.Empty;
+    public string Placement { get; set; } = "floor";
+    public string ScaleMode { get; set; } = "fixed";
+    public decimal WidthMm { get; set; }
+    public decimal HeightMm { get; set; }
+    public decimal DepthMm { get; set; }
+    public string Status { get; set; } = "draft";
+    public string? ValidationMessage { get; set; }
+    public long GlbBytes { get; set; }
+    public long? UsdzBytes { get; set; }
 }
