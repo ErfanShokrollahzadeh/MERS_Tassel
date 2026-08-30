@@ -13,6 +13,7 @@ import { cartCount, cartSubtotal, useCartStore } from '@/stores/cart';
 import { PanelSkeleton } from '@/components/DataStates';
 import { ExchangePolicyNotice } from '@/components/ExchangePolicyNotice';
 import { ExchangeRequestModal } from '@/components/ExchangeRequestModal';
+import { CartItemRemoveButton } from '@/components/CartItemRemoveButton';
 import type { OrderItem } from '@/types/commerce';
 import { formatMoney, STORE_CURRENCY } from '@/lib/money';
 
@@ -101,7 +102,7 @@ export default function AccountPage() {
                     <article key={item.id}>
                       <MediaImage src={item.image || ''} alt="" sizes="58px" />
                       <div><strong>{name}</strong><span>{finish} · {t('account.quantity', { count: item.quantity })}</span></div>
-                      <b>{money(item.lineTotal)}</b>
+                      <div className="account-bag-line__end"><b>{money(item.lineTotal)}</b><CartItemRemoveButton itemId={item.id} name={name} /></div>
                     </article>
                   );
                 })}

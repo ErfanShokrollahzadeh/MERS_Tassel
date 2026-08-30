@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Gift, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react';
+import { Gift, Minus, Plus, ShoppingBag, X } from 'lucide-react';
 import { cartSubtotal, useCartStore } from '@/stores/cart';
 import { MediaImage } from '@/components/MediaImage';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useAuthStore } from '@/stores/auth';
 import { TradeInWidget } from '@/components/TradeInWidget';
 import { formatMoney } from '@/lib/money';
+import { CartItemRemoveButton } from '@/components/CartItemRemoveButton';
 
 const surpriseRecipientLabels = {
   en: { girlfriend: 'Girlfriend', boyfriend: 'Boyfriend', partner: 'Partner', friend: 'Friend', sister: 'Sister', brother: 'Brother', mother: 'Mother', father: 'Father' },
@@ -26,7 +27,7 @@ function localizedSurpriseValue(labels: Record<string, string>, value: string) {
 }
 
 export function CartDrawer() {
-  const { items, isOpen, close, remove, setQuantity } = useCartStore();
+  const { items, isOpen, close, setQuantity } = useCartStore();
   const subtotal = useCartStore(cartSubtotal);
   const discountTotal = useCartStore((state) => state.discountTotal);
   const totalAfterDiscount = useCartStore((state) => state.totalAfterDiscount);
@@ -98,7 +99,7 @@ export function CartDrawer() {
                           </div>
                         )}
                       </div>
-                      <div className="cart-line__end"><strong>{formatMoney(item.lineTotal, locale)}</strong><button onClick={() => remove(item.id)} aria-label={t('cart.remove', { name })}><Trash2 size={16} /></button></div>
+                      <div className="cart-line__end"><strong>{formatMoney(item.lineTotal, locale)}</strong><CartItemRemoveButton itemId={item.id} name={name} /></div>
                     </motion.article>
                   );
                 })}
