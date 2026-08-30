@@ -18,6 +18,7 @@ import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { useAuthStore } from '@/stores/auth';
 import { PromoCode } from '@/components/PromoCode';
 import { TradeInWidget } from '@/components/TradeInWidget';
+import { CartItemRemoveButton } from '@/components/CartItemRemoveButton';
 import { formatMoney, STORE_CURRENCY } from '@/lib/money';
 
 type CheckoutFields = { email: string };
@@ -156,7 +157,10 @@ export default function CheckoutPage() {
                     <div key={item.id} className="summary-line">
                       <div className="summary-line__media"><MediaImage src={item.image || ''} alt="" sizes="68px" /><span>{item.quantity}</span></div>
                       <section><strong>{name}</strong><small>{surpriseDetails || finish}</small></section>
-                      <b>{formatMoney(item.lineTotal, locale)}</b>
+                      <div className="summary-line__end">
+                        <b>{formatMoney(item.lineTotal, locale)}</b>
+                        <CartItemRemoveButton itemId={item.id} name={name} />
+                      </div>
                     </div>
                   );
                 })}
