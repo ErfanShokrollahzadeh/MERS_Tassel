@@ -60,6 +60,13 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     // camelCase to match the TypeScript client; enums travel as their lowercase names.
     options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+    // Popup targeting values are part of the public wire contract. Without this converter
+    // System.Text.Json emits their numeric backing values (0, 1, ...), while the storefront
+    // and admin clients intentionally use readable camel-case values such as
+    // "centerModal" and "scrollDepth". That mismatch made the popup query succeed but then
+    // crash the popup workspace while it rendered/filterered the response.
+    options.JsonSerializerOptions.Converters.Add(
+        new JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase));
 });
 
 // [ApiController]'s automatic ModelState filter would answer first, with PascalCase keys and

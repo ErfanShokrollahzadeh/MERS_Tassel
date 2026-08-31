@@ -1,6 +1,8 @@
 'use client';
+
 import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, Copy, Sparkles, X } from 'lucide-react';
