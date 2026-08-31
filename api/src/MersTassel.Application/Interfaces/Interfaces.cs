@@ -238,6 +238,11 @@ public interface IDashboardService
     Task<DashboardDto> GetAsync(CancellationToken ct = default);
 }
 
+public interface IMarketingService
+{
+    Task<MarketingDto> GetAsync(CancellationToken ct = default);
+}
+
 public interface IUserAdminService
 {
     Task<PagedResult<AdminUserDto>> ListAsync(string? search, int page, int pageSize, CancellationToken ct = default);

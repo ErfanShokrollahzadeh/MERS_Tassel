@@ -127,6 +127,7 @@ public static class DependencyInjection
         services.AddScoped<ISupportAttachmentStorage, SupportAttachmentStorage>();
         services.AddScoped<ISupportTicketService, SupportTicketService>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IMarketingService, MarketingService>();
         services.AddScoped<IUserAdminService, UserAdminService>();
         services.AddScoped<DatabaseSeeder>();
 

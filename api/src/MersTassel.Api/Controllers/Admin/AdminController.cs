@@ -155,3 +155,14 @@ public class AdminDashboardController(IDashboardService dashboard) : ApiControll
     public async Task<ActionResult<ApiResponse<DashboardDto>>> Get(CancellationToken ct) =>
         Ok(ApiResponse<DashboardDto>.Ok(await dashboard.GetAsync(ct)));
 }
+
+[ApiController]
+[Route("api/v1/admin/marketing")]
+[Authorize(Roles = RoleNames.Admin)]
+[Tags("Admin · Marketing")]
+public class AdminMarketingController(IMarketingService marketing) : ApiControllerBase
+{
+    [HttpGet]
+    public async Task<ActionResult<ApiResponse<MarketingDto>>> Get(CancellationToken ct) =>
+        Ok(ApiResponse<MarketingDto>.Ok(await marketing.GetAsync(ct)));
+}

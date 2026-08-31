@@ -341,6 +341,7 @@ export type Dashboard = {
   recentOrders: Order[];
   topProducts: TopProduct[];
 };
+<<<<<<< ours
 export type PopupType = 'promotional' | 'newsletter' | 'announcement' | 'support_care' | 'custom';
 export type PopupPlacement = 'center_modal' | 'bottom_bar' | 'slide_in_bottom_right' | 'slide_in_bottom_left';
 export type PopupTriggerType = 'delay' | 'scroll_depth' | 'exit_intent' | 'immediate';
@@ -416,3 +417,24 @@ export type PopupDraft = {
   couponCode?: string | null;
 };
 
+=======
+
+export type ChannelAttribution = { channel: string; orders: number; revenue: number; sharePct: number };
+export type FunnelStep = { step: string; count: number };
+export type CohortRow = { cohortWeek: string; cohortSize: number; retentionPcts: number[] };
+
+export type Marketing = {
+  totalSessions: number;
+  sessionsChangePct: number;
+  conversionRate: number;
+  conversionChangePct: number;
+  revenue: number;
+  revenueChangePct: number;
+  acquisitionCost: number;
+  roasMultiplier: number;
+  attribution: ChannelAttribution[];
+  funnel: FunnelStep[];
+  cohorts: CohortRow[];
+  revenueSeries: RevenuePoint[];
+};
+>>>>>>> theirs

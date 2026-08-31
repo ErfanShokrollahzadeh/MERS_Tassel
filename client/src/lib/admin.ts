@@ -4,6 +4,7 @@ import type {
   Category,
   Coupon,
   Dashboard,
+  Marketing,
   ExchangeRequest,
   ExchangeStatus,
   Order,
@@ -22,6 +23,10 @@ import type {
 
 export function fetchDashboard() {
   return api.get<Dashboard>('/admin/dashboard', { auth: true });
+}
+
+export function fetchMarketing() {
+  return api.get<Marketing>('/admin/marketing', { auth: true });
 }
 
 // ── Products ────────────────────────────────────────────────────────────────
@@ -445,6 +450,7 @@ export function deletePopup(id: number) {
 
 export const adminKeys = {
   dashboard: () => ['admin', 'dashboard'] as const,
+  marketing: () => ['admin', 'marketing'] as const,
   products: (query: AdminProductQuery = {}) => ['admin', 'products', query] as const,
   categories: () => ['admin', 'categories'] as const,
   orders: (query: AdminOrderQuery = {}) => ['admin', 'orders', query] as const,
