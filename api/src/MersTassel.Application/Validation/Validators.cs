@@ -46,6 +46,7 @@ public class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequ
             .NotEmpty()
             .MinimumLength(8).WithMessage("Password must be at least 8 characters.")
             .MaximumLength(128)
+            .Matches("[a-z]").WithMessage("Password must contain a lowercase letter.")
             .Matches("[0-9]").WithMessage("Password must contain a digit.");
     }
 }

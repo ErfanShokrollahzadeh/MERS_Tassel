@@ -13,7 +13,7 @@ import { FavoritesDrawer } from '@/components/FavoritesDrawer';
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith('/admin');
-  const isAuth = pathname === '/login' || pathname === '/signup';
+  const isAuth = ['/login', '/signup', '/forgot-password', '/reset-password'].includes(pathname);
   const isCheckout = pathname.startsWith('/checkout');
   const isModelCapture = pathname.startsWith('/model-capture/');
   const reduceMotion = useReducedMotion();
@@ -27,10 +27,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
       {!isAuth && !isCheckout && <StoreHeader />}
       <AnimatePresence mode="wait" initial={false}><motion.main id="main-content" key={pathname} initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, y: -6 }} transition={{ duration: reduceMotion ? 0 : .28, ease: [0.22, 1, 0.36, 1] }}>{children}</motion.main></AnimatePresence>
       {!isAuth && !isCheckout && <StoreFooter />}
-      <CartDrawer />
-      <FavoritesDrawer />
-      <TradeInModal />
-      <CookiePreferencesCenter />
+      {!isAuth && <><CartDrawer /><FavoritesDrawer /><TradeInModal /><CookiePreferencesCenter /></>}
     </div>
   );
 }

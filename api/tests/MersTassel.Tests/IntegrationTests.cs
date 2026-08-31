@@ -515,8 +515,15 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
             { new StringContent("Customer has a verified delivery address."), "Body" },
             { new StringContent("true"), "IsInternal" },
         };
-        (await admin.PostAsync($"/api/v1/admin/support/tickets/{ticketId}/messages", note))
-            .StatusCode.Should().Be(HttpStatusCode.OK);
+        var noteResponse = await admin.PostAsync($"/api/v1/admin/support/tickets/{ticketId}/messages", note);
+        noteResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var afterNote = (await noteResponse.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        var privateNote = afterNote.GetProperty("messages").EnumerateArray()
+            .Single(message => message.GetProperty("isInternal").GetBoolean());
+        afterNote.GetProperty("preview").GetString().Should().Be("Customer has a verified delivery address.");
+        afterNote.GetProperty("lastMessageAt").GetDateTimeOffset()
+            .Should().Be(privateNote.GetProperty("createdAt").GetDateTimeOffset(),
+                "staff timestamps must follow the latest staff-visible note");
 
         var agentPayload = await admin.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/admin/support/agents", Json);
         var adminId = agentPayload!.Data![0].GetProperty("id").GetString();

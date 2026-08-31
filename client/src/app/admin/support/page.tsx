@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Download, FileText, Filter, MessageSquareText, Paperclip, RefreshCw, Search, Send, ShoppingBag, UserRound, X } from 'lucide-react';
+import { CheckCircle2, Download, FileText, Filter, Flag, MessageSquareText, Paperclip, RefreshCw, Search, Send, ShoppingBag, UserRound, X } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ErrorState, PanelSkeleton } from '@/components/DataStates';
 import {
@@ -44,6 +44,7 @@ export default function SupportPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [status, setStatus] = useState<TicketStatus | 'all'>('all');
+  const [priority, setPriority] = useState<TicketPriority | 'all'>('all');
   const [assignment, setAssignment] = useState<AdminTicketQuery['assignment']>('all');
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -59,10 +60,11 @@ export default function SupportPage() {
     return () => window.clearTimeout(timer);
   }, [search]);
 
-  useEffect(() => setPage(1), [status, assignment, debouncedSearch]);
+  useEffect(() => setPage(1), [status, priority, assignment, debouncedSearch]);
 
   const listQuery: AdminTicketQuery = {
     status,
+    priority,
     assignment,
     search: debouncedSearch || undefined,
     page,
@@ -137,6 +139,19 @@ export default function SupportPage() {
 
   const selected = detail.data;
   const replyBlocked = selected?.status === 'closed' && replyMode === 'reply';
+  const hasActiveFilters = status !== 'all' || priority !== 'all' || assignment !== 'all' || search.trim().length > 0;
+  const isRefreshing = tickets.isFetching || agents.isFetching || (selectedId !== null && detail.isFetching);
+  const resetFilters = () => {
+    setSearch('');
+    setDebouncedSearch('');
+    setStatus('all');
+    setPriority('all');
+    setAssignment('all');
+    setPage(1);
+  };
+  const refreshAll = () => {
+    void queryClient.invalidateQueries({ queryKey: ['admin', 'support'] });
+  };
   const dateTime = new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
   const relativeFormat = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
   const relative = (value: string) => {
@@ -151,9 +166,10 @@ export default function SupportPage() {
     <>
       <div className="admin-page-heading support-heading">
         <div><span className="admin-kicker">Customer care</span><h1>Support inbox</h1><p>Customer conversations, private notes, assignments, and order context in one place.</p></div>
-        <div>
+        <div className="support-heading-actions">
           <label className="support-assignment-filter"><Filter size={14} /><span className="sr-only">Assignment filter</span><select value={assignment} onChange={(event) => setAssignment(event.target.value)}><option value="all">All assignments</option><option value="mine">Assigned to me</option><option value="unassigned">Unassigned</option>{agents.data?.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}</select></label>
-          <button type="button" className="admin-button" onClick={() => tickets.refetch()}><RefreshCw size={14} /> Refresh</button>
+          <label className="support-assignment-filter"><Flag size={14} /><span className="sr-only">Priority filter</span><select value={priority} onChange={(event) => setPriority(event.target.value as TicketPriority | 'all')}><option value="all">All priorities</option>{PRIORITIES.map((item) => <option key={item} value={item}>{titleCase(item)} priority</option>)}</select></label>
+          <button type="button" className="admin-button" onClick={refreshAll} disabled={isRefreshing}><RefreshCw className={isRefreshing ? 'is-spinning' : ''} size={14} /> {isRefreshing ? 'Refreshing…' : 'Refresh'}</button>
         </div>
       </div>
 
@@ -176,7 +192,7 @@ export default function SupportPage() {
                 <footer><span className={`priority priority--${ticket.priority}`}>{ticket.priority}</span><span><MessageSquareText size={11} /> {ticket.messageCount} · {titleCase(ticket.status)}</span></footer>
               </button>
             ))}
-            {!tickets.data.items.length && <div className="ticket-list-empty"><MessageSquareText /><strong>No tickets here</strong><span>Try another filter or search.</span></div>}
+            {!tickets.data.items.length && <div className="ticket-list-empty"><CheckCircle2 /><strong>{hasActiveFilters ? 'No matching tickets' : 'Inbox clear'}</strong><span>{hasActiveFilters ? 'Try a broader search or clear the filters.' : 'New customer conversations will appear here.'}</span>{hasActiveFilters && <button type="button" onClick={resetFilters}>Clear filters</button>}</div>}
           </div>}
           {tickets.data && tickets.data.totalPages > 1 && <div className="ticket-pagination"><button type="button" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>Previous</button><span>{page} / {tickets.data.totalPages}</span><button type="button" disabled={page >= tickets.data.totalPages} onClick={() => setPage((value) => value + 1)}>Next</button></div>}
         </aside>
@@ -184,7 +200,7 @@ export default function SupportPage() {
         <main className="thread-panel">
           {selectedId && detail.isPending && <PanelSkeleton lines={8} />}
           {detail.isError && <ErrorState error={detail.error} onRetry={() => detail.refetch()} title="Could not open this ticket" />}
-          {!selectedId && !tickets.isPending && <div className="support-no-selection"><MessageSquareText /><h2>Select a ticket</h2><p>Choose a customer conversation from the inbox.</p></div>}
+          {!selectedId && !tickets.isPending && !tickets.isError && <div className="support-no-selection">{tickets.data?.items.length ? <MessageSquareText /> : <CheckCircle2 />}<h2>{tickets.data?.items.length ? 'Select a ticket' : hasActiveFilters ? 'No conversations match' : 'You are all caught up'}</h2><p>{tickets.data?.items.length ? 'Choose a customer conversation from the inbox.' : hasActiveFilters ? 'Adjust the search or filters to see other conversations.' : 'There are no customer conversations waiting in the inbox.'}</p>{hasActiveFilters && !tickets.data?.items.length && <button type="button" onClick={resetFilters}>Clear filters</button>}</div>}
           {selected && <>
             <header className="thread-header">
               <div><span className="admin-kicker">{selected.number} · {titleCase(selected.category)}</span><h2>{selected.subject}</h2><p>Opened {dateTime.format(new Date(selected.createdAt))}{selected.orderNumber ? ` · Order ${selected.orderNumber}` : ''}</p></div>
@@ -210,11 +226,11 @@ export default function SupportPage() {
             <form className={`reply-box${replyMode === 'note' ? ' reply-box--note' : ''}`} onSubmit={submitReply}>
               <div className="reply-tabs"><button type="button" className={replyMode === 'reply' ? 'active' : ''} onClick={() => setReplyMode('reply')}>Reply to customer</button><button type="button" className={replyMode === 'note' ? 'active' : ''} onClick={() => setReplyMode('note')}>Internal note</button></div>
               <textarea required minLength={2} maxLength={4000} disabled={replyBlocked} value={body} onChange={(event) => setBody(event.target.value)} placeholder={replyMode === 'note' ? 'Add a private note for the support team…' : replyBlocked ? 'Reopen this ticket before replying to the customer.' : 'Write a helpful reply…'} />
-              {files.length > 0 && <div className="reply-files">{files.map((file) => <span key={`${file.name}-${file.lastModified}`}>{file.name}</span>)}</div>}
+              {files.length > 0 && <div className="reply-files">{files.map((file, index) => <span key={`${file.name}-${file.lastModified}`}>{file.name}<button type="button" aria-label={`Remove ${file.name}`} onClick={() => setFiles((current) => current.filter((_, fileIndex) => fileIndex !== index))}><X /></button></span>)}</div>}
               <footer>
                 <div>
-                  <button type="button" onClick={() => fileInput.current?.click()}><Paperclip /> Attach<input ref={fileInput} hidden type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple onChange={(event) => setFiles(Array.from(event.target.files || []).slice(0, 5))} /></button>
-                  {replyMode === 'reply' && <label className="canned-response"><span className="sr-only">Saved reply</span><select value="" onChange={(event) => { if (event.target.value) setBody(event.target.value); }} disabled={sendMessage.isPending}>{CANNED_RESPONSES.map((response) => <option key={response.label} value={response.value}>{response.label}</option>)}</select></label>}
+                  <button type="button" disabled={replyBlocked || sendMessage.isPending} onClick={() => fileInput.current?.click()}><Paperclip /> Attach<input ref={fileInput} hidden type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple onChange={(event) => setFiles(Array.from(event.target.files || []).slice(0, 5))} /></button>
+                  {replyMode === 'reply' && <label className="canned-response"><span className="sr-only">Saved reply</span><select value="" onChange={(event) => { if (event.target.value) setBody(event.target.value); }} disabled={replyBlocked || sendMessage.isPending}>{CANNED_RESPONSES.map((response) => <option key={response.label} value={response.value}>{response.label}</option>)}</select></label>}
                 </div>
                 <button type="submit" disabled={replyBlocked || sendMessage.isPending || body.trim().length < 2}>{sendMessage.isPending ? 'Sending…' : replyMode === 'note' ? 'Add note' : 'Send reply'} <Send /></button>
               </footer>

@@ -5,6 +5,13 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 export type Locale = 'en' | 'tr';
 
 const en = {
+  'auth.hidePassword': 'Hide password',
+  'auth.passwordRequirements': 'Password requirements',
+  'auth.passwordLength': 'Eight or more characters',
+  'auth.passwordLetter': 'One lowercase letter',
+  'auth.passwordNumber': 'One number',
+  'auth.passwordsMatch': 'Passwords match',
+  'auth.resetRequirementsCopy': 'Use at least eight characters, including one lowercase letter and one number.',
   'language.label': 'Language', 'language.en': 'English', 'language.tr': 'Turkish',
   'nav.home': 'Home', 'nav.shop': 'Shop', 'nav.kavanoz': 'Kavanoz', 'nav.surprise': 'Surprise Box', 'nav.story': 'Our story', 'nav.journal': 'Contact', 'nav.admin': 'Atelier admin',
   'header.menu': 'Toggle navigation', 'header.search': 'Search', 'header.searchPlaceholder': 'Search rings, bags, keychains…', 'header.submitSearch': 'View results', 'header.closeSearch': 'Close search', 'header.saved': 'Saved pieces', 'header.account': 'Your account', 'header.bag': 'Open bag with {{count}} items', 'header.light': 'Use light theme', 'header.dark': 'Use dark theme', 'header.home': 'MERS Tassel home', 'header.navigation': 'Main navigation',
@@ -35,6 +42,13 @@ const en = {
 export type TranslationKey = keyof typeof en;
 
 const tr: Record<TranslationKey, string> = {
+  'auth.hidePassword': 'Şifreyi gizle',
+  'auth.passwordRequirements': 'Şifre gereksinimleri',
+  'auth.passwordLength': 'En az sekiz karakter',
+  'auth.passwordLetter': 'Bir küçük harf',
+  'auth.passwordNumber': 'Bir rakam',
+  'auth.passwordsMatch': 'Şifreler eşleşiyor',
+  'auth.resetRequirementsCopy': 'En az sekiz karakter, bir küçük harf ve bir rakam kullanın.',
   'language.label': 'Dil', 'language.en': 'İngilizce', 'language.tr': 'Türkçe',
   'nav.home': 'Ana sayfa', 'nav.shop': 'Mağaza', 'nav.kavanoz': 'Kavanoz', 'nav.surprise': 'Sürpriz Kutu', 'nav.story': 'Hikâyemiz', 'nav.journal': 'İletişim', 'nav.admin': 'Atölye yönetimi',
   'header.menu': 'Menüyü aç veya kapat', 'header.search': 'Ara', 'header.searchPlaceholder': 'Yüzük, çanta, anahtarlık ara…', 'header.submitSearch': 'Sonuçları gör', 'header.closeSearch': 'Aramayı kapat', 'header.saved': 'Kaydedilen parçalar', 'header.account': 'Hesabınız', 'header.bag': '{{count}} ürün bulunan çantayı aç', 'header.light': 'Açık temayı kullan', 'header.dark': 'Koyu temayı kullan', 'header.home': 'MERS Tassel ana sayfası', 'header.navigation': 'Ana menü',
