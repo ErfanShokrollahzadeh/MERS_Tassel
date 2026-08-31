@@ -1,14 +1,10 @@
-<<<<<<< ours
 using FluentValidation;
-=======
->>>>>>> theirs
 using MersTassel.Application.Common;
 using MersTassel.Application.DTOs;
 using MersTassel.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MersTassel.Api.Controllers;
-<<<<<<< ours
 
 [ApiController]
 [Route("api/v1/popups")]
@@ -44,13 +40,4 @@ public class PopupsController(
         await popups.RecordEventAsync(id, request.EventType, ct);
         return Ok(ApiResponse.Ok());
     }
-=======
-[ApiController, Route("api/v1/popups"), Tags("Popups")]
-public class PopupsController(IPopupService service) : ControllerBase
-{
-    [HttpGet("active")]
-    public async Task<ActionResult<ApiResponse<IReadOnlyList<PopupDto>>>> Active([FromQuery] string? path, [FromQuery] string? device, CancellationToken ct) => Ok(ApiResponse<IReadOnlyList<PopupDto>>.Ok(await service.GetActivePopupsAsync(path, device, User.Identity?.IsAuthenticated == true, ct)));
-    [HttpPost("{id:int}/track")]
-    public async Task<ActionResult<ApiResponse<object?>>> Track(int id, TrackPopupEventRequest request, CancellationToken ct) { await service.RecordEventAsync(id, request.EventType, ct); return Ok(ApiResponse.Ok()); }
->>>>>>> theirs
 }

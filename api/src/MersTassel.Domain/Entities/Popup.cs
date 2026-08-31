@@ -3,7 +3,6 @@ using MersTassel.Domain.Enums;
 
 namespace MersTassel.Domain.Entities;
 
-<<<<<<< ours
 /// <summary>
 /// A storefront popup or banner campaign created and managed by the backoffice team.
 /// Supports scheduling, targeting rules, trigger configurations, and telemetry tracking.
@@ -37,23 +36,6 @@ public class Popup : SoftDeletableEntity
     public DateTimeOffset? ExpiresAt { get; set; }
 
     // Content & Localization
-=======
-public class Popup : SoftDeletableEntity
-{
-    public string Name { get; set; } = string.Empty;
-    public PopupType Type { get; set; }
-    public PopupPlacement Placement { get; set; }
-    public PopupTriggerType TriggerType { get; set; }
-    public int TriggerValue { get; set; }
-    public PopupTargetAudience TargetAudience { get; set; }
-    public string? TargetPages { get; set; }
-    public string DeviceTarget { get; set; } = "all";
-    public int CooldownDays { get; set; } = 7;
-    public int Priority { get; set; }
-    public bool IsActive { get; set; } = true;
-    public DateTimeOffset? StartsAt { get; set; }
-    public DateTimeOffset? ExpiresAt { get; set; }
->>>>>>> theirs
     public string? Badge { get; set; }
     public string? BadgeTr { get; set; }
     public string Title { get; set; } = string.Empty;
@@ -67,11 +49,8 @@ public class Popup : SoftDeletableEntity
     public string? SecondaryCtaText { get; set; }
     public string? SecondaryCtaTextTr { get; set; }
     public string? CouponCode { get; set; }
-<<<<<<< ours
 
     // Telemetry
-=======
->>>>>>> theirs
     public long ImpressionCount { get; set; }
     public long ClickCount { get; set; }
     public long ConversionCount { get; set; }

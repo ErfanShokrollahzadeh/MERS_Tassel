@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MersTassel.Api.Controllers.Admin;
-<<<<<<< ours
 
 [ApiController]
 [Route("api/v1/admin/popups")]
@@ -77,15 +76,4 @@ public class AdminPopupsController(
         await popups.DeleteAsync(id, ct);
         return Ok(ApiResponse.Ok("Popup campaign removed."));
     }
-=======
-[ApiController, Route("api/v1/admin/popups"), Authorize(Roles = RoleNames.Admin), Tags("Admin · Popups")]
-public class AdminPopupsController(IPopupService service, IValidator<PopupWriteRequest> validator) : ApiControllerBase
-{
-    [HttpGet] public async Task<ActionResult<ApiResponse<IReadOnlyList<AdminPopupDto>>>> List(CancellationToken ct) => Ok(ApiResponse<IReadOnlyList<AdminPopupDto>>.Ok(await service.ListAdminAsync(ct)));
-    [HttpGet("{id:int}")] public async Task<ActionResult<ApiResponse<AdminPopupDto>>> Get(int id, CancellationToken ct) => Ok(ApiResponse<AdminPopupDto>.Ok(await service.GetAdminByIdAsync(id, ct)));
-    [HttpPost] public async Task<ActionResult<ApiResponse<AdminPopupDto>>> Create([FromForm] PopupWriteRequest request, IFormFile? image, CancellationToken ct) { await ValidateAsync(validator,request,ct); return StatusCode(201,ApiResponse<AdminPopupDto>.Ok(await service.CreateAsync(request,image,ct))); }
-    [HttpPut("{id:int}")] public async Task<ActionResult<ApiResponse<AdminPopupDto>>> Update(int id,[FromForm] PopupWriteRequest request,IFormFile? image,CancellationToken ct) { await ValidateAsync(validator,request,ct); return Ok(ApiResponse<AdminPopupDto>.Ok(await service.UpdateAsync(id,request,image,ct))); }
-    [HttpPatch("{id:int}/status")] public async Task<ActionResult<ApiResponse<object?>>> Status(int id,TogglePopupStatusRequest request,CancellationToken ct) { await service.ToggleStatusAsync(id,request.IsActive,ct); return Ok(ApiResponse.Ok()); }
-    [HttpDelete("{id:int}")] public async Task<ActionResult<ApiResponse<object?>>> Delete(int id,CancellationToken ct) { await service.DeleteAsync(id,ct); return Ok(ApiResponse.Ok()); }
->>>>>>> theirs
 }

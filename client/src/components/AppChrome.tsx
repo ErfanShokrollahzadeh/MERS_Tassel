@@ -28,16 +28,10 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
       {!isAuth && !isCheckout && <StoreHeader />}
       <AnimatePresence mode="wait" initial={false}><motion.main id="main-content" key={pathname} initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, y: -6 }} transition={{ duration: reduceMotion ? 0 : .28, ease: [0.22, 1, 0.36, 1] }}>{children}</motion.main></AnimatePresence>
       {!isAuth && !isCheckout && <StoreFooter />}
-<<<<<<< ours
       {!isAuth && <><CartDrawer /><FavoritesDrawer /><TradeInModal /><CookiePreferencesCenter /><PopupRenderer /></>}
-=======
-      <CartDrawer />
-      <FavoritesDrawer />
-      <TradeInModal />
-      <CookiePreferencesCenter />
-      {!isAuth && !isCheckout && <PopupRenderer />}
->>>>>>> theirs
     </div>
   );
 }
+
+
 

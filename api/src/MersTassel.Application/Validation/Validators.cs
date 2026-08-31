@@ -410,7 +410,6 @@ public class UpdateUserRoleRequestValidator : AbstractValidator<UpdateUserRoleRe
 
 public class PopupWriteRequestValidator : AbstractValidator<PopupWriteRequest>
 {
-<<<<<<< ours
     private static readonly string[] AllowedTypes = ["promotional", "newsletter", "announcement", "support_care", "custom"];
     private static readonly string[] AllowedPlacements = ["center_modal", "bottom_bar", "slide_in_bottom_right", "slide_in_bottom_left"];
     private static readonly string[] AllowedTriggers = ["delay", "scroll_depth", "exit_intent", "immediate"];
@@ -483,17 +482,3 @@ public class TrackPopupEventRequestValidator : AbstractValidator<TrackPopupEvent
     }
 }
 
-=======
-    public PopupWriteRequestValidator()
-    {
-        RuleFor(x => x.Name).NotEmpty().MaximumLength(160);
-        RuleFor(x => x.Title).NotEmpty().MaximumLength(240);
-        RuleFor(x => x.DeviceTarget).Must(x => x is "all" or "desktop" or "mobile");
-        RuleFor(x => x.TriggerValue).InclusiveBetween(0, 100).When(x => x.TriggerType == MersTassel.Domain.Enums.PopupTriggerType.ScrollDepth);
-        RuleFor(x => x.TriggerValue).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.CooldownDays).InclusiveBetween(0, 365);
-        RuleFor(x => x.ExpiresAt).GreaterThan(x => x.StartsAt).When(x => x.StartsAt.HasValue && x.ExpiresAt.HasValue);
-        RuleFor(x => x.PrimaryCtaUrl).MaximumLength(500);
-    }
-}
->>>>>>> theirs

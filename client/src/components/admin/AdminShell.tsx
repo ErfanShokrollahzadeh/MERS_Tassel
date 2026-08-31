@@ -15,13 +15,10 @@ const adminLinks = [
   { href: '/admin/users', label: 'People & roles', icon: Users },
   { href: '/admin/marketing', label: 'Growth', icon: BarChart3 },
   { href: '/admin/promotions', label: 'Promotions', icon: Megaphone },
-<<<<<<< ours
   { href: '/admin/popups', label: 'Popups & Modals', icon: Sparkles },
-=======
-  { href: '/admin/popups', label: 'Popups', icon: Bell },
->>>>>>> theirs
   { href: '/admin/support', label: 'Support', icon: TicketCheck },
 ];
+
 
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

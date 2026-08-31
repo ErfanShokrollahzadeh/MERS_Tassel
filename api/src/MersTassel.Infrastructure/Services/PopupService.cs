@@ -4,15 +4,10 @@ using MersTassel.Application.Interfaces;
 using MersTassel.Domain.Entities;
 using MersTassel.Domain.Enums;
 using MersTassel.Infrastructure.Data;
-<<<<<<< ours
-=======
-using Microsoft.AspNetCore.Http;
->>>>>>> theirs
 using Microsoft.EntityFrameworkCore;
 
 namespace MersTassel.Infrastructure.Services;
 
-<<<<<<< ours
 public class PopupService(AppDbContext db, IFileStorageService storage) : IPopupService
 {
     public async Task<IReadOnlyList<PopupDto>> GetActivePopupsAsync(
@@ -291,70 +286,4 @@ public class PopupService(AppDbContext db, IFileStorageService storage) : IPopup
 
     private static string? NullIfEmpty(string? val) =>
         string.IsNullOrWhiteSpace(val) ? null : val.Trim();
-=======
-public class PopupService(AppDbContext db, IFileStorageService files) : IPopupService
-{
-    public async Task<IReadOnlyList<PopupDto>> GetActivePopupsAsync(string? path, string? device, bool authenticated, CancellationToken ct)
-    {
-        var now = DateTimeOffset.UtcNow;
-        var query = db.Popups.AsNoTracking().Where(x => x.IsActive && (!x.StartsAt.HasValue || x.StartsAt <= now) &&
-            (!x.ExpiresAt.HasValue || x.ExpiresAt > now));
-        query = authenticated ? query.Where(x => x.TargetAudience != PopupTargetAudience.GuestsOnly)
-                              : query.Where(x => x.TargetAudience != PopupTargetAudience.RegisteredOnly);
-        if (!string.IsNullOrWhiteSpace(device)) query = query.Where(x => x.DeviceTarget == "all" || x.DeviceTarget == device);
-        var rows = await query.OrderByDescending(x => x.Priority).ThenBy(x => x.Id).ToListAsync(ct);
-        return rows.Where(x => MatchesPath(x.TargetPages, path)).Select(ToPublic).ToList();
-    }
-
-    public async Task RecordEventAsync(int id, string eventType, CancellationToken ct)
-    {
-        var popup = await db.Popups.SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new NotFoundException("Popup not found.");
-        switch (eventType.Trim().ToLowerInvariant())
-        {
-            case "impression": popup.ImpressionCount++; break;
-            case "click": popup.ClickCount++; break;
-            case "conversion": popup.ConversionCount++; break;
-            default: throw new ValidationException("eventType", "Event type must be impression, click, or conversion.");
-        }
-        await db.SaveChangesAsync(ct);
-    }
-
-    public async Task<IReadOnlyList<AdminPopupDto>> ListAdminAsync(CancellationToken ct) =>
-        (await db.Popups.AsNoTracking().OrderByDescending(x => x.Priority).ThenByDescending(x => x.CreatedAt).ToListAsync(ct)).Select(ToAdmin).ToList();
-
-    public async Task<AdminPopupDto> GetAdminByIdAsync(int id, CancellationToken ct) =>
-        ToAdmin(await Find(id, ct));
-
-    public async Task<AdminPopupDto> CreateAsync(PopupWriteRequest request, IFormFile? image, CancellationToken ct)
-    {
-        var popup = new Popup(); Apply(popup, request);
-        if (image != null) popup.ImagePath = await SaveImage(image, ct);
-        db.Popups.Add(popup); await db.SaveChangesAsync(ct); return ToAdmin(popup);
-    }
-
-    public async Task<AdminPopupDto> UpdateAsync(int id, PopupWriteRequest request, IFormFile? image, CancellationToken ct)
-    {
-        var popup = await Find(id, ct); Apply(popup, request);
-        var old = popup.ImagePath;
-        if (image != null) popup.ImagePath = await SaveImage(image, ct);
-        await db.SaveChangesAsync(ct);
-        if (image != null) await files.DeleteAsync(old, ct);
-        return ToAdmin(popup);
-    }
-
-    public async Task ToggleStatusAsync(int id, bool active, CancellationToken ct) { var popup = await Find(id, ct); popup.IsActive = active; await db.SaveChangesAsync(ct); }
-    public async Task DeleteAsync(int id, CancellationToken ct) { var popup = await Find(id, ct); popup.IsDelete = true; popup.DeletedAt = DateTimeOffset.UtcNow; await db.SaveChangesAsync(ct); }
-
-    private async Task<Popup> Find(int id, CancellationToken ct) => await db.Popups.SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new NotFoundException("Popup not found.");
-    private async Task<string> SaveImage(IFormFile image, CancellationToken ct) { using var stream = image.OpenReadStream(); files.Validate(stream, image.FileName, image.Length); return await files.SaveAsync(stream, image.FileName, "popups", ct); }
-    private static bool MatchesPath(string? patterns, string? path)
-    {
-        if (string.IsNullOrWhiteSpace(patterns)) return true;
-        path = string.IsNullOrWhiteSpace(path) ? "/" : path.Split('?', '#')[0];
-        return patterns.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Any(p => p == "*" || p == path || (p.EndsWith("/*") && path.StartsWith(p[..^1], StringComparison.OrdinalIgnoreCase)));
-    }
-    private static void Apply(Popup p, PopupWriteRequest r) { p.Name=r.Name.Trim(); p.Type=r.Type; p.Placement=r.Placement; p.TriggerType=r.TriggerType; p.TriggerValue=r.TriggerValue; p.TargetAudience=r.TargetAudience; p.TargetPages=r.TargetPages; p.DeviceTarget=r.DeviceTarget.ToLowerInvariant(); p.CooldownDays=r.CooldownDays; p.Priority=r.Priority; p.IsActive=r.IsActive; p.StartsAt=r.StartsAt; p.ExpiresAt=r.ExpiresAt; p.Badge=r.Badge; p.BadgeTr=r.BadgeTr; p.Title=r.Title; p.TitleTr=r.TitleTr; p.Description=r.Description; p.DescriptionTr=r.DescriptionTr; p.PrimaryCtaText=r.PrimaryCtaText; p.PrimaryCtaTextTr=r.PrimaryCtaTextTr; p.PrimaryCtaUrl=r.PrimaryCtaUrl; p.SecondaryCtaText=r.SecondaryCtaText; p.SecondaryCtaTextTr=r.SecondaryCtaTextTr; p.CouponCode=r.CouponCode; }
-    private static PopupDto ToPublic(Popup p) => new(p.Id,p.Type,p.Placement,p.TriggerType,p.TriggerValue,p.CooldownDays,p.Badge,p.BadgeTr,p.Title,p.TitleTr,p.Description,p.DescriptionTr,p.ImagePath,p.PrimaryCtaText,p.PrimaryCtaTextTr,p.PrimaryCtaUrl,p.SecondaryCtaText,p.SecondaryCtaTextTr,p.CouponCode);
-    private static AdminPopupDto ToAdmin(Popup p) => new(p.Id,p.Name,p.Type,p.Placement,p.TriggerType,p.TriggerValue,p.TargetAudience,p.TargetPages,p.DeviceTarget,p.CooldownDays,p.Priority,p.IsActive,p.StartsAt,p.ExpiresAt,p.Badge,p.BadgeTr,p.Title,p.TitleTr,p.Description,p.DescriptionTr,p.ImagePath,p.PrimaryCtaText,p.PrimaryCtaTextTr,p.PrimaryCtaUrl,p.SecondaryCtaText,p.SecondaryCtaTextTr,p.CouponCode,p.ImpressionCount,p.ClickCount,p.ConversionCount,p.ImpressionCount == 0 ? 0 : Math.Round((decimal)p.ClickCount / p.ImpressionCount * 100, 2));
->>>>>>> theirs
 }

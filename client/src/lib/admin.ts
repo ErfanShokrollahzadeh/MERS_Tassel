@@ -12,25 +12,13 @@ import type {
   TradeInStatus,
   Product,
   SiteSettings,
-<<<<<<< ours
   AdminPopup,
   PopupDraft,
 } from '@/types/commerce';
 
-=======
-  AdminPopup, PopupDraft,
-} from '@/types/commerce';
-
-export const popupKeys = { all: ['admin', 'popups'] as const };
-export function fetchAdminPopups() { return api.get<AdminPopup[]>('/admin/popups', { auth: true, cache: 'no-store' }); }
-function popupForm(draft: PopupDraft, image?: File | null) { const form = new FormData(); Object.entries(draft).forEach(([key,value]) => { if (value != null) form.append(key[0].toUpperCase()+key.slice(1), String(value)); }); if (image) form.append('image',image); return form; }
-export function createPopup(draft: PopupDraft,image?:File|null) { return api.postForm<AdminPopup>('/admin/popups',popupForm(draft,image),{auth:true}); }
-export function updatePopup(id:number,draft:PopupDraft,image?:File|null) { return api.putForm<AdminPopup>(`/admin/popups/${id}`,popupForm(draft,image),{auth:true}); }
-export function togglePopupStatus(id:number,isActive:boolean) { return api.patch<null>(`/admin/popups/${id}/status`,{isActive},{auth:true}); }
-export function deletePopup(id:number) { return api.delete<null>(`/admin/popups/${id}`,{auth:true}); }
->>>>>>> theirs
 
 // ── Dashboard ───────────────────────────────────────────────────────────────
+
 
 export function fetchDashboard() {
   return api.get<Dashboard>('/admin/dashboard', { auth: true });
