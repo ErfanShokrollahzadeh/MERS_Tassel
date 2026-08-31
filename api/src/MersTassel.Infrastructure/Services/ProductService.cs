@@ -326,6 +326,7 @@ public class ProductService(AppDbContext db, IFileStorageService storage, IProdu
                 PosterPath = posterPath,
                 Alt = request.Alt.Trim(),
                 Placement = request.Placement,
+                SupportedPlacements = NormalizePlacements(request.SupportedPlacements, request.Placement),
                 ScaleMode = "fixed",
                 WidthMm = request.WidthMm,
                 HeightMm = request.HeightMm,
@@ -391,6 +392,7 @@ public class ProductService(AppDbContext db, IFileStorageService storage, IProdu
             model.PosterPath = newPoster ?? model.PosterPath;
             model.Alt = request.Alt.Trim();
             model.Placement = request.Placement;
+            model.SupportedPlacements = NormalizePlacements(request.SupportedPlacements, request.Placement);
             model.ScaleMode = "fixed";
             model.WidthMm = request.WidthMm;
             model.HeightMm = request.HeightMm;
@@ -434,6 +436,15 @@ public class ProductService(AppDbContext db, IFileStorageService storage, IProdu
         if (request.ScaleMode != "fixed") throw new ValidationException(nameof(request.ScaleMode), "AR models must use fixed scale.");
         if (request.WidthMm <= 0 || request.HeightMm <= 0 || request.DepthMm <= 0)
             throw new ValidationException("dimensions", "Width, height and depth must be greater than zero.");
+    }
+
+    private static string NormalizePlacements(string? value, string defaultPlacement)
+    {
+        var placements = (value ?? defaultPlacement).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Select(x => x.ToLowerInvariant()).Distinct().ToArray();
+        if (placements.Length == 0 || placements.Any(x => x is not ("floor" or "wall")) || !placements.Contains(defaultPlacement))
+            throw new ValidationException(nameof(ProductModelWriteRequest.SupportedPlacements), "Choose floor, wall, or both and include the default placement.");
+        return string.Join(',', placements.OrderBy(x => x));
     }
 
     private async Task AttachImagesAsync(Product product, IReadOnlyList<UploadedFile> images, CancellationToken ct)

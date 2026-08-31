@@ -62,6 +62,10 @@ services:
       Email__FromName: MERS Tassel Website
       Seed__AdminEmail: ${ADMIN_EMAIL}
       Seed__ResetAdminPassword: "false"
+      ModelGeneration__StoragePath: /model-data
+      ModelGeneration__ProcessorUrl: http://model-processor:8090
+      ModelGeneration__ProcessorKey: ${MODEL_PROCESSOR_KEY:-}
+      ModelGeneration__MeshyApiKey: ${MODEL_GENERATION_MESHY_API_KEY:-}
     secrets:
       - source: postgres_password
         target: Database__Password
@@ -78,11 +82,14 @@ services:
     volumes:
       - dotnet_uploads:/app/wwwroot/uploads
       - dotnet_keys:/app/keys
+      - model_generation_data:/model-data
     networks:
       - backend
       - data
     depends_on:
       postgres:
+        condition: service_healthy
+      model-processor:
         condition: service_healthy
     read_only: true
     tmpfs:
@@ -94,6 +101,42 @@ services:
     pids_limit: 256
     mem_limit: 768m
     cpus: 1.5
+    logging: *default-logging
+
+  model-processor:
+    build:
+      context: .
+      dockerfile: model-processor/Dockerfile
+    image: mers-tassel/model-processor:latest
+    restart: unless-stopped
+    init: true
+    environment:
+      MODEL_DATA_ROOT: /model-data
+      MODEL_PROCESSOR_KEY: ${MODEL_PROCESSOR_KEY:-}
+    volumes:
+      - model_generation_data:/model-data
+    # Allows an API launched from the local IDE to reach the processor without exposing it
+    # beyond this computer. The production API continues to use the internal service DNS name.
+    ports:
+      - "127.0.0.1:8090:8090"
+    networks:
+      - backend
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 1g
+    cpus: 1.5
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health', timeout=3)"]
+      interval: 10s
+      timeout: 4s
+      retries: 6
+      start_period: 20s
     logging: *default-logging
 
   python-api:
@@ -198,6 +241,7 @@ services:
       - dotnet_uploads:/volumes/dotnet_uploads:ro
       - dotnet_keys:/volumes/dotnet_keys:ro
       - django_media:/volumes/django_media:ro
+      - model_generation_data:/volumes/model_generation_data:ro
     entrypoint: ["/bin/sh", "/usr/local/bin/backup"]
     networks:
       - data
@@ -221,6 +265,7 @@ volumes:
   postgres_data:
   dotnet_uploads:
   dotnet_keys:
+  model_generation_data:
   django_media:
   django_static:
   caddy_data:

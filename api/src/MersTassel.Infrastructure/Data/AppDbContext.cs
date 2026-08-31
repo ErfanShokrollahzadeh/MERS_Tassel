@@ -15,6 +15,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
     public DbSet<ProductMedia> ProductMedia => Set<ProductMedia>();
     public DbSet<ProductModelAsset> ProductModelAssets => Set<ProductModelAsset>();
+    public DbSet<ProductModelGenerationJob> ProductModelGenerationJobs => Set<ProductModelGenerationJob>();
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
     public DbSet<Coupon> Coupons => Set<Coupon>();

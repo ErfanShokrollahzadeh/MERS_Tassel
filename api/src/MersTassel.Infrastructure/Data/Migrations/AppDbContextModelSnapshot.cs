@@ -1077,6 +1077,11 @@ namespace MersTassel.Infrastructure.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("SupportedPlacements")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
                     b.Property<long>("UpdatedAt")
                         .HasColumnType("INTEGER");
 
@@ -1109,6 +1114,154 @@ namespace MersTassel.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("ProductModelAssets", (string)null);
+                });
+
+            modelBuilder.Entity("MersTassel.Domain.Entities.ProductModelGenerationJob", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ApprovedModelAssetId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CalibrationReferenceMm")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CaptureMethod")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CapturePathsJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CaptureTokenExpiresAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CaptureTokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("CaptureTokenUsedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("CompletedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CreatedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DefaultPlacement")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("DeletedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("DepthMm")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DraftGlbPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DraftPosterPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FailureCode")
+                        .HasMaxLength(80)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FailureMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("HeightMm")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("isDelete");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ProgressPercent")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProviderJobId")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RequestedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("ReviewedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ReviewedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Stage")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("StartedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SupportedPlacements")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("UpdatedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ValidationReportJson")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("VariantId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("WidthMm")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovedModelAssetId");
+
+                    b.HasIndex("IsDelete");
+
+                    b.HasIndex("ProviderJobId");
+
+                    b.HasIndex("RequestedByUserId");
+
+                    b.HasIndex("ReviewedByUserId");
+
+                    b.HasIndex("VariantId");
+
+                    b.HasIndex("ProductId", "Status");
+
+                    b.ToTable("ProductModelGenerationJobs", (string)null);
                 });
 
             modelBuilder.Entity("MersTassel.Domain.Entities.ProductVariant", b =>
@@ -1784,6 +1937,46 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.Navigation("Variant");
                 });
 
+            modelBuilder.Entity("MersTassel.Domain.Entities.ProductModelGenerationJob", b =>
+                {
+                    b.HasOne("MersTassel.Domain.Entities.ProductModelAsset", "ApprovedModelAsset")
+                        .WithMany()
+                        .HasForeignKey("ApprovedModelAssetId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("MersTassel.Domain.Entities.Product", "Product")
+                        .WithMany("ModelGenerationJobs")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MersTassel.Domain.Entities.AppUser", "RequestedByUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MersTassel.Domain.Entities.AppUser", "ReviewedByUser")
+                        .WithMany()
+                        .HasForeignKey("ReviewedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("MersTassel.Domain.Entities.ProductVariant", "Variant")
+                        .WithMany()
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ApprovedModelAsset");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("RequestedByUser");
+
+                    b.Navigation("ReviewedByUser");
+
+                    b.Navigation("Variant");
+                });
+
             modelBuilder.Entity("MersTassel.Domain.Entities.ProductVariant", b =>
                 {
                     b.HasOne("MersTassel.Domain.Entities.Product", "Product")
@@ -1934,6 +2127,8 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.Navigation("Media");
 
                     b.Navigation("ModelAssets");
+
+                    b.Navigation("ModelGenerationJobs");
 
                     b.Navigation("Variants");
                 });
