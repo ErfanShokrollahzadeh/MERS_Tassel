@@ -115,6 +115,10 @@ services:
       MODEL_PROCESSOR_KEY: ${MODEL_PROCESSOR_KEY:-}
     volumes:
       - model_generation_data:/model-data
+    # Allows an API launched from the local IDE to reach the processor without exposing it
+    # beyond this computer. The production API continues to use the internal service DNS name.
+    ports:
+      - "127.0.0.1:8090:8090"
     networks:
       - backend
     read_only: true

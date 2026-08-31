@@ -407,6 +407,28 @@ Next.js same-origin `/api/v1` proxy, so a local `localhost` API value does not r
 phone itself. For a different LAN/public hostname, set `NEXT_PUBLIC_CAPTURE_BASE_URL` to the
 URL the phone can open.
 
+### Local IDE setup
+
+When the ASP.NET Core API runs from an IDE, start only the private processor with Docker:
+
+```bash
+docker compose up --build model-processor
+```
+
+The processor is bound only to `127.0.0.1:8090`. Add these **environment variables in the API
+launch profile or IDE** (never commit the provider key):
+
+```text
+ModelGeneration__ProcessorUrl=http://localhost:8090
+ModelGeneration__MeshyApiKey=your-meshy-api-key
+# Must match MODEL_PROCESSOR_KEY in compose only if you set one:
+ModelGeneration__ProcessorKey=
+```
+
+For a phone on the same Wi-Fi network, set `NEXT_PUBLIC_CAPTURE_BASE_URL` in
+`client/.env.local` to the LAN URL shown by Next.js, such as `http://192.168.1.20:3000`, and
+restart Next.js before creating a new capture link.
+
 Use resumable, chunked upload for large capture packages. Do not proxy a large video through the Vercel frontend. Upload to the API or private object storage using a short-lived signed upload URL.
 
 Example progress response:
