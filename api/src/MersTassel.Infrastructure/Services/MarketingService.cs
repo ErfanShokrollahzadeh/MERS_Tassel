@@ -11,15 +11,11 @@ public class MarketingService(AppDbContext db) : IMarketingService
 {
     public async Task<MarketingDto> GetAsync(CancellationToken ct = default)
     {
-<<<<<<< ours
-        var today = DateTimeOffset.UtcNow.Date;
-=======
         // Keep every query boundary as an explicitly UTC DateTimeOffset. DateTimeOffset.Date
         // returns an Unspecified DateTime; converting that value back on a non-UTC host applies
         // the machine's local offset, which PostgreSQL rejects for timestamptz parameters.
         var now = DateTimeOffset.UtcNow;
         var today = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero);
->>>>>>> theirs
         var currentStart = today.AddDays(-29);
         var currentEnd = today.AddDays(1);
         var previousStart = currentStart.AddDays(-30);
@@ -117,16 +113,11 @@ public class MarketingService(AppDbContext db) : IMarketingService
         };
     }
 
-<<<<<<< ours
-    private static DateTimeOffset StartOfIsoWeek(DateTimeOffset date) =>
-        date.Date.AddDays(-((7 + (int)date.DayOfWeek - (int)DayOfWeek.Monday) % 7));
-=======
     private static DateTimeOffset StartOfIsoWeek(DateTimeOffset date)
     {
         var utcDate = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, TimeSpan.Zero);
         return utcDate.AddDays(-((7 + (int)date.DayOfWeek - (int)DayOfWeek.Monday) % 7));
     }
->>>>>>> theirs
 
     private static decimal PercentChange(decimal previous, decimal current)
     {
