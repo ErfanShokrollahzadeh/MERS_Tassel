@@ -28,6 +28,28 @@ public class LoginRequestValidator : AbstractValidator<LoginRequest>
     }
 }
 
+public class ForgotPasswordRequestValidator : AbstractValidator<ForgotPasswordRequest>
+{
+    public ForgotPasswordRequestValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(254);
+    }
+}
+
+public class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequest>
+{
+    public ResetPasswordRequestValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(254);
+        RuleFor(x => x.Token).NotEmpty();
+        RuleFor(x => x.NewPassword)
+            .NotEmpty()
+            .MinimumLength(8).WithMessage("Password must be at least 8 characters.")
+            .MaximumLength(128)
+            .Matches("[0-9]").WithMessage("Password must contain a digit.");
+    }
+}
+
 public class NewsletterSubscribeRequestValidator : AbstractValidator<NewsletterSubscribeRequest>
 {
     public NewsletterSubscribeRequestValidator()

@@ -20,7 +20,10 @@ public class AuthController(
     ICurrentUser currentUser,
     IValidator<RegisterRequest> registerValidator,
     IValidator<LoginRequest> loginValidator,
+    IValidator<ForgotPasswordRequest> forgotPasswordValidator,
+    IValidator<ResetPasswordRequest> resetPasswordValidator,
     IValidator<UpdateProfileRequest> profileValidator,
+    IAuthEmailSender authEmailSender,
     ILogger<AuthController> logger) : ControllerBase
 {
     [HttpPost("register")]
@@ -84,6 +87,57 @@ public class AuthController(
 
         await userManager.ResetAccessFailedCountAsync(user);
         return Ok(ApiResponse<AuthSessionDto>.Ok(await tokens.IssueAsync(user, ct)));
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<ActionResult<ApiResponse<object?>>> ForgotPassword(ForgotPasswordRequest request, CancellationToken ct)
+    {
+        await ValidateAsync(forgotPasswordValidator, request, ct);
+
+        var email = request.Email.Trim().ToLowerInvariant();
+        var user = await userManager.FindByEmailAsync(email);
+        if (user is not null && !user.IsDelete)
+        {
+            try
+            {
+                var token = await userManager.GeneratePasswordResetTokenAsync(user);
+                await authEmailSender.SendPasswordResetAsync(email, token, ct);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                // Delivery state must not change the public response: doing so would reveal
+                // whether an address belongs to an active account.
+                logger.LogError(exception, "Password reset email delivery failed.");
+            }
+        }
+
+        return Ok(ApiResponse.Ok("If an account matches this email, reset instructions have been sent."));
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<ActionResult<ApiResponse<object?>>> ResetPassword(ResetPasswordRequest request, CancellationToken ct)
+    {
+        await ValidateAsync(resetPasswordValidator, request, ct);
+
+        var user = await userManager.FindByEmailAsync(request.Email.Trim().ToLowerInvariant());
+        if (user is null || user.IsDelete)
+            throw new ValidationException(nameof(request.Email), "This password reset link is invalid.");
+
+        var result = await userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
+        if (!result.Succeeded)
+        {
+            throw new ValidationException("Password could not be reset.",
+                new Dictionary<string, string[]>
+                {
+                    ["newPassword"] = result.Errors.Select(error => error.Description).ToArray(),
+                });
+        }
+
+        return Ok(ApiResponse.Ok("Password reset successfully."));
     }
 
     [HttpPost("refresh")]

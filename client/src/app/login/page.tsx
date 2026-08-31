@@ -73,7 +73,7 @@ export default function LoginPage() {
           <label>{t('checkout.email')}<input name="email" type="email" required autoComplete="email" /></label>
           <label>{t('auth.password')}<div><input name="password" type={show ? 'text' : 'password'} required autoComplete="current-password" /><button type="button" onClick={() => setShow(!show)} aria-label={t('auth.showPassword')}>{show ? <EyeOff /> : <Eye />}</button></div></label>
           {error && <p className="auth-error" role="alert">{error}</p>}
-          <div className="auth-options"><label><input type="checkbox" /> {t('auth.remember')}</label><a href="#">{t('auth.forgot')}</a></div>
+          <div className="auth-options"><label><input type="checkbox" /> {t('auth.remember')}</label><Link href="/forgot-password">{t('auth.forgot')}</Link></div>
           <button type="submit" className="button button--primary button--block" disabled={submitting}>{submitting ? t('auth.signingIn') : t('auth.signIn')} <ArrowRight /></button>
         </form>
         <span className="auth-switch">{t('auth.new')} <Link href="/signup">{t('auth.create')}</Link></span>
