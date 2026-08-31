@@ -15,6 +15,7 @@ CLIENT_DIR = Path(__file__).resolve().parent.parent
 REPO_ROOT = CLIENT_DIR.parent
 API_DIR = REPO_ROOT / 'api' / 'src' / 'MersTassel.Api'
 API_HEALTH_URL = 'http://localhost:5080/health'
+PASSWORD_RECOVERY_URL = 'http://localhost:5080/api/v1/auth/forgot-password'
 API_STARTUP_TIMEOUT_SECONDS = 60
 
 sys.path.insert(0, str(REPO_ROOT / 'scripts'))
@@ -40,6 +41,20 @@ def api_is_healthy(timeout: float = 0.75) -> bool:
             return response.status == 200 and payload.get('status') == 'ok'
     except (HTTPError, URLError, TimeoutError, OSError, ValueError):
         return False
+
+
+def password_recovery_is_available(timeout: float = 0.75) -> bool:
+    """Return true when the API on the dev port contains the current auth routes.
+
+    GET returns 405 for this POST-only route and 404 when an older API build is still running.
+    """
+    try:
+        urlopen(PASSWORD_RECOVERY_URL, timeout=timeout)
+    except HTTPError as error:
+        return error.code == 405
+    except (URLError, TimeoutError, OSError):
+        return False
+    return False
 
 
 def wait_for_api(api: subprocess.Popen, timeout: int = API_STARTUP_TIMEOUT_SECONDS) -> bool:
@@ -93,7 +108,15 @@ def main():
             # IDE launch profiles often start the API separately. Reuse that healthy process
             # instead of racing a second Kestrel instance for port 5080. Because it is not our
             # child process, this launcher also leaves it running when the storefront stops.
-            print(f'API already running at {API_HEALTH_URL}. Reusing it.', flush=True)
+            if not password_recovery_is_available():
+                print(
+                    'An older MERS API is already running on port 5080 and does not expose '
+                    '/api/v1/auth/forgot-password. Stop the API process in your IDE, then run '
+                    '`npm run dev` again so the current backend is started.',
+                    file=sys.stderr,
+                )
+                return 1
+            print(f'Current API already running at {API_HEALTH_URL}. Reusing it.', flush=True)
         else:
             api = subprocess.Popen(
                 [str(dotnet), 'run', '--no-launch-profile'],

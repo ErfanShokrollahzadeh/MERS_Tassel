@@ -25,7 +25,13 @@ export default function ForgotPasswordPage() {
       await forgotPassword({ email });
       setSent(true);
     } catch (requestError) {
-      setError(requestError instanceof ApiError ? requestError.message : t('common.unexpected'));
+      setError(
+        requestError instanceof ApiError && requestError.status === 404
+          ? t('auth.recoveryUnavailable')
+          : requestError instanceof ApiError
+            ? requestError.message
+            : t('common.unexpected'),
+      );
     } finally {
       setSubmitting(false);
     }
