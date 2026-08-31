@@ -123,6 +123,7 @@ public static class DependencyInjection
         services.AddScoped<IContactMessageService, ContactMessageService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IUserAdminService, UserAdminService>();
+        services.AddScoped<ISupportService, SupportService>();
         services.AddScoped<DatabaseSeeder>();
 
         // Payments resolve to a disabled stub unless both Stripe secrets are present, so the

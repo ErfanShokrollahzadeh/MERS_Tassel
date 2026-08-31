@@ -1,5 +1,5 @@
 import { api, ApiError } from '@/lib/apiClient';
-import type { Cart, ExchangeRequest, Order, TradeInEstimate, Wallet } from '@/types/commerce';
+import type { Cart, ExchangeRequest, Order, SupportTicket, TradeInEstimate, Wallet } from '@/types/commerce';
 import { STORE_CURRENCY } from '@/lib/money';
 
 // ── Bag ─────────────────────────────────────────────────────────────────────
@@ -110,6 +110,10 @@ export function fetchOrder(number: string) {
   return api.get<Order>(`/orders/${encodeURIComponent(number)}`, { auth: true });
 }
 
+export function fetchMySupportTickets() { return api.get<SupportTicket[]>('/support/tickets', { auth: true, cache: 'no-store' }); }
+export function createSupportTicket(input: { subject: string; category: string; priority: string; orderId?: number; message: string }) { return api.post<SupportTicket>('/support/tickets', input, { auth: true }); }
+export function replyToSupportTicket(id: number, body: string) { return api.post<SupportTicket>(`/support/tickets/${id}/messages`, { body }, { auth: true }); }
+
 // ── Wallet & exchanges ─────────────────────────────────────────────────────
 
 export function fetchWallet(currency: string = STORE_CURRENCY) {
@@ -168,4 +172,5 @@ export const commerceKeys = {
   order: (number: string) => ['order', number] as const,
   wallet: (currency: string = STORE_CURRENCY) => ['wallet', currency] as const,
   exchanges: () => ['exchanges'] as const,
+  support: () => ['support', 'tickets'] as const,
 };

@@ -40,8 +40,7 @@ Next.js storefront deploys independently to Vercel. Start with [the deployment r
   stock when an order is cancelled or refunded
 - People and roles, and a site-settings page for the logo, hero banner and contact details
 
-Growth, Promotions and Support have no backend yet. Those pages say so rather than showing
-placeholder numbers.
+Support is fully connected for customers and the atelier team, including ticket history, replies, private notes, priorities, status workflow, order context, assignment data, and search. Growth remains planned; Promotions is backed by coupon management.
 
 ## Local setup
 

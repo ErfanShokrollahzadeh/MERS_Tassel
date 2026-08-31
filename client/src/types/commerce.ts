@@ -312,6 +312,16 @@ export type AdminUser = AuthUser & {
   lastActiveAt?: string | null;
 };
 
+export type SupportMessage = { id: number; authorId: string; authorName: string; body: string; isInternal: boolean; createdAt: string };
+export type SupportTicket = {
+  id: number; number: string; subject: string; category: string;
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  status: 'open' | 'pending_customer' | 'in_progress' | 'resolved' | 'closed';
+  customerId: string; customerName: string; customerEmail: string;
+  orderId?: number | null; orderNumber?: string | null; assignedToId?: string | null; assignedToName?: string | null;
+  createdAt: string; updatedAt: string; firstRespondedAt?: string | null; resolvedAt?: string | null; messages: SupportMessage[];
+};
+
 export type RevenuePoint = { name: string; date: string; revenue: number; orders: number };
 
 export type TopProduct = {

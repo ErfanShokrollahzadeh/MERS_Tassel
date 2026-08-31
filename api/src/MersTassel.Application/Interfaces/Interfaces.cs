@@ -197,6 +197,16 @@ public interface IUserAdminService
     Task<AdminUserDto> UpdateRoleAsync(string userId, string role, CancellationToken ct = default);
 }
 
+public interface ISupportService
+{
+    Task<SupportTicketDto> CreateAsync(string userId, CreateSupportTicketRequest request, CancellationToken ct = default);
+    Task<IReadOnlyList<SupportTicketDto>> ListMineAsync(string userId, CancellationToken ct = default);
+    Task<SupportTicketDto> GetAsync(int id, string userId, bool isStaff, CancellationToken ct = default);
+    Task<SupportTicketDto> AddMessageAsync(int id, string userId, bool isStaff, AddSupportMessageRequest request, CancellationToken ct = default);
+    Task<PagedResult<SupportTicketDto>> ListAdminAsync(SupportTicketQuery query, CancellationToken ct = default);
+    Task<SupportTicketDto> UpdateAsync(int id, UpdateSupportTicketRequest request, CancellationToken ct = default);
+}
+
 /// <summary>
 /// Payment gateway boundary. A disabled implementation is registered when provider keys are
 /// absent so the API starts and fails explicitly at the call site rather than at boot.

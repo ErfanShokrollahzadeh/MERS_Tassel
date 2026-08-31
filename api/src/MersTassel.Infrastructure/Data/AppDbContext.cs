@@ -31,6 +31,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<NewsletterSubscriber> NewsletterSubscribers => Set<NewsletterSubscriber>();
     public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
+    public DbSet<SupportTicket> SupportTickets => Set<SupportTicket>();
+    public DbSet<SupportMessage> SupportMessages => Set<SupportMessage>();
+    public DbSet<CannedSupportResponse> CannedSupportResponses => Set<CannedSupportResponse>();
 
     /// <summary>
     /// SQLite has no native date or decimal type, and EF refuses to translate ORDER BY or

@@ -12,6 +12,7 @@ import type {
   TradeInStatus,
   Product,
   SiteSettings,
+  SupportTicket,
 } from '@/types/commerce';
 
 // ── Dashboard ───────────────────────────────────────────────────────────────
@@ -302,6 +303,12 @@ export function updateExchangeStatus(id: number, status: Exclude<ExchangeStatus,
   return api.patch<ExchangeRequest>(`/admin/exchanges/${id}/status`, { status, adminNote }, { auth: true });
 }
 
+export type SupportQuery = { search?: string; status?: string; priority?: string; page?: number; pageSize?: number };
+export function fetchSupportTickets(query: SupportQuery = {}) { return api.get<Paged<SupportTicket>>(`/admin/support/tickets${queryString(query)}`, { auth: true, cache: 'no-store' }); }
+export function fetchSupportTicket(id: number) { return api.get<SupportTicket>(`/admin/support/tickets/${id}`, { auth: true, cache: 'no-store' }); }
+export function replySupportTicket(id: number, body: string, isInternal = false) { return api.post<SupportTicket>(`/admin/support/tickets/${id}/messages`, { body, isInternal }, { auth: true }); }
+export function updateSupportTicket(id: number, changes: { status?: SupportTicket['status']; priority?: SupportTicket['priority']; assignedToId?: string }) { return api.patch<SupportTicket>(`/admin/support/tickets/${id}`, changes, { auth: true }); }
+
 // ── Promotions ──────────────────────────────────────────────────────────────
 
 export type CouponDraft = {
@@ -390,4 +397,5 @@ export const adminKeys = {
   users: (query: { search?: string; page?: number } = {}) => ['admin', 'users', query] as const,
   settings: () => ['admin', 'settings'] as const,
   promotions: () => ['admin', 'promotions'] as const,
+  support: (query: SupportQuery = {}) => ['admin', 'support', query] as const,
 };

@@ -4,6 +4,47 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MersTassel.Infrastructure.Data;
 
+public class SupportTicketConfiguration : IEntityTypeConfiguration<SupportTicket>
+{
+    public void Configure(EntityTypeBuilder<SupportTicket> b)
+    {
+        b.ToTable("SupportTickets");
+        b.Property(x => x.Number).HasMaxLength(24).IsRequired();
+        b.Property(x => x.Subject).HasMaxLength(200).IsRequired();
+        b.Property(x => x.Category).HasMaxLength(30).IsRequired();
+        b.Property(x => x.Priority).HasMaxLength(12).IsRequired();
+        b.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        b.HasIndex(x => x.Number).IsUnique();
+        b.HasIndex(x => new { x.Status, x.UpdatedAt });
+        b.HasIndex(x => x.CustomerId);
+        b.HasOne(x => x.Customer).WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne(x => x.AssignedTo).WithMany().HasForeignKey(x => x.AssignedToId).OnDelete(DeleteBehavior.SetNull);
+        b.HasOne(x => x.Order).WithMany().HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.SetNull);
+    }
+}
+
+public class SupportMessageConfiguration : IEntityTypeConfiguration<SupportMessage>
+{
+    public void Configure(EntityTypeBuilder<SupportMessage> b)
+    {
+        b.ToTable("SupportMessages");
+        b.Property(x => x.Body).HasMaxLength(8000).IsRequired();
+        b.HasIndex(x => new { x.TicketId, x.CreatedAt });
+        b.HasOne(x => x.Ticket).WithMany(x => x.Messages).HasForeignKey(x => x.TicketId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne(x => x.Author).WithMany().HasForeignKey(x => x.AuthorId).OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public class CannedSupportResponseConfiguration : IEntityTypeConfiguration<CannedSupportResponse>
+{
+    public void Configure(EntityTypeBuilder<CannedSupportResponse> b)
+    {
+        b.ToTable("CannedSupportResponses");
+        b.Property(x => x.Title).HasMaxLength(100).IsRequired();
+        b.Property(x => x.Body).HasMaxLength(8000).IsRequired();
+    }
+}
+
 public class CategoryConfiguration : IEntityTypeConfiguration<Category>
 {
     public void Configure(EntityTypeBuilder<Category> b)

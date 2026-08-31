@@ -16,6 +16,7 @@ import { ExchangeRequestModal } from '@/components/ExchangeRequestModal';
 import { CartItemRemoveButton } from '@/components/CartItemRemoveButton';
 import type { OrderItem } from '@/types/commerce';
 import { formatMoney, STORE_CURRENCY } from '@/lib/money';
+import { AccountSupport } from '@/components/AccountSupport';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -142,6 +143,7 @@ export default function AccountPage() {
             <header><div><span className="account-icon"><ArrowLeftRight /></span><div><span className="eyebrow">{tr ? 'KONTROL BEKLİYOR' : 'PENDING VERIFICATION'}</span><h2>{tr ? 'Değişim talepleriniz' : 'Your exchange requests'}</h2></div></div></header>
             <div className="exchange-list">{exchanges.data.map((exchange) => <article key={exchange.id}><div><strong>{exchange.originalProductName} → {exchange.newProductName}</strong><span>{exchange.newProductColor} · {dateFormat.format(new Date(exchange.createdAt))}</span>{exchange.status === 'approved' && exchange.amountDue > 0 && !exchange.settlementOrderNumber && <Link className="text-button" href={`/checkout?exchange=${exchange.id}`}>{tr ? 'Farkı öde' : 'Pay the difference'} <ArrowRight /></Link>}</div><span className={`status status--${exchange.status}`}>{exchange.status.replaceAll('_', ' ')}</span><b>{exchange.walletCredit > 0 ? `+${money(exchange.walletCredit, exchange.currency)}` : exchange.amountDue > 0 ? `${money(exchange.amountDue, exchange.currency)} ${tr ? 'ödenecek' : 'due'}` : money(0, exchange.currency)}</b></article>)}</div>
           </section> : null}
+          <AccountSupport tr={tr} />
         </main>
       </div>
       <ExchangeRequestModal item={exchangeItem?.item || null} currency={exchangeItem?.currency || STORE_CURRENCY} onClose={() => setExchangeItem(null)} />
