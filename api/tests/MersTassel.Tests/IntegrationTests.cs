@@ -27,6 +27,7 @@ namespace MersTassel.Tests;
 public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly string _dbPath = Path.Combine(Path.GetTempPath(), $"mt-test-{Guid.NewGuid():N}.db");
+    private readonly string _supportPath = Path.Combine(Path.GetTempPath(), $"mt-support-{Guid.NewGuid():N}");
     public const string AdminEmail = "admin@merstassel.local";
     public static string AdminPassword { get; } = $"{Guid.NewGuid():N}aA1!";
 
@@ -42,6 +43,7 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
                 ["Seed:AdminEmail"] = AdminEmail,
                 ["Seed:AdminPassword"] = AdminPassword,
                 ["Jwt:SigningKey"] = Convert.ToBase64String(RandomNumberGenerator.GetBytes(48)),
+                ["Support:StoragePath"] = _supportPath,
                 // Left blank on purpose: proves the API boots and degrades cleanly without Stripe.
                 ["Stripe:SecretKey"] = "",
                 ["Stripe:WebhookSecret"] = "",
@@ -67,6 +69,7 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         // Drop pooled handles before deleting the file, or SQLite keeps it locked.
         SqliteConnectionCleanup();
         if (File.Exists(_dbPath)) File.Delete(_dbPath);
+        if (Directory.Exists(_supportPath)) Directory.Delete(_supportPath, recursive: true);
     }
 
     private static void SqliteConnectionCleanup() =>
@@ -468,6 +471,127 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var admin = await AdminClientAsync();
         (await admin.GetAsync("/api/v1/admin/products")).StatusCode
             .Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task Ticket_conversation_enforces_ownership_internal_notes_and_private_attachments()
+    {
+        var email = $"support-{Guid.NewGuid():N}@example.com";
+        var customer = factory.CreateClient();
+        await customer.PostAsJsonAsync("/api/v1/auth/register",
+            new { email, firstName = "Ada", lastName = "Customer", password = ApiFactory.AdminPassword });
+        customer.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(customer, email, ApiFactory.AdminPassword));
+
+        using var create = new MultipartFormDataContent
+        {
+            { new StringContent("Delivery date for my order"), "Subject" },
+            { new StringContent("shipping"), "Category" },
+            { new StringContent("Could you confirm when my parcel will leave the atelier?"), "Message" },
+        };
+        var pdf = new ByteArrayContent(Encoding.ASCII.GetBytes("%PDF-1.7\nprivate support document"));
+        pdf.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+        create.Add(pdf, "attachments", "receipt.pdf");
+
+        var createdResponse = await customer.PostAsync("/api/v1/tickets", create);
+        createdResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = (await createdResponse.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        var ticketId = created.GetProperty("id").GetInt32();
+        var attachmentId = created.GetProperty("messages")[0].GetProperty("attachments")[0].GetProperty("id").GetInt32();
+
+        var strangerEmail = $"stranger-{Guid.NewGuid():N}@example.com";
+        var stranger = factory.CreateClient();
+        await stranger.PostAsJsonAsync("/api/v1/auth/register",
+            new { email = strangerEmail, firstName = "Other", lastName = "Customer", password = ApiFactory.AdminPassword });
+        stranger.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(stranger, strangerEmail, ApiFactory.AdminPassword));
+        (await stranger.GetAsync($"/api/v1/tickets/{ticketId}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await stranger.GetAsync($"/api/v1/tickets/{ticketId}/attachments/{attachmentId}"))
+            .StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        var admin = await AdminClientAsync();
+        var note = new MultipartFormDataContent
+        {
+            { new StringContent("Customer has a verified delivery address."), "Body" },
+            { new StringContent("true"), "IsInternal" },
+        };
+        (await admin.PostAsync($"/api/v1/admin/support/tickets/{ticketId}/messages", note))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var agentPayload = await admin.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/admin/support/agents", Json);
+        var adminId = agentPayload!.Data![0].GetProperty("id").GetString();
+        var updated = await admin.PatchAsJsonAsync($"/api/v1/admin/support/tickets/{ticketId}", new
+        {
+            status = "in_progress",
+            priority = "high",
+            assignedToUserId = adminId,
+        });
+        updated.StatusCode.Should().Be(HttpStatusCode.OK);
+        var updatedTicket = (await updated.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        updatedTicket.GetProperty("priority").GetString().Should().Be("high");
+        updatedTicket.GetProperty("assignedToUserId").GetString().Should().Be(adminId);
+
+        var reply = new MultipartFormDataContent
+        {
+            { new StringContent("Your parcel is scheduled to leave tomorrow afternoon."), "Body" },
+            { new StringContent("false"), "IsInternal" },
+        };
+        (await admin.PostAsync($"/api/v1/admin/support/tickets/{ticketId}/messages", reply))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var customerView = await customer.GetFromJsonAsync<Envelope<JsonElement>>($"/api/v1/tickets/{ticketId}", Json);
+        customerView!.Data!.GetProperty("messages").GetArrayLength().Should().Be(2,
+            "private staff notes must never leave the customer API");
+        customerView.Data.GetProperty("status").GetString().Should().Be("waiting_for_customer");
+
+        var download = await customer.GetAsync($"/api/v1/tickets/{ticketId}/attachments/{attachmentId}");
+        download.StatusCode.Should().Be(HttpStatusCode.OK);
+        download.Content.Headers.ContentType!.MediaType.Should().Be("application/pdf");
+
+        var customerReply = new MultipartFormDataContent
+        {
+            { new StringContent("Thank you, I will watch for the tracking message."), "Body" },
+        };
+        var replied = await customer.PostAsync($"/api/v1/tickets/{ticketId}/messages", customerReply);
+        var repliedBody = (await replied.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        repliedBody.GetProperty("status").GetString().Should().Be("in_progress");
+
+        (await admin.PatchAsJsonAsync($"/api/v1/admin/support/tickets/{ticketId}", new
+        {
+            status = "closed",
+            priority = "high",
+            assignedToUserId = adminId,
+        })).StatusCode.Should().Be(HttpStatusCode.OK);
+        using var afterClose = new MultipartFormDataContent
+        {
+            { new StringContent("I should not be able to append to a closed conversation."), "Body" },
+        };
+        (await customer.PostAsync($"/api/v1/tickets/{ticketId}/messages", afterClose))
+            .StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task Staff_role_can_use_support_workspace_but_not_administrator_apis()
+    {
+        var email = $"agent-{Guid.NewGuid():N}@example.com";
+        var registration = factory.CreateClient();
+        await registration.PostAsJsonAsync("/api/v1/auth/register",
+            new { email, firstName = "Support", lastName = "Agent", password = ApiFactory.AdminPassword });
+
+        var admin = await AdminClientAsync();
+        var users = await admin.GetFromJsonAsync<Envelope<JsonElement>>(
+            $"/api/v1/admin/users?search={Uri.EscapeDataString(email)}", Json);
+        var id = users!.Data!.GetProperty("items")[0].GetProperty("id").GetString();
+        (await admin.PatchAsJsonAsync($"/api/v1/admin/users/{id}/role", new { role = "Staff" }))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var staff = factory.CreateClient();
+        staff.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", await LoginAsync(staff, email, ApiFactory.AdminPassword));
+        (await staff.GetAsync("/api/v1/admin/support/tickets")).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await staff.GetAsync("/api/v1/admin/support/agents")).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await staff.GetAsync("/api/v1/admin/products")).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        (await staff.GetAsync("/api/v1/admin/users")).StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     // ── Admin product lifecycle ────────────────────────────────────────────

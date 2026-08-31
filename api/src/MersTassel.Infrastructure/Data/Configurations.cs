@@ -490,3 +490,56 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
+
+public class SupportTicketConfiguration : IEntityTypeConfiguration<SupportTicket>
+{
+    public void Configure(EntityTypeBuilder<SupportTicket> b)
+    {
+        b.ToTable("SupportTickets");
+        b.Property(x => x.Number).HasMaxLength(24).IsRequired();
+        b.Property(x => x.CustomerName).HasMaxLength(160).IsRequired();
+        b.Property(x => x.CustomerEmail).HasMaxLength(254).IsRequired();
+        b.Property(x => x.Subject).HasMaxLength(160).IsRequired();
+        b.Property(x => x.Category).HasConversion<string>().HasMaxLength(24);
+        b.Property(x => x.Status).HasConversion<string>().HasMaxLength(24);
+        b.Property(x => x.Priority).HasConversion<string>().HasMaxLength(16);
+
+        b.HasIndex(x => x.Number).IsUnique();
+        b.HasIndex(x => new { x.Status, x.LastMessageAt });
+        b.HasIndex(x => x.CustomerId);
+        b.HasIndex(x => x.AssignedToUserId);
+        b.HasIndex(x => x.OrderId);
+        b.HasIndex(x => x.IsDelete);
+
+        b.HasOne(x => x.Customer).WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.SetNull);
+        b.HasOne(x => x.AssignedToUser).WithMany().HasForeignKey(x => x.AssignedToUserId).OnDelete(DeleteBehavior.SetNull);
+        b.HasOne(x => x.Order).WithMany().HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.SetNull);
+    }
+}
+
+public class SupportTicketMessageConfiguration : IEntityTypeConfiguration<SupportTicketMessage>
+{
+    public void Configure(EntityTypeBuilder<SupportTicketMessage> b)
+    {
+        b.ToTable("SupportTicketMessages");
+        b.Property(x => x.AuthorName).HasMaxLength(160).IsRequired();
+        b.Property(x => x.Body).HasMaxLength(4000).IsRequired();
+        b.HasIndex(x => new { x.TicketId, x.CreatedAt });
+        b.HasIndex(x => x.AuthorUserId);
+        b.HasOne(x => x.Ticket).WithMany(x => x.Messages).HasForeignKey(x => x.TicketId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne(x => x.AuthorUser).WithMany().HasForeignKey(x => x.AuthorUserId).OnDelete(DeleteBehavior.SetNull);
+    }
+}
+
+public class SupportTicketAttachmentConfiguration : IEntityTypeConfiguration<SupportTicketAttachment>
+{
+    public void Configure(EntityTypeBuilder<SupportTicketAttachment> b)
+    {
+        b.ToTable("SupportTicketAttachments");
+        b.Property(x => x.StoragePath).HasMaxLength(500).IsRequired();
+        b.Property(x => x.OriginalFileName).HasMaxLength(240).IsRequired();
+        b.Property(x => x.ContentType).HasMaxLength(100).IsRequired();
+        b.HasIndex(x => x.MessageId);
+        b.HasOne(x => x.Message).WithMany(x => x.Attachments).HasForeignKey(x => x.MessageId).OnDelete(DeleteBehavior.Cascade);
+    }
+}

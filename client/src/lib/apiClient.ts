@@ -251,6 +251,37 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   }
 }
 
+async function sendBlob(path: string, accessOverride?: string): Promise<Blob> {
+  const access = accessOverride ?? bridge?.getAccess() ?? null;
+  let response: Response;
+  try {
+    response = await fetch(requestUrl(path), {
+      method: 'GET',
+      headers: access ? { Authorization: `Bearer ${access}` } : {},
+      cache: 'no-store',
+    });
+  } catch {
+    throw new ApiError('Could not reach the atelier service. Check that the API is running.', 0, 'network_error');
+  }
+
+  if (!response.ok) {
+    const envelope = (await response.json().catch(() => null)) as ApiEnvelope<never> | null;
+    throw new ApiError(envelope?.message || `Download failed (${response.status}).`, response.status, envelope?.code, envelope?.errors);
+  }
+  return response.blob();
+}
+
+async function download(path: string): Promise<Blob> {
+  try {
+    return await sendBlob(path);
+  } catch (error) {
+    if (!(error instanceof ApiError) || error.status !== 401 || !bridge) throw error;
+    const access = await refreshAccessToken();
+    if (!access) throw error;
+    return sendBlob(path, access);
+  }
+}
+
 export const api = {
   get: <T>(path: string, options: Omit<RequestOptions, 'method' | 'body'> = {}) =>
     request<T>(path, { ...options, method: 'GET' }),
@@ -273,6 +304,8 @@ export const api = {
 
   putForm: <T>(path: string, form: FormData, options: Omit<RequestOptions, 'method' | 'form'> = {}) =>
     request<T>(path, { ...options, method: 'PUT', form }),
+
+  getBlob: (path: string) => download(path),
 };
 
 /** Serializes query params, dropping empty values so URLs stay clean. */

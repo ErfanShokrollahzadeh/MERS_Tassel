@@ -121,6 +121,8 @@ public static class DependencyInjection
         services.AddScoped<INewsletterService, NewsletterService>();
         services.AddScoped<IContactEmailSender, SmtpContactEmailSender>();
         services.AddScoped<IContactMessageService, ContactMessageService>();
+        services.AddScoped<ISupportAttachmentStorage, SupportAttachmentStorage>();
+        services.AddScoped<ISupportTicketService, SupportTicketService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IUserAdminService, UserAdminService>();
         services.AddScoped<DatabaseSeeder>();

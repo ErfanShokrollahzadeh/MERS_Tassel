@@ -9,6 +9,8 @@ obj/
 
 # Uploaded and seeded media — generated at runtime from seed-assets/
 src/MersTassel.Api/wwwroot/uploads/
+src/MersTassel.Api/support-data/
+support-data/
 
 # User secrets / local overrides
 appsettings.Local.json

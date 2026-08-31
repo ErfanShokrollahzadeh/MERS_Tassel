@@ -32,16 +32,17 @@ Next.js storefront deploys independently to Vercel. Start with [the deployment r
 
 ### Atelier workspace (`/admin`)
 
-- Administrator-only, guarded by role
+- Role-guarded workspace: administrators have full access; support staff are restricted to the support inbox
 - Overview with revenue, orders, average order value and inventory, computed from real orders
 - Product management: create, edit and remove, with drag-and-drop image upload, live previews,
   cover-image selection, per-finish variants and EN/TR fields
 - Order management with filters, search, expandable detail and status transitions that return
   stock when an order is cancelled or refunded
 - People and roles, and a site-settings page for the logo, hero banner and contact details
+- Complete support inbox with customer-created tickets, threaded replies, private internal notes,
+  private image/PDF attachments, assignment, priority, lifecycle states, search, and order context
 
-Growth, Promotions and Support have no backend yet. Those pages say so rather than showing
-placeholder numbers.
+Growth remains presentation-only. Promotions and Support are connected to the active API.
 
 ## Local setup
 
@@ -134,6 +135,7 @@ environment variables (`Jwt__SigningKey`).
 | `Jwt:AccessTokenMinutes` / `Jwt:RefreshTokenDays` | Token lifetimes (default 15 minutes / 7 days) |
 | `Cors:AllowedOrigins` | Origins allowed to call the API |
 | `Storage:MaxBytes` | Upload size limit (default 10 MB) |
+| `Support:StoragePath` | Private ticket attachment directory; never place it under `wwwroot` |
 | `Stripe:SecretKey` / `Stripe:WebhookSecret` | Enables payments; without both, checkout returns a `payments_not_configured` 503 |
 | `Email:Username` / `Email:AppPassword` | Gmail SMTP account and app password used by the contact form |
 | `Email:Recipient` | Contact-form inbox (default `merstassel@gmail.com`) |
@@ -196,6 +198,10 @@ Uploaded media is stored under `wwwroot/uploads/{entity}/{yyyy}/{MM}/` and retur
 relative path such as `/uploads/products/2026/08/{guid}.jpg`; the client resolves it against
 the API origin. Uploads are validated by magic bytes rather than by file extension.
 
+Support attachments are intentionally different: they live under `Support:StoragePath` and can
+only be downloaded through an authenticated ticket endpoint after customer-ownership or staff-role
+authorization. They are never exposed by static-file middleware.
+
 Records are soft-deleted through an `isDelete` column with a global query filter, so removing a
 product hides it from the storefront while order history keeps its reference.
 
@@ -206,7 +212,7 @@ export PATH="$(dirname "$(python3 scripts/dotnet_sdk.py)"):$PATH"
 
 cd api
 dotnet build
-dotnet test          # 47 unit and integration tests
+dotnet test          # 67 unit and integration tests
 
 cd ../client
 npm run typecheck

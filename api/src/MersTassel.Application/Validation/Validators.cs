@@ -54,6 +54,45 @@ public class ContactMessageRequestValidator : AbstractValidator<ContactMessageRe
     }
 }
 
+public class CreateSupportTicketRequestValidator : AbstractValidator<CreateSupportTicketRequest>
+{
+    private static readonly string[] Categories =
+        ["order", "product", "shipping", "return", "repair", "account", "other"];
+
+    public CreateSupportTicketRequestValidator()
+    {
+        RuleFor(x => x.Subject).NotEmpty().MinimumLength(4).MaximumLength(160);
+        RuleFor(x => x.Category).NotEmpty()
+            .Must(value => Categories.Contains(value.Trim().ToLowerInvariant()))
+            .WithMessage("Choose a valid support category.");
+        RuleFor(x => x.Message).NotEmpty().MinimumLength(10).MaximumLength(4000);
+        RuleFor(x => x.OrderNumber).MaximumLength(40);
+    }
+}
+
+public class AddSupportTicketMessageRequestValidator : AbstractValidator<AddSupportTicketMessageRequest>
+{
+    public AddSupportTicketMessageRequestValidator()
+    {
+        RuleFor(x => x.Body).NotEmpty().MinimumLength(2).MaximumLength(4000);
+    }
+}
+
+public class UpdateSupportTicketRequestValidator : AbstractValidator<UpdateSupportTicketRequest>
+{
+    private static readonly string[] Statuses = ["open", "in_progress", "waiting_for_customer", "resolved", "closed"];
+    private static readonly string[] Priorities = ["low", "normal", "high", "urgent"];
+
+    public UpdateSupportTicketRequestValidator()
+    {
+        RuleFor(x => x.Status).NotEmpty().Must(value => Statuses.Contains(value.Trim().ToLowerInvariant()))
+            .WithMessage("Choose a valid ticket status.");
+        RuleFor(x => x.Priority).NotEmpty().Must(value => Priorities.Contains(value.Trim().ToLowerInvariant()))
+            .WithMessage("Choose a valid ticket priority.");
+        RuleFor(x => x.AssignedToUserId).MaximumLength(450);
+    }
+}
+
 public class UpdateProfileRequestValidator : AbstractValidator<UpdateProfileRequest>
 {
     public UpdateProfileRequestValidator()

@@ -31,6 +31,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<NewsletterSubscriber> NewsletterSubscribers => Set<NewsletterSubscriber>();
     public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
+    public DbSet<SupportTicket> SupportTickets => Set<SupportTicket>();
+    public DbSet<SupportTicketMessage> SupportTicketMessages => Set<SupportTicketMessage>();
+    public DbSet<SupportTicketAttachment> SupportTicketAttachments => Set<SupportTicketAttachment>();
 
     /// <summary>
     /// SQLite has no native date or decimal type, and EF refuses to translate ORDER BY or
@@ -104,6 +107,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         // an orphaned wallet for a soft-deleted account and does not emit model warning 10622.
         builder.Entity<StoreWallet>().HasQueryFilter(w => !w.User.IsDelete);
         builder.Entity<StoreWalletTransaction>().HasQueryFilter(t => !t.Wallet.User.IsDelete);
+
+        // Ticket messages and attachments require their parents. Mirror the ticket's soft-delete
+        // filter so EF never materializes child rows from a conversation hidden by that filter.
+        builder.Entity<SupportTicketMessage>().HasQueryFilter(message => !message.Ticket.IsDelete);
+        builder.Entity<SupportTicketAttachment>().HasQueryFilter(attachment => !attachment.Message.Ticket.IsDelete);
     }
 
     public override int SaveChanges()

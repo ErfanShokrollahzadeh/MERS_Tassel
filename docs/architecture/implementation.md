@@ -5,7 +5,9 @@
 - `client` owns the storefront and staff workspaces. Public catalog surfaces are server-renderable; mutable commerce interfaces use local query state and typed domain fixtures when the API is unavailable.
 - `server/products` owns catalog content, variants, media, and sellable inventory identity.
 - `server/commerce` owns carts, checkout sessions, immutable order snapshots, promotions, inventory reservations, and webhook-driven fulfillment.
-- `server/support` owns tickets, internal notes, attachments, assignments, and SLA state.
+- The active ASP.NET Core API owns tickets, internal notes, private attachments, assignments,
+  customer unread state, and lifecycle state. Admin and Staff are authorized server-side; customer
+  reads are always scoped to the ticket owner.
 - `server/analytics` owns append-only funnel events and daily aggregates.
 
 ## Consistency rules

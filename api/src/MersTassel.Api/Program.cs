@@ -137,6 +137,15 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit = 0,
             AutoReplenishment = true,
         }));
+    options.AddPolicy("support-write", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 20,
+            Window = TimeSpan.FromMinutes(10),
+            QueueLimit = 0,
+            AutoReplenishment = true,
+        }));
 });
 
 // ── CORS ────────────────────────────────────────────────────────────────────
@@ -237,6 +246,7 @@ internal class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser
     public string? UserId => Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
     public string? Email => Principal?.FindFirstValue(ClaimTypes.Email);
     public bool IsAdmin => Principal?.IsInRole("Admin") ?? false;
+    public bool IsSupportStaff => IsAdmin || (Principal?.IsInRole("Staff") ?? false);
     public bool IsAuthenticated => Principal?.Identity?.IsAuthenticated ?? false;
 }
 

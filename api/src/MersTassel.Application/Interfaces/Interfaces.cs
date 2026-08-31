@@ -180,6 +180,34 @@ public interface IContactMessageService
     Task<ContactMessageReceiptDto> SendAsync(ContactMessageRequest request, CancellationToken ct = default);
 }
 
+public interface ISupportTicketService
+{
+    Task<SupportTicketDetailDto> CreateAsync(string userId, CreateSupportTicketRequest request,
+        IReadOnlyList<UploadedFile> attachments, CancellationToken ct = default);
+    Task<IReadOnlyList<SupportTicketSummaryDto>> ListForCustomerAsync(string userId, CancellationToken ct = default);
+    Task<SupportTicketDetailDto> GetForCustomerAsync(int id, string userId, CancellationToken ct = default);
+    Task<SupportTicketDetailDto> AddCustomerMessageAsync(int id, string userId,
+        AddSupportTicketMessageRequest request, IReadOnlyList<UploadedFile> attachments, CancellationToken ct = default);
+
+    Task<PagedResult<SupportTicketSummaryDto>> ListForStaffAsync(SupportTicketQuery query, string staffUserId,
+        CancellationToken ct = default);
+    Task<SupportTicketDetailDto> GetForStaffAsync(int id, string staffUserId, CancellationToken ct = default);
+    Task<SupportTicketDetailDto> AddStaffMessageAsync(int id, string staffUserId,
+        AddSupportTicketMessageRequest request, IReadOnlyList<UploadedFile> attachments, CancellationToken ct = default);
+    Task<SupportTicketDetailDto> UpdateAsync(int id, string staffUserId, UpdateSupportTicketRequest request,
+        CancellationToken ct = default);
+    Task<IReadOnlyList<SupportAgentDto>> ListAgentsAsync(CancellationToken ct = default);
+    Task<SupportAttachmentDownload> OpenAttachmentAsync(int ticketId, int attachmentId, string userId,
+        bool isSupportStaff, CancellationToken ct = default);
+}
+
+public interface ISupportAttachmentStorage
+{
+    Task<StoredSupportAttachment> SaveAsync(UploadedFile file, CancellationToken ct = default);
+    Task<Stream> OpenReadAsync(string privatePath, CancellationToken ct = default);
+    Task DeleteAsync(string? privatePath, CancellationToken ct = default);
+}
+
 /// <summary>Email delivery boundary; the infrastructure implementation authenticates with SMTP.</summary>
 public interface IContactEmailSender
 {
@@ -222,5 +250,6 @@ public interface ICurrentUser
     string? UserId { get; }
     string? Email { get; }
     bool IsAdmin { get; }
+    bool IsSupportStaff { get; }
     bool IsAuthenticated { get; }
 }

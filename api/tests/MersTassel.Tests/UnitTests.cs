@@ -2,12 +2,14 @@ using System.Text;
 using FluentAssertions;
 using MersTassel.Application.Common;
 using MersTassel.Application.DTOs;
+using MersTassel.Application.Interfaces;
 using MersTassel.Infrastructure.Email;
 using MersTassel.Infrastructure.Data;
 using MersTassel.Infrastructure.Services;
 using MersTassel.Infrastructure.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 
 namespace MersTassel.Tests;
 
@@ -150,6 +152,54 @@ public class FileStorageTests : IDisposable
 
         var act = async () => await _storage.DeleteAsync(path);
         await act.Should().NotThrowAsync("deleting an already-removed file is not an error");
+    }
+
+    public void Dispose()
+    {
+        if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
+        GC.SuppressFinalize(this);
+    }
+}
+
+public class SupportAttachmentStorageTests : IDisposable
+{
+    private readonly string _root = Path.Combine(Path.GetTempPath(), $"mt-private-support-{Guid.NewGuid():N}");
+    private readonly SupportAttachmentStorage _storage;
+
+    public SupportAttachmentStorageTests()
+    {
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(
+            new Dictionary<string, string?> { ["Support:StoragePath"] = _root }).Build();
+        _storage = new SupportAttachmentStorage(configuration, NullLogger<SupportAttachmentStorage>.Instance);
+    }
+
+    [Fact]
+    public async Task Stores_pdf_outside_public_media_and_reopens_it()
+    {
+        var bytes = Encoding.ASCII.GetBytes("%PDF-1.7\nprivate receipt");
+        using var content = new MemoryStream(bytes);
+        var saved = await _storage.SaveAsync(new UploadedFile(content, "receipt.pdf", bytes.Length, "application/pdf"));
+
+        saved.ContentType.Should().Be("application/pdf");
+        Path.IsPathRooted(saved.StoragePath).Should().BeFalse();
+        File.Exists(Path.Combine(_root, saved.StoragePath.Replace('/', Path.DirectorySeparatorChar))).Should().BeTrue();
+
+        await using var reopened = await _storage.OpenReadAsync(saved.StoragePath);
+        using var copy = new MemoryStream();
+        await reopened.CopyToAsync(copy);
+        copy.ToArray().Should().Equal(bytes);
+    }
+
+    [Fact]
+    public async Task Rejects_executable_content_disguised_as_an_image()
+    {
+        var bytes = Encoding.UTF8.GetBytes("#!/bin/sh\necho unsafe");
+        using var content = new MemoryStream(bytes);
+        var upload = new UploadedFile(content, "screenshot.jpg", bytes.Length, "image/jpeg");
+
+        var act = () => _storage.SaveAsync(upload);
+
+        await act.Should().ThrowAsync<ValidationException>().WithMessage("*JPEG, PNG, WebP, or PDF*");
     }
 
     public void Dispose()

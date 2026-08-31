@@ -31,15 +31,16 @@ export default function AdminLoginPage() {
         password: String(form.get('password') || ''),
       });
 
-      // Authenticating is not enough — this workspace is for administrators only.
-      if (session.user.role !== 'admin') {
+      // Customers stay in the shop; admins and support staff receive scoped workspace access.
+      if (session.user.role === 'customer') {
         clearSession();
         setError('This account does not have workspace access.');
         return;
       }
 
       setSession(session);
-      router.replace(safeDestination());
+      const requested = safeDestination();
+      router.replace(session.user.role === 'staff' && !requested.startsWith('/admin/support') ? '/admin/support' : requested);
     } catch (requestError) {
       setError(
         requestError instanceof ApiError
@@ -59,7 +60,7 @@ export default function AdminLoginPage() {
         <Link href="/" className="wordmark"><span className="wordmark__seal">M</span><span>MERS <i>Tassel</i></span></Link>
         <span className="admin-kicker">Atelier workspace</span>
         <h1>Sign in to continue</h1>
-        <p>Manage the catalog, orders and storefront settings.</p>
+        <p>Manage the atelier or help customers from the support workspace.</p>
 
         <form onSubmit={onSubmit}>
           <label>Email address<input name="email" type="email" required autoComplete="email" autoFocus /></label>
@@ -70,7 +71,7 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        <p className="admin-login__note"><LockKeyhole size={13} /> Administrator access only. Storefront accounts sign in at <Link href="/login">the shop</Link>.</p>
+        <p className="admin-login__note"><LockKeyhole size={13} /> Administrator or support staff access. Storefront accounts sign in at <Link href="/login">the shop</Link>.</p>
       </div>
     </div>
   );

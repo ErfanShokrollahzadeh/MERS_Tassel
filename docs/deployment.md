@@ -16,6 +16,7 @@ flowchart LR
     Dotnet --> StoreDB[(PostgreSQL: merstassel)]
     Django --> LegacyDB[(PostgreSQL: merstassel_django)]
     Dotnet --> Uploads[(uploads volume)]
+    Dotnet --> SupportFiles[(private support attachments)]
     Dotnet --> Keys[(data-protection key ring)]
 ```
 
@@ -130,8 +131,8 @@ Google app password. The normal account password must never be used.
 
 ## Backups
 
-Create a timestamped backup of both databases, both media volumes and the ASP.NET Core
-data-protection key ring:
+Create a timestamped backup of both databases, public media, private support attachments and the
+ASP.NET Core data-protection key ring:
 
 ```bash
 docker compose --env-file .env.production --profile tools run --rm backup
@@ -165,7 +166,7 @@ backward.
 ```bash
 DOTNET="$(python3 scripts/dotnet_sdk.py)"
 "$DOTNET" ef migrations add <Name> --project api/src/MersTassel.PostgresMigrations \
-  --startup-project api/src/MersTassel.Api
+  --startup-project api/src/MersTassel.PostgresMigrations
 ```
 
 Commands that do reach a database — `database update`, scripting against a live schema — read
@@ -179,9 +180,9 @@ export POSTGRES_DESIGN_CONNECTION='Host=localhost;Database=merstassel;Username=m
 
 The production stack uses PostgreSQL while local development currently uses SQLite. A fresh
 deployment seeds the catalog but does not silently copy local users, orders, newsletters or
-contact messages. Keep `api/src/MersTassel.Api/merstassel.db` and the local `wwwroot/uploads`
-directory backed up until a one-time data migration has been verified. Do not delete them after
-the first deployment.
+contact messages or support tickets. Keep `api/src/MersTassel.Api/merstassel.db`, the local
+`wwwroot/uploads` directory, and `support-data` backed up until a one-time data migration has been
+verified. Do not delete them after the first deployment.
 
 ## Operational checks
 
