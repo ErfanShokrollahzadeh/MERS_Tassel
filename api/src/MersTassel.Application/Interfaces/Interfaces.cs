@@ -170,6 +170,19 @@ public interface ISiteSettingsService
     Task<SiteSettingsDto> UpdateAsync(SiteSettingsDto request, UploadedFile? logo, UploadedFile? hero, CancellationToken ct = default);
 }
 
+public interface IPopupService
+{
+    Task<IReadOnlyList<PopupDto>> GetActivePopupsAsync(string? path, string? device, bool isAuthenticated, CancellationToken ct = default);
+    Task RecordEventAsync(int popupId, string eventType, CancellationToken ct = default);
+    Task<IReadOnlyList<AdminPopupDto>> ListAdminAsync(CancellationToken ct = default);
+    Task<AdminPopupDto> GetAdminByIdAsync(int id, CancellationToken ct = default);
+    Task<AdminPopupDto> CreateAsync(PopupWriteRequest request, UploadedFile? image, CancellationToken ct = default);
+    Task<AdminPopupDto> UpdateAsync(int id, PopupWriteRequest request, UploadedFile? image, CancellationToken ct = default);
+    Task ToggleStatusAsync(int id, bool isActive, CancellationToken ct = default);
+    Task DeleteAsync(int id, CancellationToken ct = default);
+}
+
+
 public interface INewsletterService
 {
     Task<NewsletterSubscriptionDto> SubscribeAsync(NewsletterSubscribeRequest request, CancellationToken ct = default);

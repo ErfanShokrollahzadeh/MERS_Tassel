@@ -104,3 +104,36 @@ public enum SupportTicketCategory
     Account = 5,
     Other = 6,
 }
+
+public enum PopupType
+{
+    Promotional = 0,
+    Newsletter = 1,
+    Announcement = 2,
+    SupportCare = 3,
+    Custom = 4,
+}
+
+public enum PopupTriggerType
+{
+    Delay = 0,
+    ScrollDepth = 1,
+    ExitIntent = 2,
+    Immediate = 3,
+}
+
+public enum PopupPlacement
+{
+    CenterModal = 0,
+    BottomBar = 1,
+    SlideInBottomRight = 2,
+    SlideInBottomLeft = 3,
+}
+
+public enum PopupTargetAudience
+{
+    All = 0,
+    GuestsOnly = 1,
+    RegisteredOnly = 2,
+}
+

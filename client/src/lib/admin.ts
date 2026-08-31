@@ -12,7 +12,23 @@ import type {
   TradeInStatus,
   Product,
   SiteSettings,
+<<<<<<< ours
+  AdminPopup,
+  PopupDraft,
 } from '@/types/commerce';
+
+=======
+  AdminPopup, PopupDraft,
+} from '@/types/commerce';
+
+export const popupKeys = { all: ['admin', 'popups'] as const };
+export function fetchAdminPopups() { return api.get<AdminPopup[]>('/admin/popups', { auth: true, cache: 'no-store' }); }
+function popupForm(draft: PopupDraft, image?: File | null) { const form = new FormData(); Object.entries(draft).forEach(([key,value]) => { if (value != null) form.append(key[0].toUpperCase()+key.slice(1), String(value)); }); if (image) form.append('image',image); return form; }
+export function createPopup(draft: PopupDraft,image?:File|null) { return api.postForm<AdminPopup>('/admin/popups',popupForm(draft,image),{auth:true}); }
+export function updatePopup(id:number,draft:PopupDraft,image?:File|null) { return api.putForm<AdminPopup>(`/admin/popups/${id}`,popupForm(draft,image),{auth:true}); }
+export function togglePopupStatus(id:number,isActive:boolean) { return api.patch<null>(`/admin/popups/${id}/status`,{isActive},{auth:true}); }
+export function deletePopup(id:number) { return api.delete<null>(`/admin/popups/${id}`,{auth:true}); }
+>>>>>>> theirs
 
 // ── Dashboard ───────────────────────────────────────────────────────────────
 
@@ -381,6 +397,64 @@ export function updateSettings(draft: SiteSettings, logo?: File | null, hero?: F
   return api.putForm<SiteSettings>('/admin/settings', form, { auth: true });
 }
 
+// ── Popups ─────────────────────────────────────────────────────────────────
+
+function popupForm(draft: PopupDraft, image?: File | null): FormData {
+  const form = new FormData();
+  form.append('Name', draft.name);
+  form.append('Type', draft.type);
+  form.append('Placement', draft.placement);
+  form.append('TriggerType', draft.triggerType);
+  form.append('TriggerValue', String(draft.triggerValue));
+  form.append('TargetAudience', draft.targetAudience);
+  if (draft.targetPages) form.append('TargetPages', draft.targetPages);
+  form.append('DeviceTarget', draft.deviceTarget);
+  form.append('CooldownDays', String(draft.cooldownDays));
+  form.append('Priority', String(draft.priority));
+  form.append('IsActive', String(draft.isActive));
+  if (draft.startsAt) form.append('StartsAt', draft.startsAt);
+  if (draft.expiresAt) form.append('ExpiresAt', draft.expiresAt);
+  if (draft.badge) form.append('Badge', draft.badge);
+  if (draft.badgeTr) form.append('BadgeTr', draft.badgeTr);
+  form.append('Title', draft.title);
+  if (draft.titleTr) form.append('TitleTr', draft.titleTr);
+  if (draft.description) form.append('Description', draft.description);
+  if (draft.descriptionTr) form.append('DescriptionTr', draft.descriptionTr);
+  if (draft.primaryCtaText) form.append('PrimaryCtaText', draft.primaryCtaText);
+  if (draft.primaryCtaTextTr) form.append('PrimaryCtaTextTr', draft.primaryCtaTextTr);
+  if (draft.primaryCtaUrl) form.append('PrimaryCtaUrl', draft.primaryCtaUrl);
+  if (draft.secondaryCtaText) form.append('SecondaryCtaText', draft.secondaryCtaText);
+  if (draft.secondaryCtaTextTr) form.append('SecondaryCtaTextTr', draft.secondaryCtaTextTr);
+  if (draft.couponCode) form.append('CouponCode', draft.couponCode);
+
+  if (image) form.append('image', image);
+  return form;
+}
+
+export function fetchAdminPopups() {
+  return api.get<AdminPopup[]>('/admin/popups', { auth: true });
+}
+
+export function fetchAdminPopup(id: number) {
+  return api.get<AdminPopup>(`/admin/popups/${id}`, { auth: true });
+}
+
+export function createPopup(draft: PopupDraft, image?: File | null) {
+  return api.postForm<AdminPopup>('/admin/popups', popupForm(draft, image), { auth: true });
+}
+
+export function updatePopup(id: number, draft: PopupDraft, image?: File | null) {
+  return api.putForm<AdminPopup>(`/admin/popups/${id}`, popupForm(draft, image), { auth: true });
+}
+
+export function togglePopupStatus(id: number, isActive: boolean) {
+  return api.patch<null>(`/admin/popups/${id}/status`, { isActive }, { auth: true });
+}
+
+export function deletePopup(id: number) {
+  return api.delete<null>(`/admin/popups/${id}`, { auth: true });
+}
+
 export const adminKeys = {
   dashboard: () => ['admin', 'dashboard'] as const,
   products: (query: AdminProductQuery = {}) => ['admin', 'products', query] as const,
@@ -390,4 +464,6 @@ export const adminKeys = {
   users: (query: { search?: string; page?: number } = {}) => ['admin', 'users', query] as const,
   settings: () => ['admin', 'settings'] as const,
   promotions: () => ['admin', 'promotions'] as const,
+  popups: () => ['admin', 'popups'] as const,
 };
+

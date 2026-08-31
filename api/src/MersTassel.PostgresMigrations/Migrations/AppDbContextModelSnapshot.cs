@@ -848,6 +848,148 @@ namespace MersTassel.PostgresMigrations.Migrations
                     b.ToTable("OrderItems", (string)null);
                 });
 
+            modelBuilder.Entity("MersTassel.Domain.Entities.Popup", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Badge")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("BadgeTr")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<long>("ClickCount")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ConversionCount")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("CooldownDays")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CouponCode")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<long>("CreatedAt")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeletedAt")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("DescriptionTr")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("DeviceTarget")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<long?>("ExpiresAt")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ImagePath")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<long>("ImpressionCount")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isDelete");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<int>("Placement")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PrimaryCtaText")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("PrimaryCtaTextTr")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("PrimaryCtaUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SecondaryCtaText")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("SecondaryCtaTextTr")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<long?>("StartsAt")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("TargetAudience")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TargetPages")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(240)
+                        .HasColumnType("character varying(240)");
+
+                    b.Property<string>("TitleTr")
+                        .HasMaxLength(240)
+                        .HasColumnType("character varying(240)");
+
+                    b.Property<int>("TriggerType")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TriggerValue")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("UpdatedAt")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("IsDelete");
+
+                    b.HasIndex("Priority");
+
+                    b.HasIndex("StartsAt");
+
+                    b.ToTable("Popups", (string)null);
+                });
+
             modelBuilder.Entity("MersTassel.Domain.Entities.ProcessedStripeEvent", b =>
                 {
                     b.Property<int>("Id")

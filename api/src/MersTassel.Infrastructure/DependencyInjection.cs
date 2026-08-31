@@ -119,6 +119,7 @@ public static class DependencyInjection
         services.AddScoped<IExchangeService, ExchangeService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<ISiteSettingsService, SiteSettingsService>();
+        services.AddScoped<IPopupService, PopupService>();
         services.AddScoped<INewsletterService, NewsletterService>();
         services.AddScoped<IContactEmailSender, SmtpContactEmailSender>();
         services.AddScoped<IAuthEmailSender, SmtpAuthEmailSender>();
@@ -127,6 +128,7 @@ public static class DependencyInjection
         services.AddScoped<ISupportTicketService, SupportTicketService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IUserAdminService, UserAdminService>();
+        services.AddScoped<IPopupService, PopupService>();
         services.AddScoped<DatabaseSeeder>();
 
         // Payments resolve to a disabled stub unless both Stripe secrets are present, so the
