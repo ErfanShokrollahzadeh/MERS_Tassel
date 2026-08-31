@@ -63,6 +63,7 @@ services:
       Seed__AdminEmail: ${ADMIN_EMAIL}
       Seed__ResetAdminPassword: "false"
       ModelGeneration__StoragePath: /model-data
+      Support__StoragePath: /support-data
       ModelGeneration__ProcessorUrl: http://model-processor:8090
       ModelGeneration__ProcessorKey: ${MODEL_PROCESSOR_KEY:-}
       ModelGeneration__MeshyApiKey: ${MODEL_GENERATION_MESHY_API_KEY:-}
@@ -83,6 +84,7 @@ services:
       - dotnet_uploads:/app/wwwroot/uploads
       - dotnet_keys:/app/keys
       - model_generation_data:/model-data
+      - support_attachment_data:/support-data
     networks:
       - backend
       - data
@@ -242,6 +244,7 @@ services:
       - dotnet_keys:/volumes/dotnet_keys:ro
       - django_media:/volumes/django_media:ro
       - model_generation_data:/volumes/model_generation_data:ro
+      - support_attachment_data:/volumes/support_attachment_data:ro
     entrypoint: ["/bin/sh", "/usr/local/bin/backup"]
     networks:
       - data
@@ -266,6 +269,7 @@ volumes:
   dotnet_uploads:
   dotnet_keys:
   model_generation_data:
+  support_attachment_data:
   django_media:
   django_static:
   caddy_data:

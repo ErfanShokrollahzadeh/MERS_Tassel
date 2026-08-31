@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { ArrowLeftRight, BarChart3, Bell, ChevronLeft, CircleHelp, Command, LayoutDashboard, Megaphone, Menu, Moon, Package, Search, Settings, ShoppingBag, Sun, TicketCheck, Users, X } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 
-const links = [
+const adminLinks = [
   { href: '/admin', label: 'Overview', icon: LayoutDashboard },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/admin/exchanges', label: 'Exchanges', icon: ArrowLeftRight },
@@ -31,14 +31,18 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const signOut = useAuthStore((state) => state.signOut);
 
   const isLoginRoute = pathname === '/admin/login';
+  const isWorkspaceUser = user?.role === 'admin' || user?.role === 'staff';
+  const links = user?.role === 'staff' ? adminLinks.filter((link) => link.href === '/admin/support') : adminLinks;
 
-  // The workspace is administrator-only; anyone else is sent to the sign-in screen.
+  // Admins receive the full workspace; Staff is a deliberately narrow support-only role.
   useEffect(() => {
     if (!hasHydrated || isLoginRoute) return;
-    if (!user || user.role !== 'admin') {
+    if (!isWorkspaceUser) {
       router.replace(`/admin/login?next=${encodeURIComponent(pathname)}`);
+    } else if (user.role === 'staff' && !pathname.startsWith('/admin/support')) {
+      router.replace('/admin/support');
     }
-  }, [hasHydrated, isLoginRoute, pathname, router, user]);
+  }, [hasHydrated, isLoginRoute, isWorkspaceUser, pathname, router, user]);
 
   const toggleTheme = () => {
     const next = !dark;
@@ -54,7 +58,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   // The login screen renders on its own, without the workspace chrome around it.
   if (isLoginRoute) return <>{children}</>;
 
-  if (!hasHydrated || !user || user.role !== 'admin') {
+  if (!hasHydrated || !user || !isWorkspaceUser) {
     return <div className="admin-gate"><span className="skeleton-block admin-gate__bar" /><p>Checking your workspace access…</p></div>;
   }
 
@@ -65,7 +69,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <a className="skip-link" href="#admin-main">Skip to workspace</a>
       <aside className={`admin-sidebar glass-panel${mobileOpen ? ' mobile-open' : ''}`}>
         <div className="admin-brand"><Link href="/admin" className="wordmark"><span className="wordmark__seal">M</span><span>MERS <i>Tassel</i></span></Link><button className="icon-button sidebar-close" onClick={() => setMobileOpen(false)}><X size={19} /></button></div>
-        <div className="workspace-switcher"><span className="workspace-avatar">MA</span><div><strong>MERS Atelier</strong><small>Commerce workspace</small></div></div>
+        <div className="workspace-switcher"><span className="workspace-avatar">MA</span><div><strong>MERS Atelier</strong><small>{user.role === 'staff' ? 'Support workspace' : 'Commerce workspace'}</small></div></div>
         <nav className="admin-nav" aria-label="Admin navigation">
           {links.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || (href !== '/admin' && pathname.startsWith(href));

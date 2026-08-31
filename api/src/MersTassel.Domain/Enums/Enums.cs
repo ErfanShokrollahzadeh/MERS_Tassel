@@ -76,3 +76,31 @@ public enum ExchangeRequestStatus
     Cancelled = 3,
     Completed = 4,
 }
+
+public enum SupportTicketStatus
+{
+    Open = 0,
+    InProgress = 1,
+    WaitingForCustomer = 2,
+    Resolved = 3,
+    Closed = 4,
+}
+
+public enum SupportTicketPriority
+{
+    Low = 0,
+    Normal = 1,
+    High = 2,
+    Urgent = 3,
+}
+
+public enum SupportTicketCategory
+{
+    Order = 0,
+    Product = 1,
+    Shipping = 2,
+    Return = 3,
+    Repair = 4,
+    Account = 5,
+    Other = 6,
+}

@@ -16,6 +16,7 @@ import { ExchangeRequestModal } from '@/components/ExchangeRequestModal';
 import { CartItemRemoveButton } from '@/components/CartItemRemoveButton';
 import type { OrderItem } from '@/types/commerce';
 import { formatMoney, STORE_CURRENCY } from '@/lib/money';
+import { CustomerSupportPanel } from '@/components/CustomerSupportPanel';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -66,7 +67,7 @@ export default function AccountPage() {
             <div><dt>{t('account.memberSince')}</dt><dd>{new Intl.DateTimeFormat(locale === 'tr' ? 'tr-TR' : 'en-US', { month: 'long', year: 'numeric' }).format(new Date(user.dateJoined))}</dd></div>
             <div><dt>{t('account.membership')}</dt><dd>{t('account.collector')}</dd></div>
           </dl>
-          {user.role === 'admin' && <Link className="button button--ghost account-admin-link" href="/admin">{t('account.openAtelier')} <ArrowRight size={15} /></Link>}
+          {user.role !== 'customer' && <Link className="button button--ghost account-admin-link" href={user.role === 'staff' ? '/admin/support' : '/admin'}>{user.role === 'staff' ? (tr ? 'Destek alanını aç' : 'Open support workspace') : t('account.openAtelier')} <ArrowRight size={15} /></Link>}
           <button className="text-button account-signout" onClick={handleSignOut}><LogOut /> {t('auth.signOut')}</button>
         </aside>
 
@@ -137,6 +138,8 @@ export default function AccountPage() {
               <div className="account-empty"><p>{t('account.noOrders')}</p><Link href="/products">{t('account.startShopping')} <ArrowRight /></Link></div>
             ))}
           </section>
+
+          <CustomerSupportPanel orders={orders.data || []} tr={tr} />
 
           {exchanges.data?.length ? <section className="account-card">
             <header><div><span className="account-icon"><ArrowLeftRight /></span><div><span className="eyebrow">{tr ? 'KONTROL BEKLİYOR' : 'PENDING VERIFICATION'}</span><h2>{tr ? 'Değişim talepleriniz' : 'Your exchange requests'}</h2></div></div></header>

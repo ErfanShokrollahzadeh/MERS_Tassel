@@ -62,7 +62,7 @@ export default function UsersPage() {
             <div>
               <strong>{role}</strong>
               <small>
-                {role === 'Admin' ? 'Full access to this workspace.' : role === 'Staff' ? 'Signed-in account, no workspace access yet.' : 'Storefront shopper.'}
+                {role === 'Admin' ? 'Full access to this workspace.' : role === 'Staff' ? 'Support inbox access only.' : 'Storefront shopper.'}
               </small>
             </div>
           </article>
