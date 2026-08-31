@@ -10,6 +10,8 @@ using MersTassel.Application.Common;
 using MersTassel.Application.DTOs;
 using MersTassel.Application.Interfaces;
 using MersTassel.Infrastructure.Data;
+using MersTassel.Domain.Entities;
+using MersTassel.Domain.Enums;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -129,6 +131,41 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
 
         var body = await response.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
         return body!.Data!.GetProperty("access").GetString()!;
+    }
+
+    [Fact]
+    public async Task Admin_marketing_dashboard_returns_real_metrics()
+    {
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var admin = await db.Users.SingleAsync(user => user.Email == ApiFactory.AdminEmail);
+            var marketingWindowDate = DateTimeOffset.UtcNow.AddDays(-15);
+            var cart = new Cart { UserId = admin.Id, Email = admin.Email! };
+            var order = new Order
+            {
+                Number = $"TEST-{Guid.NewGuid():N}", UserId = admin.Id, Email = admin.Email!,
+                CustomerName = "Admin", PaymentStatus = PaymentStatus.Paid, Total = 125m,
+                Channel = "storefront",
+            };
+            db.Carts.Add(cart);
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+            cart.CreatedAt = marketingWindowDate;
+            order.CreatedAt = marketingWindowDate;
+            await db.SaveChangesAsync();
+        }
+
+        var client = await AdminClientAsync();
+        var response = await client.GetAsync("/api/v1/admin/marketing");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        var body = await response.Content.ReadFromJsonAsync<Envelope<MarketingDto>>(Json);
+        body!.Success.Should().BeTrue();
+        body.Data!.RevenueSeries.Should().HaveCount(30);
+        body.Data.Revenue.Should().BeGreaterThanOrEqualTo(125m);
+        body.Data.Funnel.Should().HaveCount(4);
+        body.Data.Cohorts.Should().HaveCount(4);
     }
 
     // ── Catalog ────────────────────────────────────────────────────────────
