@@ -1383,3 +1383,4 @@ kbd { display:inline-flex; align-items:center; gap:2px; padding:4px 6px; border:
   .model-section-actions .admin-button{justify-content:center;width:100%}
 }
 .generation-capture-link__warning{color:var(--danger)!important;line-height:1.45}
+.auth-confirmation,.auth-invalid{display:grid;gap:18px}.auth-confirmation>svg,.auth-invalid>svg{width:42px;height:42px;color:var(--plum)}.auth-confirmation h1,.auth-invalid h1{margin:0}.auth-confirmation p,.auth-invalid p{margin:0 0 12px;color:var(--ink-soft);font-size:13px;line-height:1.65}.auth-confirmation .button,.auth-invalid .button{margin-top:8px}

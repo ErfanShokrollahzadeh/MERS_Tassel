@@ -214,6 +214,12 @@ public interface IContactEmailSender
     Task SendAsync(ContactMessageRequest request, int reference, CancellationToken ct = default);
 }
 
+/// <summary>Sends security-sensitive account messages without exposing SMTP concerns to the API.</summary>
+public interface IAuthEmailSender
+{
+    Task SendPasswordResetAsync(string email, string token, CancellationToken ct = default);
+}
+
 public interface IDashboardService
 {
     Task<DashboardDto> GetAsync(CancellationToken ct = default);
