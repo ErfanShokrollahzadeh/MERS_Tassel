@@ -218,3 +218,35 @@ cd ../client
 npm run typecheck
 npm run build
 ```
+
+## Resolving pull-request conflicts
+
+GitHub reports a conflict when both the pull-request branch and its base branch changed the same
+part of a file. Resolve it on the pull-request branch (not on `master`) and merge the current base
+branch into it:
+
+```bash
+git fetch origin
+git switch <pull-request-branch>
+git merge origin/master
+```
+
+Open every file reported by Git, choose the intended content between the `<<<<<<<`, `=======`, and
+`>>>>>>>` markers, and remove all three marker lines. Then verify that no unresolved paths or
+markers remain, run the project checks, commit the merge, and push the same branch:
+
+```bash
+git diff --name-only --diff-filter=U
+git grep -n -E '^(<<<<<<<|=======|>>>>>>>)' -- . ':!package-lock.json'
+
+git add <resolved-files>
+git commit -m "merge: resolve conflicts with master"
+git push origin <pull-request-branch>
+```
+
+The first two verification commands should print nothing. GitHub updates the existing pull request
+after the push; do not open a replacement pull request just to resolve its conflicts. If another
+pull request has already merged every commit from the conflicted branch, close the duplicate pull
+request instead of resolving and merging the same work twice. Confirm that case with
+`git log origin/master..<pull-request-branch>`: no output means the base branch already contains
+the branch's commits.
