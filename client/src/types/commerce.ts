@@ -341,3 +341,100 @@ export type Dashboard = {
   recentOrders: Order[];
   topProducts: TopProduct[];
 };
+<<<<<<< ours
+export type PopupType = 'promotional' | 'newsletter' | 'announcement' | 'support_care' | 'custom';
+export type PopupPlacement = 'center_modal' | 'bottom_bar' | 'slide_in_bottom_right' | 'slide_in_bottom_left';
+export type PopupTriggerType = 'delay' | 'scroll_depth' | 'exit_intent' | 'immediate';
+export type PopupTargetAudience = 'all' | 'guests_only' | 'registered_only';
+
+export type Popup = {
+  id: number;
+  type: PopupType;
+  placement: PopupPlacement;
+  triggerType: PopupTriggerType;
+  triggerValue: number;
+  cooldownDays: number;
+  priority: number;
+  targetPages?: string | null;
+  deviceTarget: 'all' | 'desktop' | 'mobile';
+  badge?: string | null;
+  badgeTr?: string | null;
+  title: string;
+  titleTr?: string | null;
+  description?: string | null;
+  descriptionTr?: string | null;
+  imagePath?: string | null;
+  primaryCtaText?: string | null;
+  primaryCtaTextTr?: string | null;
+  primaryCtaUrl?: string | null;
+  secondaryCtaText?: string | null;
+  secondaryCtaTextTr?: string | null;
+  couponCode?: string | null;
+};
+
+export type StorefrontPopup = Popup;
+
+export type AdminPopup = Popup & {
+  name: string;
+  targetAudience: PopupTargetAudience;
+  isActive: boolean;
+  startsAt?: string | null;
+  expiresAt?: string | null;
+  impressionCount: number;
+  clickCount: number;
+  conversionCount: number;
+  clickThroughRate: number;
+  conversionRate: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PopupDraft = {
+  name: string;
+  type: PopupType;
+  placement: PopupPlacement;
+  triggerType: PopupTriggerType;
+  triggerValue: number;
+  targetAudience: PopupTargetAudience;
+  targetPages?: string | null;
+  deviceTarget: 'all' | 'desktop' | 'mobile';
+  cooldownDays: number;
+  priority: number;
+  isActive: boolean;
+  startsAt?: string | null;
+  expiresAt?: string | null;
+  badge?: string | null;
+  badgeTr?: string | null;
+  title: string;
+  titleTr?: string | null;
+  description?: string | null;
+  descriptionTr?: string | null;
+  primaryCtaText?: string | null;
+  primaryCtaTextTr?: string | null;
+  primaryCtaUrl?: string | null;
+  secondaryCtaText?: string | null;
+  secondaryCtaTextTr?: string | null;
+  couponCode?: string | null;
+};
+
+=======
+
+export type ChannelAttribution = { channel: string; orders: number; revenue: number; sharePct: number };
+export type FunnelStep = { step: string; count: number };
+export type CohortRow = { cohortWeek: string; cohortSize: number; retentionPcts: number[] };
+
+export type Marketing = {
+  totalSessions: number;
+  sessionsChangePct: number;
+  conversionRate: number;
+  conversionChangePct: number;
+  revenue: number;
+  revenueChangePct: number;
+  acquisitionCost: number;
+  roasMultiplier: number;
+  attribution: ChannelAttribution[];
+  funnel: FunnelStep[];
+  cohorts: CohortRow[];
+  revenueSeries: RevenuePoint[];
+};
+>>>>>>> theirs

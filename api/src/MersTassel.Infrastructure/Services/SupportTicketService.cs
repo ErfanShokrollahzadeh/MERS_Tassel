@@ -160,7 +160,9 @@ public sealed class SupportTicketService(
         var page = Math.Max(1, query.Page);
         var pageSize = Math.Clamp(query.PageSize, 1, 100);
         var total = await q.CountAsync(ct);
-        var tickets = await q.OrderByDescending(x => x.LastMessageAt)
+        // Staff can see private notes, so staff ordering and timestamps must follow the latest
+        // staff-visible message rather than the latest customer-visible conversation activity.
+        var tickets = await q.OrderByDescending(x => x.Messages.Max(message => message.CreatedAt))
             .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
         return new PagedResult<SupportTicketSummaryDto>(tickets.Select(x => MapSummary(x, true)).ToList(), page, pageSize, total);
     }
@@ -390,7 +392,7 @@ public sealed class SupportTicketService(
                 : ticket.LastStaffReplyAt.HasValue && (!ticket.CustomerReadAt.HasValue || ticket.CustomerReadAt < ticket.LastStaffReplyAt),
             CreatedAt = ticket.CreatedAt,
             UpdatedAt = ticket.UpdatedAt,
-            LastMessageAt = ticket.LastMessageAt,
+            LastMessageAt = last?.CreatedAt ?? ticket.LastMessageAt,
         };
     }
 

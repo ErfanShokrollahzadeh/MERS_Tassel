@@ -4,6 +4,26 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MersTassel.Infrastructure.Data;
 
+public class PopupConfiguration : IEntityTypeConfiguration<Popup>
+{
+    public void Configure(EntityTypeBuilder<Popup> b)
+    {
+        b.ToTable("Popups");
+        b.Property(x => x.Name).HasMaxLength(160).IsRequired();
+        b.Property(x => x.Title).HasMaxLength(240).IsRequired();
+        b.Property(x => x.TitleTr).HasMaxLength(240);
+        b.Property(x => x.Badge).HasMaxLength(80); b.Property(x => x.BadgeTr).HasMaxLength(80);
+        b.Property(x => x.Description).HasMaxLength(2000); b.Property(x => x.DescriptionTr).HasMaxLength(2000);
+        b.Property(x => x.TargetPages).HasMaxLength(1000); b.Property(x => x.DeviceTarget).HasMaxLength(16);
+        b.Property(x => x.ImagePath).HasMaxLength(400); b.Property(x => x.PrimaryCtaUrl).HasMaxLength(500);
+        b.Property(x => x.PrimaryCtaText).HasMaxLength(100); b.Property(x => x.PrimaryCtaTextTr).HasMaxLength(100);
+        b.Property(x => x.SecondaryCtaText).HasMaxLength(100); b.Property(x => x.SecondaryCtaTextTr).HasMaxLength(100);
+        b.Property(x => x.CouponCode).HasMaxLength(80);
+        b.HasIndex(x => x.IsActive); b.HasIndex(x => x.StartsAt); b.HasIndex(x => x.ExpiresAt);
+        b.HasIndex(x => x.Priority); b.HasIndex(x => x.IsDelete);
+    }
+}
+
 public class CategoryConfiguration : IEntityTypeConfiguration<Category>
 {
     public void Configure(EntityTypeBuilder<Category> b)

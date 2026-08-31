@@ -119,6 +119,7 @@ public static class DependencyInjection
         services.AddScoped<IExchangeService, ExchangeService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<ISiteSettingsService, SiteSettingsService>();
+        services.AddScoped<IPopupService, PopupService>();
         services.AddScoped<INewsletterService, NewsletterService>();
         services.AddScoped<IContactEmailSender, SmtpContactEmailSender>();
         services.AddScoped<IAuthEmailSender, SmtpAuthEmailSender>();
@@ -126,6 +127,7 @@ public static class DependencyInjection
         services.AddScoped<ISupportAttachmentStorage, SupportAttachmentStorage>();
         services.AddScoped<ISupportTicketService, SupportTicketService>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IMarketingService, MarketingService>();
         services.AddScoped<IUserAdminService, UserAdminService>();
         services.AddScoped<DatabaseSeeder>();
 

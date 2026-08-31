@@ -46,6 +46,7 @@ public class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequ
             .NotEmpty()
             .MinimumLength(8).WithMessage("Password must be at least 8 characters.")
             .MaximumLength(128)
+            .Matches("[a-z]").WithMessage("Password must contain a lowercase letter.")
             .Matches("[0-9]").WithMessage("Password must contain a digit.");
     }
 }
@@ -406,3 +407,78 @@ public class UpdateUserRoleRequestValidator : AbstractValidator<UpdateUserRoleRe
             .WithMessage($"Role must be one of: {string.Join(", ", Allowed)}.");
     }
 }
+
+public class PopupWriteRequestValidator : AbstractValidator<PopupWriteRequest>
+{
+    private static readonly string[] AllowedTypes = ["promotional", "newsletter", "announcement", "support_care", "custom"];
+    private static readonly string[] AllowedPlacements = ["center_modal", "bottom_bar", "slide_in_bottom_right", "slide_in_bottom_left"];
+    private static readonly string[] AllowedTriggers = ["delay", "scroll_depth", "exit_intent", "immediate"];
+    private static readonly string[] AllowedAudiences = ["all", "guests_only", "registered_only"];
+    private static readonly string[] AllowedDevices = ["all", "desktop", "mobile"];
+
+    public PopupWriteRequestValidator()
+    {
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(150);
+        RuleFor(x => x.Type)
+            .NotEmpty()
+            .Must(t => AllowedTypes.Contains(t.ToLowerInvariant()))
+            .WithMessage($"Type must be one of: {string.Join(", ", AllowedTypes)}.");
+
+        RuleFor(x => x.Placement)
+            .NotEmpty()
+            .Must(p => AllowedPlacements.Contains(p.ToLowerInvariant()))
+            .WithMessage($"Placement must be one of: {string.Join(", ", AllowedPlacements)}.");
+
+        RuleFor(x => x.TriggerType)
+            .NotEmpty()
+            .Must(t => AllowedTriggers.Contains(t.ToLowerInvariant()))
+            .WithMessage($"TriggerType must be one of: {string.Join(", ", AllowedTriggers)}.");
+
+        RuleFor(x => x.TriggerValue)
+            .GreaterThanOrEqualTo(0)
+            .WithMessage("TriggerValue must be 0 or greater.");
+
+        RuleFor(x => x.TargetAudience)
+            .NotEmpty()
+            .Must(a => AllowedAudiences.Contains(a.ToLowerInvariant()))
+            .WithMessage($"TargetAudience must be one of: {string.Join(", ", AllowedAudiences)}.");
+
+        RuleFor(x => x.DeviceTarget)
+            .NotEmpty()
+            .Must(d => AllowedDevices.Contains(d.ToLowerInvariant()))
+            .WithMessage($"DeviceTarget must be one of: {string.Join(", ", AllowedDevices)}.");
+
+        RuleFor(x => x.CooldownDays).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.Title).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.TitleTr).MaximumLength(200);
+        RuleFor(x => x.Badge).MaximumLength(80);
+        RuleFor(x => x.BadgeTr).MaximumLength(80);
+        RuleFor(x => x.Description).MaximumLength(2000);
+        RuleFor(x => x.DescriptionTr).MaximumLength(2000);
+        RuleFor(x => x.PrimaryCtaText).MaximumLength(80);
+        RuleFor(x => x.PrimaryCtaTextTr).MaximumLength(80);
+        RuleFor(x => x.PrimaryCtaUrl).MaximumLength(500);
+        RuleFor(x => x.SecondaryCtaText).MaximumLength(80);
+        RuleFor(x => x.SecondaryCtaTextTr).MaximumLength(80);
+        RuleFor(x => x.CouponCode).MaximumLength(40);
+        RuleFor(x => x.TargetPages).MaximumLength(1000);
+
+        RuleFor(x => x)
+            .Must(x => !x.StartsAt.HasValue || !x.ExpiresAt.HasValue || x.ExpiresAt > x.StartsAt)
+            .WithMessage("ExpiresAt must be later than StartsAt.");
+    }
+}
+
+public class TrackPopupEventRequestValidator : AbstractValidator<TrackPopupEventRequest>
+{
+    private static readonly string[] AllowedEvents = ["impression", "click", "conversion"];
+
+    public TrackPopupEventRequestValidator()
+    {
+        RuleFor(x => x.EventType)
+            .NotEmpty()
+            .Must(e => AllowedEvents.Contains(e.ToLowerInvariant()))
+            .WithMessage($"EventType must be one of: {string.Join(", ", AllowedEvents)}.");
+    }
+}
+

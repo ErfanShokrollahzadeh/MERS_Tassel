@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { ArrowLeftRight, BarChart3, Bell, ChevronLeft, CircleHelp, Command, LayoutDashboard, Megaphone, Menu, Moon, Package, Search, Settings, ShoppingBag, Sun, TicketCheck, Users, X } from 'lucide-react';
+import { ArrowLeftRight, BarChart3, Bell, ChevronLeft, CircleHelp, Command, LayoutDashboard, Megaphone, Menu, Moon, Package, Search, Settings, ShoppingBag, Sparkles, Sun, TicketCheck, Users, X } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 
 const adminLinks = [
@@ -15,8 +15,12 @@ const adminLinks = [
   { href: '/admin/users', label: 'People & roles', icon: Users },
   { href: '/admin/marketing', label: 'Growth', icon: BarChart3 },
   { href: '/admin/promotions', label: 'Promotions', icon: Megaphone },
+  { href: '/admin/popups', label: 'Popups & Modals', icon: Sparkles },
   { href: '/admin/support', label: 'Support', icon: TicketCheck },
 ];
+
+
+
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

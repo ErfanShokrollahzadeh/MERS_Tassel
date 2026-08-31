@@ -91,6 +91,37 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         return client;
     }
 
+    [Fact]
+    public async Task Popup_workspace_loads_and_uses_the_string_enum_contract()
+    {
+        var client = await AdminClientAsync();
+
+        using var create = new MultipartFormDataContent
+        {
+            { new StringContent("Welcome campaign"), "Name" },
+            { new StringContent("promotional"), "Type" },
+            { new StringContent("centerModal"), "Placement" },
+            { new StringContent("scrollDepth"), "TriggerType" },
+            { new StringContent("30"), "TriggerValue" },
+            { new StringContent("all"), "TargetAudience" },
+            { new StringContent("all"), "DeviceTarget" },
+            { new StringContent("7"), "CooldownDays" },
+            { new StringContent("true"), "IsActive" },
+            { new StringContent("A little welcome"), "Title" },
+        };
+
+        var created = await client.PostAsync("/api/v1/admin/popups", create);
+        created.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var response = await client.GetAsync("/api/v1/admin/popups");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var json = await response.Content.ReadAsStringAsync();
+        json.Should().Contain("\"type\":\"promotional\"");
+        json.Should().Contain("\"placement\":\"centerModal\"");
+        json.Should().Contain("\"triggerType\":\"scrollDepth\"");
+        json.Should().NotContain("\"type\":0");
+    }
+
     private static async Task<string> LoginAsync(HttpClient client, string email, string password)
     {
         var response = await client.PostAsJsonAsync("/api/v1/auth/login", new { email, password });
@@ -515,8 +546,15 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
             { new StringContent("Customer has a verified delivery address."), "Body" },
             { new StringContent("true"), "IsInternal" },
         };
-        (await admin.PostAsync($"/api/v1/admin/support/tickets/{ticketId}/messages", note))
-            .StatusCode.Should().Be(HttpStatusCode.OK);
+        var noteResponse = await admin.PostAsync($"/api/v1/admin/support/tickets/{ticketId}/messages", note);
+        noteResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var afterNote = (await noteResponse.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json))!.Data!;
+        var privateNote = afterNote.GetProperty("messages").EnumerateArray()
+            .Single(message => message.GetProperty("isInternal").GetBoolean());
+        afterNote.GetProperty("preview").GetString().Should().Be("Customer has a verified delivery address.");
+        afterNote.GetProperty("lastMessageAt").GetDateTimeOffset()
+            .Should().Be(privateNote.GetProperty("createdAt").GetDateTimeOffset(),
+                "staff timestamps must follow the latest staff-visible note");
 
         var agentPayload = await admin.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/admin/support/agents", Json);
         var adminId = agentPayload!.Data![0].GetProperty("id").GetString();
