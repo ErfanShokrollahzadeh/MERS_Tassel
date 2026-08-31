@@ -87,7 +87,8 @@ public static class DependencyInjection
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(10);
             })
             .AddRoles<AppRole>()
-            .AddEntityFrameworkStores<AppDbContext>();
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddDefaultTokenProviders();
 
         services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
         services.Configure<StripeOptions>(configuration.GetSection("Stripe"));
@@ -120,6 +121,7 @@ public static class DependencyInjection
         services.AddScoped<ISiteSettingsService, SiteSettingsService>();
         services.AddScoped<INewsletterService, NewsletterService>();
         services.AddScoped<IContactEmailSender, SmtpContactEmailSender>();
+        services.AddScoped<IAuthEmailSender, SmtpAuthEmailSender>();
         services.AddScoped<IContactMessageService, ContactMessageService>();
         services.AddScoped<ISupportAttachmentStorage, SupportAttachmentStorage>();
         services.AddScoped<ISupportTicketService, SupportTicketService>();

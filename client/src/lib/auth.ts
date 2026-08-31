@@ -11,6 +11,14 @@ export function login(payload: { email: string; password: string }) {
   return api.post<AuthSession>('/auth/login', payload);
 }
 
+export function forgotPassword(payload: { email: string }) {
+  return api.post<null>('/auth/forgot-password', payload);
+}
+
+export function resetPassword(payload: { email: string; token: string; newPassword: string }) {
+  return api.post<null>('/auth/reset-password', payload);
+}
+
 export function refreshSession(refresh: string) {
   return api.post<AuthSession>('/auth/refresh', { refresh });
 }
