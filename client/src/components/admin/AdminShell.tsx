@@ -93,6 +93,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <button className="collapse-button" onClick={() => setCollapsed((value) => !value)} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}><ChevronLeft size={17} /></button>
       </aside>
 
+      {mobileOpen && <div className="admin-sidebar-scrim" onClick={() => setMobileOpen(false)} aria-hidden="true" />}
+
       <div className="admin-stage">
         <header className="admin-topbar glass-bar">
           <button className="icon-button mobile-admin-menu" onClick={() => setMobileOpen(true)}><Menu size={20} /></button>
