@@ -324,6 +324,123 @@ public class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiFactory>
         body.Code.Should().Be("not_found");
     }
 
+    // ── Editorial journal ────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Journal_serves_seeded_media_and_only_exposes_approved_comments()
+    {
+        var client = factory.CreateClient();
+        var list = await client.GetFromJsonAsync<Envelope<JsonElement>>("/api/v1/blog?pageSize=20", Json);
+
+        list!.Success.Should().BeTrue();
+        list.Data!.GetProperty("total").GetInt32().Should().BeGreaterThanOrEqualTo(3);
+        var seeded = list.Data.GetProperty("items").EnumerateArray()
+            .First(post => post.GetProperty("slug").GetString() == "the-patience-of-the-hand");
+        var coverPath = seeded.GetProperty("coverImagePath").GetString();
+        coverPath.Should().StartWith("/uploads/blog/seed/");
+        (await client.GetAsync(coverPath)).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        int postId;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var post = await db.BlogPosts.SingleAsync(item => item.Slug == "the-patience-of-the-hand");
+            postId = post.Id;
+            db.BlogComments.AddRange(
+                new BlogComment
+                {
+                    PostId = post.Id,
+                    AuthorName = "Approved Reader",
+                    AuthorEmail = "approved@example.com",
+                    Content = "A thoughtful approved note.",
+                    Status = BlogCommentStatus.Approved,
+                },
+                new BlogComment
+                {
+                    PostId = post.Id,
+                    AuthorName = "Pending Reader",
+                    AuthorEmail = "pending@example.com",
+                    Content = "This note is still pending.",
+                    Status = BlogCommentStatus.Pending,
+                });
+            await db.SaveChangesAsync();
+        }
+
+        var detail = await client.GetFromJsonAsync<Envelope<JsonElement>>(
+            "/api/v1/blog/the-patience-of-the-hand", Json);
+        var comments = detail!.Data!.GetProperty("comments").EnumerateArray().ToList();
+        comments.Should().ContainSingle();
+        comments[0].GetProperty("authorName").GetString().Should().Be("Approved Reader");
+        comments[0].TryGetProperty("authorEmail", out _).Should().BeFalse();
+
+        var submitted = await client.PostAsJsonAsync("/api/v1/blog/the-patience-of-the-hand/comments", new
+        {
+            authorName = "  New Reader  ",
+            authorEmail = "NEW.READER@EXAMPLE.COM",
+            content = "  I loved this atelier story.  ",
+        });
+        submitted.StatusCode.Should().Be(HttpStatusCode.Created);
+        var submission = await submitted.Content.ReadFromJsonAsync<Envelope<JsonElement>>(Json);
+        submission!.Data!.GetProperty("status").GetString().Should().Be("pending");
+        var submittedId = submission.Data.GetProperty("id").GetInt32();
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var stored = await db.BlogComments.SingleAsync(comment => comment.Id == submittedId);
+            stored.PostId.Should().Be(postId);
+            stored.AuthorName.Should().Be("New Reader");
+            stored.AuthorEmail.Should().Be("new.reader@example.com");
+            stored.Content.Should().Be("I loved this atelier story.");
+        }
+
+        var admin = await AdminClientAsync();
+        var invalidStatus = await admin.PatchAsJsonAsync(
+            $"/api/v1/admin/blog/comments/{submittedId}", new { status = 99 });
+        invalidStatus.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var approved = await admin.PatchAsJsonAsync(
+            $"/api/v1/admin/blog/comments/{submittedId}", new { status = "approved" });
+        approved.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var refreshed = await client.GetFromJsonAsync<Envelope<JsonElement>>(
+            "/api/v1/blog/the-patience-of-the-hand", Json);
+        refreshed!.Data!.GetProperty("comments").EnumerateArray()
+            .Select(comment => comment.GetProperty("authorName").GetString())
+            .Should().Contain("New Reader");
+    }
+
+    [Fact]
+    public async Task Future_dated_journal_story_is_not_public_and_rejects_comments()
+    {
+        var slug = $"scheduled-{Guid.NewGuid():N}";
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.BlogPosts.Add(new BlogPost
+            {
+                Title = "Scheduled atelier note",
+                Slug = slug,
+                Excerpt = "This story is scheduled for later.",
+                Content = "This content is intentionally long enough to pass editorial validation.",
+                Category = "Atelier",
+                IsPublished = true,
+                PublishedAt = DateTimeOffset.UtcNow.AddDays(1),
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var client = factory.CreateClient();
+        (await client.GetAsync($"/api/v1/blog/{slug}"))
+            .StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await client.PostAsJsonAsync($"/api/v1/blog/{slug}/comments", new
+        {
+            authorName = "Early Reader",
+            authorEmail = "early@example.com",
+            content = "This should not be accepted yet.",
+        })).StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
     // ── Auth ───────────────────────────────────────────────────────────────
 
     [Fact]

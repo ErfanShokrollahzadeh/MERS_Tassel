@@ -27,16 +27,79 @@ public class DatabaseSeeder(
         await SeedAdminAsync();
         await SeedSettingsAsync(webRootPath, seedAssetsPath, ct);
         await SeedCatalogAsync(webRootPath, seedAssetsPath, ct);
-        await SeedBlogAsync(ct);
+        await SeedBlogAsync(webRootPath, seedAssetsPath, ct);
     }
 
-    private async Task SeedBlogAsync(CancellationToken ct)
+    private async Task SeedBlogAsync(string webRootPath, string seedAssetsPath, CancellationToken ct)
     {
-        if (await db.BlogPosts.AnyAsync(ct)) return;
-        db.BlogPosts.AddRange(
-            new BlogPost { Title="The Patience of the Hand", TitleTr="Elin Sabrı", Slug="the-patience-of-the-hand", Category="Craftsmanship", Excerpt="Inside the quiet rituals that turn a sketch into a lasting piece.", ExcerptTr="Bir eskizi kalıcı bir parçaya dönüştüren sessiz ritüeller.", Content="## Made slowly\n\nEvery MERS piece begins at the workbench. We shape, solder, polish and inspect it by hand, allowing the material to set the pace. The smallest marks are not imperfections; they are evidence of attention and a maker's presence.", ContentTr="## Yavaşça üretildi\n\nHer MERS parçası çalışma tezgâhında başlar. Malzemenin ritmine izin vererek elle şekillendirir, lehimler, parlatır ve inceleriz. En küçük izler kusur değil, özenin ve ustanın varlığının kanıtıdır.", CoverImagePath="/uploads/seed/studio.jpg", ReadingTimeMinutes=4, PublishedAt=DateTimeOffset.UtcNow.AddDays(-3) },
-            new BlogPost { Title="How to Layer a Story", TitleTr="Bir Hikâye Nasıl Katmanlanır", Slug="how-to-layer-a-story", Category="Styling", Excerpt="A considered guide to wearing keepsakes together.", ExcerptTr="Hatıra parçalarını birlikte takmak için özenli bir rehber.", Content="## Begin with memory\n\nChoose one piece with meaning, then let scale and texture guide the others. Leave a little space between chains so every detail catches the light.", ContentTr="## Hatırayla başlayın\n\nAnlam taşıyan bir parça seçin; ardından diğerlerinde ölçek ve dokunun yol göstermesine izin verin. Her detayın ışığı yakalaması için zincirler arasında biraz boşluk bırakın.", CoverImagePath="/uploads/seed/pearl.jpg", ReadingTimeMinutes=3, PublishedAt=DateTimeOffset.UtcNow.AddDays(-8) },
-            new BlogPost { Title="Materials with Memory", TitleTr="Hafızası Olan Malzemeler", Slug="materials-with-memory", Category="Materials", Excerpt="Why we choose metals, stones and silk that become more personal with time.", ExcerptTr="Zamanla kişiselleşen metal, taş ve ipekleri neden seçiyoruz.", Content="## Beauty that changes\n\nWe select materials for the way they live, not only the way they look on day one. Gentle patina and subtle variation record a life worn close.", ContentTr="## Değişen güzellik\n\nMalzemeleri yalnızca ilk günkü görünümleri için değil, yaşama biçimleri için seçiyoruz. Yumuşak patina ve ince farklılıklar tene yakın yaşanmış bir hayatı kaydeder.", CoverImagePath="/uploads/seed/silver.jpg", ReadingTimeMinutes=3, PublishedAt=DateTimeOffset.UtcNow.AddDays(-14) });
+        var now = DateTimeOffset.UtcNow;
+        var seeds = new (BlogPost Post, string AssetName)[]
+        {
+            (new BlogPost
+            {
+                Title = "The Patience of the Hand",
+                TitleTr = "Elin Sabrı",
+                Slug = "the-patience-of-the-hand",
+                Category = "Craftsmanship",
+                Excerpt = "Inside the quiet rituals that turn a sketch into a lasting piece.",
+                ExcerptTr = "Bir eskizi kalıcı bir parçaya dönüştüren sessiz ritüeller.",
+                Content = "## Made slowly\n\nEvery MERS piece begins at the workbench. We shape, solder, polish and inspect it by hand, allowing the material to set the pace. The smallest marks are not imperfections; they are evidence of attention and a maker's presence.",
+                ContentTr = "## Yavaşça üretildi\n\nHer MERS parçası çalışma tezgâhında başlar. Malzemenin ritmine izin vererek elle şekillendirir, lehimler, parlatır ve inceleriz. En küçük izler kusur değil, özenin ve ustanın varlığının kanıtıdır.",
+                ReadingTimeMinutes = 4,
+                PublishedAt = now.AddDays(-3),
+            }, "studio"),
+            (new BlogPost
+            {
+                Title = "How to Layer a Story",
+                TitleTr = "Bir Hikâye Nasıl Katmanlanır",
+                Slug = "how-to-layer-a-story",
+                Category = "Styling",
+                Excerpt = "A considered guide to wearing keepsakes together.",
+                ExcerptTr = "Hatıra parçalarını birlikte takmak için özenli bir rehber.",
+                Content = "## Begin with memory\n\nChoose one piece with meaning, then let scale and texture guide the others. Leave a little space between chains so every detail catches the light.",
+                ContentTr = "## Hatırayla başlayın\n\nAnlam taşıyan bir parça seçin; ardından diğerlerinde ölçek ve dokunun yol göstermesine izin verin. Her detayın ışığı yakalaması için zincirler arasında biraz boşluk bırakın.",
+                ReadingTimeMinutes = 3,
+                PublishedAt = now.AddDays(-8),
+            }, "pearl"),
+            (new BlogPost
+            {
+                Title = "Materials with Memory",
+                TitleTr = "Hafızası Olan Malzemeler",
+                Slug = "materials-with-memory",
+                Category = "Materials",
+                Excerpt = "Why we choose metals, stones and silk that become more personal with time.",
+                ExcerptTr = "Zamanla kişiselleşen metal, taş ve ipekleri neden seçiyoruz.",
+                Content = "## Beauty that changes\n\nWe select materials for the way they live, not only the way they look on day one. Gentle patina and subtle variation record a life worn close.",
+                ContentTr = "## Değişen güzellik\n\nMalzemeleri yalnızca ilk günkü görünümleri için değil, yaşama biçimleri için seçiyoruz. Yumuşak patina ve ince farklılıklar tene yakın yaşanmış bir hayatı kaydeder.",
+                ReadingTimeMinutes = 3,
+                PublishedAt = now.AddDays(-14),
+            }, "silver"),
+        };
+
+        var existing = await db.BlogPosts.IgnoreQueryFilters()
+            .ToDictionaryAsync(post => post.Slug, StringComparer.OrdinalIgnoreCase, ct);
+
+        foreach (var (post, assetName) in seeds)
+        {
+            var coverPath = CopyNamedSeedImage(assetName, "blog", webRootPath, seedAssetsPath);
+            if (existing.TryGetValue(post.Slug, out var current))
+            {
+                // The first journal release pointed at /uploads/seed without copying files.
+                // Repair only that launch placeholder; an administrator's later image wins.
+                if (coverPath is not null &&
+                    (string.IsNullOrWhiteSpace(current.CoverImagePath) ||
+                     current.CoverImagePath.StartsWith("/uploads/seed/", StringComparison.OrdinalIgnoreCase)))
+                {
+                    current.CoverImagePath = coverPath;
+                }
+
+                continue;
+            }
+
+            post.CoverImagePath = coverPath;
+            db.BlogPosts.Add(post);
+        }
+
         await db.SaveChangesAsync(ct);
     }
 
@@ -468,5 +531,26 @@ public class DatabaseSeeder(
         File.Copy(source, Path.Combine(absoluteDir, fileName), overwrite: true);
 
         return $"/uploads/{entity}/{now:yyyy}/{now:MM}/{fileName}";
+    }
+
+    /// <summary>
+    /// Copies editorial seed media to a stable public URL. A deterministic name avoids
+    /// creating a new orphaned file each time startup repairs an older database.
+    /// </summary>
+    private string? CopyNamedSeedImage(string assetName, string entity, string webRootPath, string seedAssetsPath)
+    {
+        var source = Path.Combine(seedAssetsPath, $"{assetName}.jpg");
+        if (!File.Exists(source))
+        {
+            logger.LogWarning("Seed image {Asset} is missing at {Path}", assetName, source);
+            return null;
+        }
+
+        var relativeDir = Path.Combine("uploads", entity, "seed");
+        var absoluteDir = Path.Combine(webRootPath, relativeDir);
+        Directory.CreateDirectory(absoluteDir);
+
+        File.Copy(source, Path.Combine(absoluteDir, $"{assetName}.jpg"), overwrite: true);
+        return $"/uploads/{entity}/seed/{assetName}.jpg";
     }
 }
