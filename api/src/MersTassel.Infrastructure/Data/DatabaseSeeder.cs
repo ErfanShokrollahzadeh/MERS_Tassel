@@ -27,6 +27,7 @@ public class DatabaseSeeder(
         await SeedAdminAsync();
         await SeedSettingsAsync(webRootPath, seedAssetsPath, ct);
         await SeedCatalogAsync(webRootPath, seedAssetsPath, ct);
+        await SeedBlogAsync(ct);
     }
 
     private async Task SeedRolesAsync()
@@ -458,4 +459,14 @@ public class DatabaseSeeder(
 
         return $"/uploads/{entity}/{now:yyyy}/{now:MM}/{fileName}";
     }
+    private async Task SeedBlogAsync(CancellationToken ct)
+    {
+        if (await db.BlogPosts.AnyAsync(ct)) return;
+        db.BlogPosts.AddRange(
+            new BlogPost { Title="The Quiet Art of Making by Hand", TitleTr="Elle Üretmenin Sessiz Sanatı", Slug="quiet-art-of-making-by-hand", Category="Craftsmanship", Tags="atelier,handmade,jewelry", Excerpt="Inside our atelier, every small gesture leaves a trace.", ExcerptTr="Atölyemizde her küçük hareket bir iz bırakır.", Content="## A slower rhythm\n\nA MERS piece begins at the workbench, where metal, silk and stone are considered slowly. Each surface is shaped, checked and finished by hand. The subtle variations are not flaws; they are a record of the maker and the moment.", ContentTr="## Daha yavaş bir ritim\n\nBir MERS parçası; metal, ipek ve taşın sakince değerlendirildiği çalışma tezgâhında başlar. Her yüzey elle şekillendirilir, kontrol edilir ve tamamlanır.", ReadingTimeMinutes=4, PublishedAt=DateTimeOffset.UtcNow.AddDays(-18) },
+            new BlogPost { Title="How to Layer Jewelry with Intention", TitleTr="Takıları Özenle Katmanlama Rehberi", Slug="layer-jewelry-with-intention", Category="Styling", Tags="styling,necklaces,everyday", Excerpt="A considered guide to building combinations that feel entirely your own.", ExcerptTr="Tamamen size ait hissettiren kombinler için özenli bir rehber.", Content="## Begin with one story\n\nChoose the piece you reach for instinctively, then let every addition support it. Mix scale rather than noise: a fine chain beside a sculptural pendant, or a quiet ring beside a textured band.", ContentTr="## Tek bir hikâyeyle başlayın\n\nİçgüdüsel olarak uzandığınız parçayı seçin ve her eklemenin onu desteklemesine izin verin.", ReadingTimeMinutes=3, PublishedAt=DateTimeOffset.UtcNow.AddDays(-10) },
+            new BlogPost { Title="Materials That Grow More Beautiful", TitleTr="Zamanla Güzelleşen Malzemeler", Slug="materials-that-grow-more-beautiful", Category="Materials", Tags="materials,silver,care", Excerpt="Why we choose materials that hold memory, patina and a life well worn.", ExcerptTr="Neden hatırayı, patinayı ve yaşanmışlığı taşıyan malzemeleri seçiyoruz?", Content="## Beauty with a future\n\nWe select sterling silver, considered finishes and natural details for how they live, not only how they look on day one. Good materials can be cleaned, repaired and returned to you for another chapter.", ContentTr="## Geleceği olan güzellik\n\n925 ayar gümüşü ve doğal detayları yalnızca ilk günkü görünümleri için değil, zamanla nasıl yaşayacakları için seçiyoruz.", ReadingTimeMinutes=5, PublishedAt=DateTimeOffset.UtcNow.AddDays(-3) });
+        await db.SaveChangesAsync(ct);
+    }
+
 }
