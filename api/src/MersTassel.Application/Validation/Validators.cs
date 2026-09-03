@@ -3,6 +3,19 @@ using MersTassel.Application.DTOs;
 
 namespace MersTassel.Application.Validation;
 
+public class CreateBlogPostDtoValidator : AbstractValidator<CreateBlogPostDto>
+{
+    public CreateBlogPostDtoValidator() { RuleFor(x => x.Title).NotEmpty().MaximumLength(240); RuleFor(x => x.Slug).NotEmpty().Matches("^[a-z0-9]+(?:-[a-z0-9]+)*$").MaximumLength(240); RuleFor(x => x.Excerpt).NotEmpty().MaximumLength(1200); RuleFor(x => x.Content).NotEmpty().MinimumLength(40); RuleFor(x => x.Category).NotEmpty().MaximumLength(100); RuleFor(x => x.ReadingTimeMinutes).InclusiveBetween(1, 120); }
+}
+public class UpdateBlogPostDtoValidator : AbstractValidator<UpdateBlogPostDto>
+{
+    public UpdateBlogPostDtoValidator() { RuleFor(x => x.Title).NotEmpty().MaximumLength(240); RuleFor(x => x.Slug).NotEmpty().Matches("^[a-z0-9]+(?:-[a-z0-9]+)*$").MaximumLength(240); RuleFor(x => x.Excerpt).NotEmpty().MaximumLength(1200); RuleFor(x => x.Content).NotEmpty().MinimumLength(40); RuleFor(x => x.Category).NotEmpty().MaximumLength(100); RuleFor(x => x.ReadingTimeMinutes).InclusiveBetween(1, 120); }
+}
+public class CreateBlogCommentDtoValidator : AbstractValidator<CreateBlogCommentDto>
+{
+    public CreateBlogCommentDtoValidator() { RuleFor(x => x.AuthorName).NotEmpty().MaximumLength(120); RuleFor(x => x.AuthorEmail).NotEmpty().EmailAddress().MaximumLength(254); RuleFor(x => x.Content).NotEmpty().MinimumLength(3).MaximumLength(4000); }
+}
+
 public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
 {
     public RegisterRequestValidator()

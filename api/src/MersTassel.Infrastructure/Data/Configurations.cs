@@ -4,6 +4,33 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MersTassel.Infrastructure.Data;
 
+public class BlogPostConfiguration : IEntityTypeConfiguration<BlogPost>
+{
+    public void Configure(EntityTypeBuilder<BlogPost> b)
+    {
+        b.ToTable("BlogPosts");
+        b.Property(x => x.Title).HasMaxLength(240).IsRequired(); b.Property(x => x.TitleTr).HasMaxLength(240);
+        b.Property(x => x.Slug).HasMaxLength(240).IsRequired(); b.HasIndex(x => x.Slug).IsUnique();
+        b.Property(x => x.Excerpt).HasMaxLength(1200).IsRequired(); b.Property(x => x.ExcerptTr).HasMaxLength(1200);
+        b.Property(x => x.Content).IsRequired(); b.Property(x => x.AuthorName).HasMaxLength(160).IsRequired();
+        b.Property(x => x.Category).HasMaxLength(100).IsRequired(); b.Property(x => x.Tags).HasMaxLength(600);
+        b.Property(x => x.CoverImagePath).HasMaxLength(500); b.Property(x => x.AuthorAvatarPath).HasMaxLength(500);
+        b.HasIndex(x => new { x.IsPublished, x.PublishedAt });
+    }
+}
+
+public class BlogCommentConfiguration : IEntityTypeConfiguration<BlogComment>
+{
+    public void Configure(EntityTypeBuilder<BlogComment> b)
+    {
+        b.ToTable("BlogComments"); b.Property(x => x.AuthorName).HasMaxLength(120).IsRequired();
+        b.Property(x => x.AuthorEmail).HasMaxLength(254).IsRequired(); b.Property(x => x.Content).HasMaxLength(4000).IsRequired();
+        b.HasIndex(x => new { x.PostId, x.Status, x.CreatedAt });
+        b.HasOne(x => x.Post).WithMany(x => x.Comments).HasForeignKey(x => x.PostId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne(x => x.Customer).WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.SetNull);
+    }
+}
+
 public class PopupConfiguration : IEntityTypeConfiguration<Popup>
 {
     public void Configure(EntityTypeBuilder<Popup> b)

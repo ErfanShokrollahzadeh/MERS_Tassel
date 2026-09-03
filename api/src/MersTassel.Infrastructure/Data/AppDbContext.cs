@@ -35,6 +35,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<SupportTicketMessage> SupportTicketMessages => Set<SupportTicketMessage>();
     public DbSet<SupportTicketAttachment> SupportTicketAttachments => Set<SupportTicketAttachment>();
     public DbSet<Popup> Popups => Set<Popup>();
+    public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
+    public DbSet<BlogComment> BlogComments => Set<BlogComment>();
 
     /// <summary>
     /// SQLite has no native date or decimal type, and EF refuses to translate ORDER BY or
@@ -113,6 +115,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         // filter so EF never materializes child rows from a conversation hidden by that filter.
         builder.Entity<SupportTicketMessage>().HasQueryFilter(message => !message.Ticket.IsDelete);
         builder.Entity<SupportTicketAttachment>().HasQueryFilter(attachment => !attachment.Message.Ticket.IsDelete);
+        builder.Entity<BlogComment>().HasQueryFilter(comment => !comment.Post.IsDelete);
     }
 
     public override int SaveChanges()

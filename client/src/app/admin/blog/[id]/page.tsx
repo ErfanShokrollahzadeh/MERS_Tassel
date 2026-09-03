@@ -1,0 +1,1 @@
+'use client'; import { use } from 'react'; import { BlogEditor } from '@/components/admin/BlogEditor'; export default function EditBlogPost({params}:{params:Promise<{id:string}>}){return <BlogEditor id={Number(use(params).id)}/>}

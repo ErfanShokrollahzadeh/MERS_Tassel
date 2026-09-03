@@ -2,6 +2,7 @@
 using MersTassel.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -10,9 +11,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MersTassel.PostgresMigrations.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260903172431_AddEditorialJournal")]
+    partial class AddEditorialJournal
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1729,13 +1732,6 @@ namespace MersTassel.PostgresMigrations.Migrations
 
                     b.Property<long>("CreatedAt")
                         .HasColumnType("bigint");
-
-                    b.Property<bool>("CrispEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("CrispWebsiteId")
-                        .HasMaxLength(36)
-                        .HasColumnType("character varying(36)");
 
                     b.Property<long?>("DeletedAt")
                         .HasColumnType("bigint");

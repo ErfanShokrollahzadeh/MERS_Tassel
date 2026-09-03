@@ -15,6 +15,7 @@ import { categoryName } from '@/i18n/catalog';
 import { NewsletterForm } from '@/components/NewsletterForm';
 import { KavanozBuilder } from '@/components/KavanozBuilder';
 import { SurpriseBoxBuilder } from '@/components/SurpriseBoxBuilder';
+import { EditorialJournalSection } from '@/components/EditorialJournalSection';
 
 const reveal = { initial: { opacity: 0, y: 24 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: '-80px' }, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as const } };
 
@@ -158,6 +159,8 @@ export default function HomePage() {
         </video>
         <motion.div key={`review-${locale}`} className="container-narrow" {...reveal}><div className="quote-mark">“</div><blockquote>{t('home.review')}</blockquote><div className="quote-author"><div><strong>{t('home.reviewAuthor')}</strong><small>{t('home.reviewLocation')}</small></div></div></motion.div>
       </section>
+
+      <EditorialJournalSection />
 
       <section className="newsletter-band"><div className="ambient ambient--three" /><div className="container-wide newsletter-grid"><div><span className="eyebrow">{t('home.letters')}</span><h2>{t('home.inbox')}</h2><p>{t('home.inboxCopy')}</p></div><NewsletterForm source="home" /></div></section>
     </>

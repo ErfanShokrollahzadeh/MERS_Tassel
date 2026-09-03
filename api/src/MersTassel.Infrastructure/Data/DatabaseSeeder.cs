@@ -27,6 +27,17 @@ public class DatabaseSeeder(
         await SeedAdminAsync();
         await SeedSettingsAsync(webRootPath, seedAssetsPath, ct);
         await SeedCatalogAsync(webRootPath, seedAssetsPath, ct);
+        await SeedBlogAsync(ct);
+    }
+
+    private async Task SeedBlogAsync(CancellationToken ct)
+    {
+        if (await db.BlogPosts.AnyAsync(ct)) return;
+        db.BlogPosts.AddRange(
+            new BlogPost { Title="The Patience of the Hand", TitleTr="Elin Sabrı", Slug="the-patience-of-the-hand", Category="Craftsmanship", Excerpt="Inside the quiet rituals that turn a sketch into a lasting piece.", ExcerptTr="Bir eskizi kalıcı bir parçaya dönüştüren sessiz ritüeller.", Content="## Made slowly\n\nEvery MERS piece begins at the workbench. We shape, solder, polish and inspect it by hand, allowing the material to set the pace. The smallest marks are not imperfections; they are evidence of attention and a maker's presence.", ContentTr="## Yavaşça üretildi\n\nHer MERS parçası çalışma tezgâhında başlar. Malzemenin ritmine izin vererek elle şekillendirir, lehimler, parlatır ve inceleriz. En küçük izler kusur değil, özenin ve ustanın varlığının kanıtıdır.", CoverImagePath="/uploads/seed/studio.jpg", ReadingTimeMinutes=4, PublishedAt=DateTimeOffset.UtcNow.AddDays(-3) },
+            new BlogPost { Title="How to Layer a Story", TitleTr="Bir Hikâye Nasıl Katmanlanır", Slug="how-to-layer-a-story", Category="Styling", Excerpt="A considered guide to wearing keepsakes together.", ExcerptTr="Hatıra parçalarını birlikte takmak için özenli bir rehber.", Content="## Begin with memory\n\nChoose one piece with meaning, then let scale and texture guide the others. Leave a little space between chains so every detail catches the light.", ContentTr="## Hatırayla başlayın\n\nAnlam taşıyan bir parça seçin; ardından diğerlerinde ölçek ve dokunun yol göstermesine izin verin. Her detayın ışığı yakalaması için zincirler arasında biraz boşluk bırakın.", CoverImagePath="/uploads/seed/pearl.jpg", ReadingTimeMinutes=3, PublishedAt=DateTimeOffset.UtcNow.AddDays(-8) },
+            new BlogPost { Title="Materials with Memory", TitleTr="Hafızası Olan Malzemeler", Slug="materials-with-memory", Category="Materials", Excerpt="Why we choose metals, stones and silk that become more personal with time.", ExcerptTr="Zamanla kişiselleşen metal, taş ve ipekleri neden seçiyoruz.", Content="## Beauty that changes\n\nWe select materials for the way they live, not only the way they look on day one. Gentle patina and subtle variation record a life worn close.", ContentTr="## Değişen güzellik\n\nMalzemeleri yalnızca ilk günkü görünümleri için değil, yaşama biçimleri için seçiyoruz. Yumuşak patina ve ince farklılıklar tene yakın yaşanmış bir hayatı kaydeder.", CoverImagePath="/uploads/seed/silver.jpg", ReadingTimeMinutes=3, PublishedAt=DateTimeOffset.UtcNow.AddDays(-14) });
+        await db.SaveChangesAsync(ct);
     }
 
     private async Task SeedRolesAsync()

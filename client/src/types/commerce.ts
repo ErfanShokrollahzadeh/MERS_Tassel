@@ -418,10 +418,7 @@ export type PopupDraft = {
   couponCode?: string | null;
 };
 
-<<<<<<< ours
-=======
 
->>>>>>> theirs
 export type ChannelAttribution = { channel: string; orders: number; revenue: number; sharePct: number };
 export type FunnelStep = { step: string; count: number };
 export type CohortRow = { cohortWeek: string; cohortSize: number; retentionPcts: number[] };
