@@ -83,6 +83,8 @@ public class SiteSettingsDto
     public string? TiktokUrl { get; set; }
     public string? WhatsappPhone { get; set; }
     public string? PinterestUrl { get; set; }
+    public string? CrispWebsiteId { get; set; }
+    public bool CrispEnabled { get; set; }
     public string AboutHeadline { get; set; } = string.Empty;
     public string? AboutHeadlineTr { get; set; }
     public string AboutBody { get; set; } = string.Empty;

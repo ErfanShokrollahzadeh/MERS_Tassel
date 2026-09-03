@@ -119,3 +119,4 @@ export function BlogPostEditor({ post }: { post?: BlogPostDetail }) {
     </form>
   );
 }
+

@@ -19,3 +19,4 @@ public class AdminBlogController(IBlogService blog,IValidator<CreateBlogPostDto>
  [HttpPatch("comments/{id:int}")] public async Task<ActionResult<ApiResponse<BlogCommentDto>>> Moderate(int id,[FromBody]ModerateCommentDto dto,CancellationToken ct)=>Ok(ApiResponse<BlogCommentDto>.Ok(await blog.ModerateCommentAsync(id,dto.Status,ct)));
  [HttpDelete("comments/{id:int}")] public async Task<ActionResult<ApiResponse<object?>>> DeleteComment(int id,CancellationToken ct){await blog.DeleteCommentAsync(id,ct);return Ok(ApiResponse.Ok("Comment deleted."));}
 }
+

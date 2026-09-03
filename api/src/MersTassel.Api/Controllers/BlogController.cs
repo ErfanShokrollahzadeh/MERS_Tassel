@@ -4,8 +4,8 @@ using MersTassel.Application.Common;
 using MersTassel.Application.DTOs;
 using MersTassel.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-
 namespace MersTassel.Api.Controllers;
+
 [ApiController, Route("api/v1/blog"), Tags("Journal")]
 public class BlogController(IBlogService blog, IValidator<CreateBlogCommentDto> commentValidator) : ApiControllerBase
 {

@@ -126,7 +126,7 @@ export default function AdminBlogPage() {
                   ))}</tbody>
                 </table>
               </div>
-            ) : <EmptyState title="Your journal is ready" message="Create the first atelier story and publish it to the storefront." action={<Link className="admin-button admin-button--primary" href="/admin/blog/new"><Plus size={15} /> New story</Link>} />)}
+            ) : <EmptyState title="Your journal is ready" message="Create the first atelier story and publish it to the storefront." action={<Link className="admin-button admin-button--primary" href="/admin/blog/new"><Plus size={15} /> New story</Link>} />}
           </div>
         ) : (
           <div className="journal-comments" role="tabpanel">

@@ -11,6 +11,8 @@ public interface ISoftDeletable
     DateTimeOffset? DeletedAt { get; set; }
 }
 
+/// <summary>Base for persistent entities that do not use soft deletion.</summary>
+
 public abstract class BaseEntity
 {
     public int Id { get; set; }

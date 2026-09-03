@@ -27,7 +27,81 @@ public class DatabaseSeeder(
         await SeedAdminAsync();
         await SeedSettingsAsync(webRootPath, seedAssetsPath, ct);
         await SeedCatalogAsync(webRootPath, seedAssetsPath, ct);
-        await SeedBlogAsync(ct);
+        await SeedBlogAsync(webRootPath, seedAssetsPath, ct);
+    }
+
+    private async Task SeedBlogAsync(string webRootPath, string seedAssetsPath, CancellationToken ct)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var seeds = new (BlogPost Post, string AssetName)[]
+        {
+            (new BlogPost
+            {
+                Title = "The Patience of the Hand",
+                TitleTr = "Elin Sabrı",
+                Slug = "the-patience-of-the-hand",
+                Category = "Craftsmanship",
+                Excerpt = "Inside the quiet rituals that turn a sketch into a lasting piece.",
+                ExcerptTr = "Bir eskizi kalıcı bir parçaya dönüştüren sessiz ritüeller.",
+                Content = "## Made slowly\n\nEvery MERS piece begins at the workbench. We shape, solder, polish and inspect it by hand, allowing the material to set the pace. The smallest marks are not imperfections; they are evidence of attention and a maker's presence.",
+                ContentTr = "## Yavaşça üretildi\n\nHer MERS parçası çalışma tezgâhında başlar. Malzemenin ritmine izin vererek elle şekillendirir, lehimler, parlatır ve inceleriz. En küçük izler kusur değil, özenin ve ustanın varlığının kanıtıdır.",
+                ReadingTimeMinutes = 4,
+                PublishedAt = now.AddDays(-3),
+            }, "studio"),
+            (new BlogPost
+            {
+                Title = "How to Layer a Story",
+                TitleTr = "Bir Hikâye Nasıl Katmanlanır",
+                Slug = "how-to-layer-a-story",
+                Category = "Styling",
+                Excerpt = "A considered guide to wearing keepsakes together.",
+                ExcerptTr = "Hatıra parçalarını birlikte takmak için özenli bir rehber.",
+                Content = "## Begin with memory\n\nChoose one piece with meaning, then let scale and texture guide the others. Leave a little space between chains so every detail catches the light.",
+                ContentTr = "## Hatırayla başlayın\n\nAnlam taşıyan bir parçayı seçin; diğerlerine ölçek ve doku rehberlik etsin. Zincirler arasında biraz boşluk bırakın ki her detay ışığı yakalayabilsin.",
+                ReadingTimeMinutes = 3,
+                PublishedAt = now.AddDays(-6),
+            }, "jewelry-detail"),
+            (new BlogPost
+            {
+                Title = "Materials That Soften with Time",
+                TitleTr = "Zamanla Yumuşayan Malzemeler",
+                Slug = "materials-that-soften-with-time",
+                Category = "Materials",
+                Excerpt = "Why we choose metals, threads and stones that age alongside you.",
+                ExcerptTr = "Neden sizinle birlikte yaş alan metalleri, iplikleri ve taşları seçiyoruz?",
+                Content = "## Built to be worn\n\nJewelry is not meant to stay in a drawer. Silver gains warmth from daily wear; natural stones deepen in tone. These pieces are made to be lived with, repaired when needed, and passed on.",
+                ContentTr = "## Taşınmak için üretildi\n\nTakı bir çekmecede beklemek için değildir. Gümüş günlük kullanımla sıcaklık kazanır; doğal taşların tonu derinleşir. Bu parçalar yaşanmak, gerektiğinde onarılmak ve devredilmek için tasarlanır.",
+                ReadingTimeMinutes = 5,
+                PublishedAt = now.AddDays(-10),
+            }, "atelier"),
+        };
+
+        var existing = await db.BlogPosts.IgnoreQueryFilters()
+            .ToDictionaryAsync(post => post.Slug, StringComparer.OrdinalIgnoreCase, ct);
+
+        foreach (var (post, assetName) in seeds)
+        {
+            var coverPath = CopyNamedSeedImage(assetName, "blog", webRootPath, seedAssetsPath);
+            if (existing.TryGetValue(post.Slug, out var current))
+            {
+                // The first journal release pointed at /uploads/seed without copying files.
+                // Repair only that launch placeholder; an administrator's later image wins.
+                if (coverPath is not null &&
+                    (string.IsNullOrWhiteSpace(current.CoverImagePath) ||
+                     current.CoverImagePath.StartsWith("/uploads/seed/", StringComparison.OrdinalIgnoreCase)))
+                {
+                    current.CoverImagePath = coverPath;
+                }
+
+                continue;
+            }
+
+            post.CoverImagePath = coverPath;
+            db.BlogPosts.Add(post);
+        }
+
+        await db.SaveChangesAsync(ct);
+    }
     }
 
     private async Task SeedRolesAsync()
@@ -459,14 +533,24 @@ public class DatabaseSeeder(
 
         return $"/uploads/{entity}/{now:yyyy}/{now:MM}/{fileName}";
     }
-    private async Task SeedBlogAsync(CancellationToken ct)
+    /// <summary>
+    /// Copies editorial seed media to a stable public URL. A deterministic name avoids
+    /// creating a new orphaned file each time startup repairs an older database.
+    /// </summary>
+    private string? CopyNamedSeedImage(string assetName, string entity, string webRootPath, string seedAssetsPath)
     {
-        if (await db.BlogPosts.AnyAsync(ct)) return;
-        db.BlogPosts.AddRange(
-            new BlogPost { Title="The Quiet Art of Making by Hand", TitleTr="Elle Üretmenin Sessiz Sanatı", Slug="quiet-art-of-making-by-hand", Category="Craftsmanship", Tags="atelier,handmade,jewelry", Excerpt="Inside our atelier, every small gesture leaves a trace.", ExcerptTr="Atölyemizde her küçük hareket bir iz bırakır.", Content="## A slower rhythm\n\nA MERS piece begins at the workbench, where metal, silk and stone are considered slowly. Each surface is shaped, checked and finished by hand. The subtle variations are not flaws; they are a record of the maker and the moment.", ContentTr="## Daha yavaş bir ritim\n\nBir MERS parçası; metal, ipek ve taşın sakince değerlendirildiği çalışma tezgâhında başlar. Her yüzey elle şekillendirilir, kontrol edilir ve tamamlanır.", ReadingTimeMinutes=4, PublishedAt=DateTimeOffset.UtcNow.AddDays(-18) },
-            new BlogPost { Title="How to Layer Jewelry with Intention", TitleTr="Takıları Özenle Katmanlama Rehberi", Slug="layer-jewelry-with-intention", Category="Styling", Tags="styling,necklaces,everyday", Excerpt="A considered guide to building combinations that feel entirely your own.", ExcerptTr="Tamamen size ait hissettiren kombinler için özenli bir rehber.", Content="## Begin with one story\n\nChoose the piece you reach for instinctively, then let every addition support it. Mix scale rather than noise: a fine chain beside a sculptural pendant, or a quiet ring beside a textured band.", ContentTr="## Tek bir hikâyeyle başlayın\n\nİçgüdüsel olarak uzandığınız parçayı seçin ve her eklemenin onu desteklemesine izin verin.", ReadingTimeMinutes=3, PublishedAt=DateTimeOffset.UtcNow.AddDays(-10) },
-            new BlogPost { Title="Materials That Grow More Beautiful", TitleTr="Zamanla Güzelleşen Malzemeler", Slug="materials-that-grow-more-beautiful", Category="Materials", Tags="materials,silver,care", Excerpt="Why we choose materials that hold memory, patina and a life well worn.", ExcerptTr="Neden hatırayı, patinayı ve yaşanmışlığı taşıyan malzemeleri seçiyoruz?", Content="## Beauty with a future\n\nWe select sterling silver, considered finishes and natural details for how they live, not only how they look on day one. Good materials can be cleaned, repaired and returned to you for another chapter.", ContentTr="## Geleceği olan güzellik\n\n925 ayar gümüşü ve doğal detayları yalnızca ilk günkü görünümleri için değil, zamanla nasıl yaşayacakları için seçiyoruz.", ReadingTimeMinutes=5, PublishedAt=DateTimeOffset.UtcNow.AddDays(-3) });
-        await db.SaveChangesAsync(ct);
-    }
+        var source = Path.Combine(seedAssetsPath, $"{assetName}.jpg");
+        if (!File.Exists(source))
+        {
+            logger.LogWarning("Seed image {Asset} is missing at {Path}", assetName, source);
+            return null;
+        }
 
+        var relativeDir = Path.Combine("uploads", entity, "seed");
+        var absoluteDir = Path.Combine(webRootPath, relativeDir);
+        Directory.CreateDirectory(absoluteDir);
+
+        File.Copy(source, Path.Combine(absoluteDir, $"{assetName}.jpg"), overwrite: true);
+        return $"/uploads/{entity}/seed/{assetName}.jpg";
+    }
 }
