@@ -1,4 +1,4 @@
-import { api, queryString } from '@/lib/apiClient';
+import { api, queryString } from './apiClient';
 import type {
   BlogComment,
   BlogCommentStatus,
@@ -12,19 +12,14 @@ import type {
 export const blogKeys = {
   all: ['blog'] as const,
   featured: () => ['blog', 'featured'] as const,
-  list: (query: BlogQuery) => ['blog', 'list', query] as const,
-  detail: (slug: string) => ['blog', 'detail', slug] as const,
+  list: (q: BlogQuery) => ['blog', 'list', q] as const,
+  detail: (s: string) => ['blog', s] as const,
+  admin: ['admin', 'blog'] as const,
+  comments: (s?: BlogCommentStatus) => ['admin', 'blog', 'comments', s] as const,
 };
 
-export const adminBlogKeys = {
-  all: ['admin', 'blog'] as const,
-  posts: () => ['admin', 'blog', 'posts'] as const,
-  post: (id: number) => ['admin', 'blog', 'posts', id] as const,
-  comments: (status?: BlogCommentStatus) => ['admin', 'blog', 'comments', status ?? 'all'] as const,
-};
-
-export const fetchBlogPosts = (query: BlogQuery = {}) =>
-  api.get<BlogPage>(`/blog${queryString(query)}`);
+export const fetchBlogPosts = (q: BlogQuery = {}) =>
+  api.get<BlogPage>(`/blog${queryString(q)}`);
 
 export const fetchFeaturedPosts = () =>
   api.get<BlogPostSummary[]>('/blog/featured');
@@ -32,35 +27,41 @@ export const fetchFeaturedPosts = () =>
 export const fetchBlogPostBySlug = (slug: string) =>
   api.get<BlogPostDetail>(`/blog/${encodeURIComponent(slug)}`);
 
-export const postBlogComment = (slug: string, input: { authorName: string; authorEmail: string; content: string }) =>
-  api.post<BlogComment>(`/blog/${encodeURIComponent(slug)}/comments`, input);
+export const postBlogComment = (
+  slug: string,
+  input: { authorName: string; authorEmail: string; content: string }
+) =>
+  api.post<BlogComment>(`/blog/${encodeURIComponent(slug)}/comments`, input, {
+    auth: true,
+  });
 
 export const fetchAdminPosts = () =>
-  api.get<BlogPostDetail[]>('/admin/blog', { auth: true, cache: 'no-store' });
+  api.get<BlogPostSummary[]>('/admin/blog', { auth: true, cache: 'no-store' });
 
 export const fetchAdminPost = (id: number) =>
-  api.get<BlogPostDetail>(`/admin/blog/${id}`, { auth: true, cache: 'no-store' });
+  api.get<BlogPostDetail>(`/admin/blog/${id}`, { auth: true });
 
 export const fetchAdminComments = (status?: BlogCommentStatus) =>
-  api.get<BlogComment[]>(`/admin/blog/comments/all${queryString({ status })}`, { auth: true, cache: 'no-store' });
+  api.get<BlogComment[]>(`/admin/blog/comments${queryString({ status })}`, {
+    auth: true,
+  });
 
-export const createBlogPost = (input: BlogPostInput) =>
-  api.post<BlogPostDetail>('/admin/blog', input, { auth: true });
-
-export const updateBlogPost = (id: number, input: BlogPostInput) =>
-  api.put<BlogPostDetail>(`/admin/blog/${id}`, input, { auth: true });
-
-export const deleteBlogPost = (id: number) =>
-  api.delete<void>(`/admin/blog/${id}`, { auth: true });
-
-export const moderateBlogComment = (id: number, status: BlogCommentStatus) =>
+export const moderateComment = (id: number, status: BlogCommentStatus) =>
   api.patch<BlogComment>(`/admin/blog/comments/${id}`, { status }, { auth: true });
 
-export const deleteBlogComment = (id: number) =>
+export const deleteComment = (id: number) =>
   api.delete<void>(`/admin/blog/comments/${id}`, { auth: true });
 
-export const uploadBlogCover = (file: File) => {
-  const form = new FormData();
-  form.append('cover', file);
-  return api.postForm<string>('/admin/blog/cover', form, { auth: true });
-};
+export const deletePost = (id: number) =>
+  api.delete<void>(`/admin/blog/${id}`, { auth: true });
+
+export function savePost(input: BlogPostInput, cover: File | null, id?: number) {
+  const f = new FormData();
+  Object.entries(input).forEach(([k, v]) => {
+    if (v !== undefined) f.append(k, String(v));
+  });
+  if (cover) f.append('coverImage', cover);
+  return id
+    ? api.putForm<BlogPostDetail>(`/admin/blog/${id}`, f, { auth: true })
+    : api.postForm<BlogPostDetail>('/admin/blog', f, { auth: true });
+}

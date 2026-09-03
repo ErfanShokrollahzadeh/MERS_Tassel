@@ -14,7 +14,7 @@ public class BlogPost : SoftDeletableEntity
     public string? CoverImagePath { get; set; }
     public string AuthorName { get; set; } = "MERS Atelier";
     public string? AuthorAvatarPath { get; set; }
-    public string Category { get; set; } = string.Empty;
+    public string Category { get; set; } = "Atelier";
     public string? Tags { get; set; }
     public int ReadingTimeMinutes { get; set; } = 3;
     public bool IsPublished { get; set; } = true;

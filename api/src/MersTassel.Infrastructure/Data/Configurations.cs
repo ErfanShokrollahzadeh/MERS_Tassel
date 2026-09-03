@@ -591,3 +591,12 @@ public class SupportTicketAttachmentConfiguration : IEntityTypeConfiguration<Sup
         b.HasOne(x => x.Message).WithMany(x => x.Attachments).HasForeignKey(x => x.MessageId).OnDelete(DeleteBehavior.Cascade);
     }
 }
+
+public class BlogPostConfiguration : IEntityTypeConfiguration<BlogPost>
+{
+    public void Configure(EntityTypeBuilder<BlogPost> b) { b.ToTable("BlogPosts"); b.Property(x=>x.Title).HasMaxLength(220).IsRequired(); b.Property(x=>x.TitleTr).HasMaxLength(220); b.Property(x=>x.Slug).HasMaxLength(220).IsRequired(); b.Property(x=>x.Excerpt).HasMaxLength(1000).IsRequired(); b.Property(x=>x.ExcerptTr).HasMaxLength(1000); b.Property(x=>x.CoverImagePath).HasMaxLength(400); b.Property(x=>x.AuthorName).HasMaxLength(100).IsRequired(); b.Property(x=>x.Category).HasMaxLength(80).IsRequired(); b.Property(x=>x.Tags).HasMaxLength(500); b.HasIndex(x=>x.Slug).IsUnique(); b.HasIndex(x=>new{x.IsPublished,x.PublishedAt}); b.HasMany(x=>x.Comments).WithOne(x=>x.Post).HasForeignKey(x=>x.PostId).OnDelete(DeleteBehavior.Cascade); }
+}
+public class BlogCommentConfiguration : IEntityTypeConfiguration<BlogComment>
+{
+    public void Configure(EntityTypeBuilder<BlogComment> b) { b.ToTable("BlogComments"); b.Property(x=>x.AuthorName).HasMaxLength(100).IsRequired(); b.Property(x=>x.AuthorEmail).HasMaxLength(254).IsRequired(); b.Property(x=>x.Content).HasMaxLength(2000).IsRequired(); b.HasIndex(x=>new{x.PostId,x.Status,x.CreatedAt}); b.HasOne(x=>x.Customer).WithMany().HasForeignKey(x=>x.CustomerId).OnDelete(DeleteBehavior.SetNull); }
+}

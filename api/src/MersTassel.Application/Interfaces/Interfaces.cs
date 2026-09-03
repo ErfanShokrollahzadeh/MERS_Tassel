@@ -4,6 +4,22 @@ using MersTassel.Domain.Entities;
 
 namespace MersTassel.Application.Interfaces;
 
+public interface IBlogService
+{
+    Task<PagedResult<BlogPostSummaryDto>> GetPublishedPostsAsync(string? tag, string? search, int page, int pageSize, CancellationToken ct = default);
+    Task<IReadOnlyList<BlogPostSummaryDto>> GetFeaturedPostsAsync(int count, CancellationToken ct = default);
+    Task<BlogPostDetailDto> GetPostBySlugAsync(string slug, CancellationToken ct = default);
+    Task<BlogCommentDto> AddCommentAsync(string slug, CreateBlogCommentDto dto, string? customerId, CancellationToken ct = default);
+    Task<IReadOnlyList<BlogPostSummaryDto>> GetAdminPostsAsync(CancellationToken ct = default);
+    Task<BlogPostDetailDto> GetPostByIdAsync(int id, CancellationToken ct = default);
+    Task<BlogPostDetailDto> CreatePostAsync(CreateBlogPostDto dto, UploadedFile? cover, CancellationToken ct = default);
+    Task<BlogPostDetailDto> UpdatePostAsync(int id, UpdateBlogPostDto dto, UploadedFile? cover, CancellationToken ct = default);
+    Task DeletePostAsync(int id, CancellationToken ct = default);
+    Task<IReadOnlyList<BlogCommentDto>> GetAdminCommentsAsync(BlogCommentStatus? status, CancellationToken ct = default);
+    Task<BlogCommentDto> ModerateCommentAsync(int commentId, BlogCommentStatus newStatus, CancellationToken ct = default);
+    Task DeleteCommentAsync(int commentId, CancellationToken ct = default);
+}
+
 public interface IProductModelStorageService
 {
     void ValidateGlb(Stream content, string fileName, long length);
@@ -79,21 +95,6 @@ public interface IFileStorageService
     void Validate(Stream content, string originalFileName, long length);
 }
 
-public interface IBlogService
-{
-    Task<PagedResult<BlogPostSummaryDto>> GetPublishedPostsAsync(string? tag, string? search, int page, int pageSize, CancellationToken ct = default);
-    Task<IReadOnlyList<BlogPostSummaryDto>> GetFeaturedPostsAsync(int count, CancellationToken ct = default);
-    Task<BlogPostDetailDto> GetPostBySlugAsync(string slug, CancellationToken ct = default);
-    Task<BlogCommentDto> AddCommentAsync(string slug, CreateBlogCommentDto dto, string? customerId, CancellationToken ct = default);
-    Task<IReadOnlyList<BlogPostDetailDto>> GetAdminPostsAsync(CancellationToken ct = default);
-    Task<BlogPostDetailDto> GetPostByIdAsync(int id, CancellationToken ct = default);
-    Task<BlogPostDetailDto> CreatePostAsync(CreateBlogPostDto dto, CancellationToken ct = default);
-    Task<BlogPostDetailDto> UpdatePostAsync(int id, UpdateBlogPostDto dto, CancellationToken ct = default);
-    Task DeletePostAsync(int id, CancellationToken ct = default);
-    Task<IReadOnlyList<BlogCommentDto>> GetAdminCommentsAsync(BlogCommentStatus? status, CancellationToken ct = default);
-    Task<BlogCommentDto> ModerateCommentAsync(int commentId, BlogCommentStatus newStatus, CancellationToken ct = default);
-    Task DeleteCommentAsync(int commentId, CancellationToken ct = default);
-}
 
 public interface IProductService
 {

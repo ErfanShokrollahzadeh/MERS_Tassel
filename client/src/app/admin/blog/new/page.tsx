@@ -1,5 +1,5 @@
-import { BlogEditor } from '@/components/admin/BlogEditor';
+import { BlogPostEditor } from '@/components/admin/BlogPostEditor';
 
-export default function NewBlogPost() {
-  return <BlogEditor />;
+export default function NewBlogPostPage() {
+  return <BlogPostEditor />;
 }

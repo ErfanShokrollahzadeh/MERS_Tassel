@@ -18,9 +18,8 @@ public abstract class BaseEntity
 }
 
 /// <summary>Base for entities that carry an identity, audit stamps and soft-delete state.</summary>
-public abstract class SoftDeletableEntity : ISoftDeletable
+public abstract class SoftDeletableEntity : BaseEntity, ISoftDeletable
 {
-    public int Id { get; set; }
     public bool IsDelete { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;

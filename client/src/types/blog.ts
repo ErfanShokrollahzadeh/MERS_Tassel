@@ -1,6 +1,6 @@
 import type { Paged } from '@/lib/apiClient';
 
-export type BlogCommentStatus = 'pending' | 'approved' | 'rejected';
+export type BlogCommentStatus = 0 | 1 | 2;
 
 export type BlogComment = {
   id: number;
@@ -15,24 +15,24 @@ export type BlogComment = {
 export type BlogPostSummary = {
   id: number;
   title: string;
-  titleTr?: string;
+  titleTr?: string | null;
   slug: string;
   excerpt: string;
-  excerptTr?: string;
-  coverImagePath?: string;
+  excerptTr?: string | null;
+  coverImagePath?: string | null;
+  authorName: string;
   category: string;
-  tags?: string;
+  tags?: string | null;
   readingTimeMinutes: number;
+  isPublished: boolean;
   publishedAt: string;
   commentsCount: number;
 };
 
 export type BlogPostDetail = BlogPostSummary & {
   content: string;
-  contentTr?: string;
-  authorName: string;
-  authorAvatarPath?: string;
-  isPublished: boolean;
+  contentTr?: string | null;
+  authorAvatarPath?: string | null;
   comments: BlogComment[];
 };
 
@@ -53,12 +53,11 @@ export type BlogPostInput = {
   excerptTr?: string;
   content: string;
   contentTr?: string;
-  coverImagePath?: string;
   authorName: string;
-  authorAvatarPath?: string;
   category: string;
   tags?: string;
   readingTimeMinutes: number;
   isPublished: boolean;
   publishedAt?: string;
+  removeCoverImage?: boolean;
 };

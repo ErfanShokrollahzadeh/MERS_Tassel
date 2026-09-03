@@ -11,13 +11,13 @@ const adminLinks = [
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/admin/exchanges', label: 'Exchanges', icon: ArrowLeftRight },
   { href: '/admin/products', label: 'Products', icon: Package },
+  { href: '/admin/blog', label: 'Journal & Stories', icon: BookOpen },
   { href: '/admin/settings', label: 'Site settings', icon: Settings },
   { href: '/admin/users', label: 'People & roles', icon: Users },
   { href: '/admin/marketing', label: 'Growth', icon: BarChart3 },
   { href: '/admin/promotions', label: 'Promotions', icon: Megaphone },
   { href: '/admin/popups', label: 'Popups & Modals', icon: Sparkles },
   { href: '/admin/support', label: 'Support', icon: TicketCheck },
-  { href: '/admin/blog', label: 'Journal & Stories', icon: BookOpen },
 ];
 
 

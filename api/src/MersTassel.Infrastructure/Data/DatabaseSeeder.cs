@@ -57,27 +57,24 @@ public class DatabaseSeeder(
                 Excerpt = "A considered guide to wearing keepsakes together.",
                 ExcerptTr = "Hatıra parçalarını birlikte takmak için özenli bir rehber.",
                 Content = "## Begin with memory\n\nChoose one piece with meaning, then let scale and texture guide the others. Leave a little space between chains so every detail catches the light.",
-                ContentTr = "## Hatırayla başlayın\n\nAnlam taşıyan bir parça seçin; ardından diğerlerinde ölçek ve dokunun yol göstermesine izin verin. Her detayın ışığı yakalaması için zincirler arasında biraz boşluk bırakın.",
+                ContentTr = "## Hatırayla başlayın\n\nAnlam taşıyan bir parçayı seçin; diğerlerine ölçek ve doku rehberlik etsin. Zincirler arasında biraz boşluk bırakın ki her detay ışığı yakalayabilsin.",
                 ReadingTimeMinutes = 3,
-                PublishedAt = now.AddDays(-8),
-            }, "pearl"),
+                PublishedAt = now.AddDays(-6),
+            }, "jewelry-detail"),
             (new BlogPost
             {
-                Title = "Materials with Memory",
-                TitleTr = "Hafızası Olan Malzemeler",
-                Slug = "materials-with-memory",
+                Title = "Materials That Soften with Time",
+                TitleTr = "Zamanla Yumuşayan Malzemeler",
+                Slug = "materials-that-soften-with-time",
                 Category = "Materials",
-                Excerpt = "Why we choose metals, stones and silk that become more personal with time.",
-                ExcerptTr = "Zamanla kişiselleşen metal, taş ve ipekleri neden seçiyoruz.",
-                Content = "## Beauty that changes\n\nWe select materials for the way they live, not only the way they look on day one. Gentle patina and subtle variation record a life worn close.",
-                ContentTr = "## Değişen güzellik\n\nMalzemeleri yalnızca ilk günkü görünümleri için değil, yaşama biçimleri için seçiyoruz. Yumuşak patina ve ince farklılıklar tene yakın yaşanmış bir hayatı kaydeder.",
-                ReadingTimeMinutes = 3,
-                PublishedAt = now.AddDays(-14),
-            }, "silver"),
+                Excerpt = "Why we choose metals, threads and stones that age alongside you.",
+                ExcerptTr = "Neden sizinle birlikte yaş alan metalleri, iplikleri ve taşları seçiyoruz?",
+                Content = "## Built to be worn\n\nJewelry is not meant to stay in a drawer. Silver gains warmth from daily wear; natural stones deepen in tone. These pieces are made to be lived with, repaired when needed, and passed on.",
+                ContentTr = "## Taşınmak için üretildi\n\nTakı bir çekmecede beklemek için değildir. Gümüş günlük kullanımla sıcaklık kazanır; doğal taşların tonu derinleşir. Bu parçalar yaşanmak, gerektiğinde onarılmak ve devredilmek için tasarlanır.",
+                ReadingTimeMinutes = 5,
+                PublishedAt = now.AddDays(-10),
+            }, "atelier"),
         };
-
-        var existing = await db.BlogPosts.IgnoreQueryFilters()
-            .ToDictionaryAsync(post => post.Slug, StringComparer.OrdinalIgnoreCase, ct);
 
         foreach (var (post, assetName) in seeds)
         {
@@ -101,6 +98,9 @@ public class DatabaseSeeder(
         }
 
         await db.SaveChangesAsync(ct);
+=======
+        await SeedBlogAsync(ct);
+>>>>>>> origin/master
     }
 
     private async Task SeedRolesAsync()
@@ -532,7 +532,6 @@ public class DatabaseSeeder(
 
         return $"/uploads/{entity}/{now:yyyy}/{now:MM}/{fileName}";
     }
-
     /// <summary>
     /// Copies editorial seed media to a stable public URL. A deterministic name avoids
     /// creating a new orphaned file each time startup repairs an older database.

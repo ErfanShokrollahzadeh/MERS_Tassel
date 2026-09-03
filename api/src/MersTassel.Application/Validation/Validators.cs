@@ -536,3 +536,15 @@ public class TrackPopupEventRequestValidator : AbstractValidator<TrackPopupEvent
             .WithMessage($"EventType must be one of: {string.Join(", ", AllowedEvents)}.");
     }
 }
+public class CreateBlogPostDtoValidator : AbstractValidator<CreateBlogPostDto>
+{
+    public CreateBlogPostDtoValidator() { RuleFor(x => x.Title).NotEmpty().MaximumLength(220); RuleFor(x => x.Slug).NotEmpty().MaximumLength(220).Matches("^[a-z0-9]+(?:-[a-z0-9]+)*$"); RuleFor(x => x.Excerpt).NotEmpty().MaximumLength(1000); RuleFor(x => x.Content).NotEmpty().MinimumLength(50).MaximumLength(100000); RuleFor(x => x.Category).NotEmpty().MaximumLength(80); RuleFor(x => x.ReadingTimeMinutes).InclusiveBetween(1, 120); }
+}
+public class UpdateBlogPostDtoValidator : AbstractValidator<UpdateBlogPostDto>
+{
+    public UpdateBlogPostDtoValidator() { RuleFor(x => x.Title).NotEmpty().MaximumLength(220); RuleFor(x => x.Slug).NotEmpty().MaximumLength(220).Matches("^[a-z0-9]+(?:-[a-z0-9]+)*$"); RuleFor(x => x.Excerpt).NotEmpty().MaximumLength(1000); RuleFor(x => x.Content).NotEmpty().MinimumLength(50).MaximumLength(100000); RuleFor(x => x.Category).NotEmpty().MaximumLength(80); RuleFor(x => x.ReadingTimeMinutes).InclusiveBetween(1, 120); }
+}
+public class CreateBlogCommentDtoValidator : AbstractValidator<CreateBlogCommentDto>
+{
+    public CreateBlogCommentDtoValidator() { RuleFor(x => x.AuthorName).NotEmpty().MaximumLength(100); RuleFor(x => x.AuthorEmail).NotEmpty().EmailAddress().MaximumLength(254); RuleFor(x => x.Content).NotEmpty().MinimumLength(3).MaximumLength(2000); }
+}
