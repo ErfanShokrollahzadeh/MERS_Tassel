@@ -1,0 +1,13 @@
+using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+namespace MersTassel.Infrastructure.Data.Migrations;
+[Migration("20260903120000_AddEditorialJournal")]
+public partial class AddEditorialJournal : Migration
+{
+ protected override void Up(MigrationBuilder m){
+  m.CreateTable(name:"BlogPosts",columns:t=>new{Id=t.Column<int>(nullable:false).Annotation("Sqlite:Autoincrement",true),Title=t.Column<string>(maxLength:220,nullable:false),TitleTr=t.Column<string>(maxLength:220,nullable:true),Slug=t.Column<string>(maxLength:220,nullable:false),Excerpt=t.Column<string>(maxLength:1000,nullable:false),ExcerptTr=t.Column<string>(maxLength:1000,nullable:true),Content=t.Column<string>(nullable:false),ContentTr=t.Column<string>(nullable:true),CoverImagePath=t.Column<string>(maxLength:400,nullable:true),AuthorName=t.Column<string>(maxLength:100,nullable:false),AuthorAvatarPath=t.Column<string>(nullable:true),Category=t.Column<string>(maxLength:80,nullable:false),Tags=t.Column<string>(maxLength:500,nullable:true),ReadingTimeMinutes=t.Column<int>(nullable:false),IsPublished=t.Column<bool>(nullable:false),PublishedAt=t.Column<DateTimeOffset>(nullable:false),isDelete=t.Column<bool>(nullable:false),DeletedAt=t.Column<DateTimeOffset>(nullable:true),CreatedAt=t.Column<DateTimeOffset>(nullable:false),UpdatedAt=t.Column<DateTimeOffset>(nullable:false)},constraints:t=>t.PrimaryKey("PK_BlogPosts",x=>x.Id));
+  m.CreateTable(name:"BlogComments",columns:t=>new{Id=t.Column<int>(nullable:false).Annotation("Sqlite:Autoincrement",true),PostId=t.Column<int>(nullable:false),AuthorName=t.Column<string>(maxLength:100,nullable:false),AuthorEmail=t.Column<string>(maxLength:254,nullable:false),CustomerId=t.Column<string>(nullable:true),Content=t.Column<string>(maxLength:2000,nullable:false),Status=t.Column<int>(nullable:false),CreatedAt=t.Column<DateTimeOffset>(nullable:false)},constraints:t=>{t.PrimaryKey("PK_BlogComments",x=>x.Id);t.ForeignKey("FK_BlogComments_AspNetUsers_CustomerId",x=>x.CustomerId,"AspNetUsers","Id",onDelete:ReferentialAction.SetNull);t.ForeignKey("FK_BlogComments_BlogPosts_PostId",x=>x.PostId,"BlogPosts","Id",onDelete:ReferentialAction.Cascade);});
+  m.CreateIndex("IX_BlogPosts_Slug","BlogPosts","Slug",unique:true);m.CreateIndex("IX_BlogPosts_IsPublished_PublishedAt","BlogPosts",new[]{"IsPublished","PublishedAt"});m.CreateIndex("IX_BlogComments_CustomerId","BlogComments","CustomerId");m.CreateIndex("IX_BlogComments_PostId_Status_CreatedAt","BlogComments",new[]{"PostId","Status","CreatedAt"}); }
+ protected override void Down(MigrationBuilder m){m.DropTable("BlogComments");m.DropTable("BlogPosts");}
+}

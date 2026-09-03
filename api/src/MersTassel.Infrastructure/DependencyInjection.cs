@@ -122,6 +122,7 @@ public static class DependencyInjection
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<ISiteSettingsService, SiteSettingsService>();
         services.AddScoped<IPopupService, PopupService>();
+        services.AddScoped<IBlogService, BlogService>();
         services.AddScoped<INewsletterService, NewsletterService>();
         services.AddScoped<IContactEmailSender, SmtpContactEmailSender>();
         services.AddScoped<IAuthEmailSender, SmtpAuthEmailSender>();

@@ -18,7 +18,7 @@ const links = [
   { href: '/kavanoz', key: 'nav.kavanoz' },
   { href: '/surprise-box', key: 'nav.surprise' },
   { href: '/about', key: 'nav.story' },
-  { href: '/contact', key: 'nav.journal' },
+  { href: '/blog', key: 'nav.journal' },
 ];
 
 export function StoreHeader() {

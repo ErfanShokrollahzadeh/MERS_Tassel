@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { ArrowLeftRight, BarChart3, Bell, ChevronLeft, CircleHelp, Command, LayoutDashboard, Megaphone, Menu, Moon, Package, Search, Settings, ShoppingBag, Sparkles, Sun, TicketCheck, Users, X } from 'lucide-react';
+import { ArrowLeftRight, BarChart3, Bell, BookOpen, ChevronLeft, CircleHelp, Command, LayoutDashboard, Megaphone, Menu, Moon, Package, Search, Settings, ShoppingBag, Sparkles, Sun, TicketCheck, Users, X } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 
 const adminLinks = [
@@ -11,6 +11,7 @@ const adminLinks = [
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/admin/exchanges', label: 'Exchanges', icon: ArrowLeftRight },
   { href: '/admin/products', label: 'Products', icon: Package },
+  { href: '/admin/blog', label: 'Journal & Stories', icon: BookOpen },
   { href: '/admin/settings', label: 'Site settings', icon: Settings },
   { href: '/admin/users', label: 'People & roles', icon: Users },
   { href: '/admin/marketing', label: 'Growth', icon: BarChart3 },
