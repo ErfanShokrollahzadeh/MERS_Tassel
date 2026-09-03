@@ -115,6 +115,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         // filter so EF never materializes child rows from a conversation hidden by that filter.
         builder.Entity<SupportTicketMessage>().HasQueryFilter(message => !message.Ticket.IsDelete);
         builder.Entity<SupportTicketAttachment>().HasQueryFilter(attachment => !attachment.Message.Ticket.IsDelete);
+        builder.Entity<BlogComment>().HasQueryFilter(comment => !comment.Post.IsDelete);
     }
 
     public override int SaveChanges()

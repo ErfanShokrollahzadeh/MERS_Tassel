@@ -1,3 +1,160 @@
 'use client';
-import Link from 'next/link';import {useState} from 'react';import {BookOpen,Check,Plus,Trash2,X} from 'lucide-react';import {useMutation,useQuery,useQueryClient} from '@tanstack/react-query';import {blogKeys,deleteComment,deletePost,fetchAdminComments,fetchAdminPosts,moderateComment} from '@/lib/blog';import type {BlogCommentStatus} from '@/types/blog';
-export default function AdminBlogPage(){const qc=useQueryClient();const [tab,setTab]=useState<'articles'|'comments'>('articles');const [status,setStatus]=useState<BlogCommentStatus|undefined>(0);const posts=useQuery({queryKey:blogKeys.admin,queryFn:fetchAdminPosts});const comments=useQuery({queryKey:blogKeys.comments(status),queryFn:()=>fetchAdminComments(status)});const refresh=()=>{qc.invalidateQueries({queryKey:blogKeys.admin});qc.invalidateQueries({queryKey:['admin','blog','comments']})};const moderate=useMutation({mutationFn:({id,s}:{id:number;s:BlogCommentStatus})=>moderateComment(id,s),onSuccess:refresh});const removeComment=useMutation({mutationFn:deleteComment,onSuccess:refresh});const removePost=useMutation({mutationFn:deletePost,onSuccess:refresh});return <div className="admin-blog"><header className="admin-page-header"><div><span className="eyebrow">Editorial workspace</span><h1>Journal & Stories</h1><p>Publish atelier stories and tend to your reader community.</p></div><Link className="button button--primary" href="/admin/blog/new"><Plus/> New Story</Link></header><div className="admin-blog-tabs"><button className={tab==='articles'?'active':''} onClick={()=>setTab('articles')}><BookOpen/> Articles</button><button className={tab==='comments'?'active':''} onClick={()=>setTab('comments')}>Comments</button></div>{tab==='articles'?<div className="admin-table-wrap"><table className="admin-blog-table"><thead><tr><th>Story</th><th>Category</th><th>Comments</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody>{posts.data?.map(p=><tr key={p.id}><td><strong>{p.title}</strong><small>/{p.slug}</small></td><td>{p.category}</td><td>{p.commentsCount}</td><td><span className={`status-pill ${p.isPublished?'published':'draft'}`}>{p.isPublished?'Published':'Draft'}</span></td><td>{new Date(p.publishedAt).toLocaleDateString()}</td><td><Link href={`/admin/blog/${p.id}`}>Edit</Link><button onClick={()=>confirm('Delete this story?')&&removePost.mutate(p.id)}><Trash2/></button></td></tr>)}</tbody></table></div>:<><div className="comment-filters">{([['Pending',0],['Approved',1],['Rejected',2]] as const).map(([label,value])=><button className={status===value?'active':''} onClick={()=>setStatus(value)} key={value}>{label}</button>)}</div><div className="moderation-list">{comments.data?.map(c=><article key={c.id}><header><div><strong>{c.authorName}</strong><span>on {c.postTitle}</span></div><time>{new Date(c.createdAt).toLocaleString()}</time></header><p>{c.content}</p><footer><button onClick={()=>moderate.mutate({id:c.id,s:1})}><Check/> Approve</button><button onClick={()=>moderate.mutate({id:c.id,s:2})}><X/> Reject</button><button onClick={()=>removeComment.mutate(c.id)}><Trash2/> Delete</button></footer></article>)}</div></>}</div>}
+
+import Link from 'next/link';
+import { useState } from 'react';
+import { BookOpen, Check, Plus, Trash2, X } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  blogKeys,
+  deleteComment,
+  deletePost,
+  fetchAdminComments,
+  fetchAdminPosts,
+  moderateComment,
+} from '@/lib/blog';
+import type { BlogCommentStatus } from '@/types/blog';
+
+export default function AdminBlogPage() {
+  const qc = useQueryClient();
+  const [tab, setTab] = useState<'articles' | 'comments'>('articles');
+  const [status, setStatus] = useState<BlogCommentStatus | undefined>(0);
+
+  const posts = useQuery({ queryKey: blogKeys.admin, queryFn: fetchAdminPosts });
+  const comments = useQuery({
+    queryKey: blogKeys.comments(status),
+    queryFn: () => fetchAdminComments(status),
+  });
+
+  const refresh = () => {
+    void qc.invalidateQueries({ queryKey: blogKeys.admin });
+    void qc.invalidateQueries({ queryKey: ['admin', 'blog', 'comments'] });
+  };
+
+  const moderate = useMutation({
+    mutationFn: ({ id, s }: { id: number; s: BlogCommentStatus }) => moderateComment(id, s),
+    onSuccess: refresh,
+  });
+  const removeComment = useMutation({ mutationFn: deleteComment, onSuccess: refresh });
+  const removePost = useMutation({ mutationFn: deletePost, onSuccess: refresh });
+
+  return (
+    <div className="admin-blog">
+      <header className="admin-page-header">
+        <div>
+          <span className="eyebrow">Editorial workspace</span>
+          <h1>Journal & Stories</h1>
+          <p>Publish atelier stories and tend to your reader community.</p>
+        </div>
+        <Link className="button button--primary" href="/admin/blog/new">
+          <Plus size={16} /> New Story
+        </Link>
+      </header>
+
+      <div className="admin-blog-tabs">
+        <button
+          className={tab === 'articles' ? 'active' : ''}
+          onClick={() => setTab('articles')}
+        >
+          <BookOpen size={16} /> Articles
+        </button>
+        <button
+          className={tab === 'comments' ? 'active' : ''}
+          onClick={() => setTab('comments')}
+        >
+          Comments
+        </button>
+      </div>
+
+      {tab === 'articles' ? (
+        <div className="admin-table-wrap">
+          <table className="admin-blog-table">
+            <thead>
+              <tr>
+                <th>Story</th>
+                <th>Category</th>
+                <th>Comments</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {posts.data?.map((p) => (
+                <tr key={p.id}>
+                  <td>
+                    <strong>{p.title}</strong>
+                    <small>/{p.slug}</small>
+                  </td>
+                  <td>{p.category}</td>
+                  <td>{p.commentsCount}</td>
+                  <td>
+                    <span className={`status-pill ${p.isPublished ? 'published' : 'draft'}`}>
+                      {p.isPublished ? 'Published' : 'Draft'}
+                    </span>
+                  </td>
+                  <td>{new Date(p.publishedAt).toLocaleDateString()}</td>
+                  <td>
+                    <Link href={`/admin/blog/${p.id}`}>Edit</Link>
+                    <button
+                      onClick={() =>
+                        confirm('Delete this story?') && removePost.mutate(p.id)
+                      }
+                      aria-label="Delete story"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <>
+          <div className="comment-filters">
+            {(
+              [
+                ['Pending', 0],
+                ['Approved', 1],
+                ['Rejected', 2],
+              ] as const
+            ).map(([label, value]) => (
+              <button
+                className={status === value ? 'active' : ''}
+                onClick={() => setStatus(value)}
+                key={value}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="moderation-list">
+            {comments.data?.map((c) => (
+              <article key={c.id}>
+                <header>
+                  <div>
+                    <strong>{c.authorName}</strong>
+                    <span>on {c.postTitle}</span>
+                  </div>
+                  <time>{new Date(c.createdAt).toLocaleString()}</time>
+                </header>
+                <p>{c.content}</p>
+                <footer>
+                  <button onClick={() => moderate.mutate({ id: c.id, s: 1 })}>
+                    <Check size={14} /> Approve
+                  </button>
+                  <button onClick={() => moderate.mutate({ id: c.id, s: 2 })}>
+                    <X size={14} /> Reject
+                  </button>
+                  <button onClick={() => removeComment.mutate(c.id)}>
+                    <Trash2 size={14} /> Delete
+                  </button>
+                </footer>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

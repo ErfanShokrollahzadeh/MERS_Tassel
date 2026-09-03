@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { ArrowLeftRight, BarChart3, Bell, BookOpen, ChevronLeft, CircleHelp, Command, LayoutDashboard, Megaphone, Menu, Moon, Package, Search, Settings, ShoppingBag, Sparkles, Sun, TicketCheck, Users, X } from 'lucide-react';
+import { ArrowLeftRight, BarChart3, Bell, BookOpen, ChevronLeft, CircleHelp, Command, LayoutDashboard, Megaphone, Menu, MessageCircle, Moon, Package, Search, Settings, ShoppingBag, Sparkles, Sun, TicketCheck, Users, X } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 
 const adminLinks = [
@@ -81,7 +81,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             return <Link key={href} href={href} className={active ? 'active' : ''} onClick={() => setMobileOpen(false)} title={collapsed ? label : undefined}><Icon size={18} /><span>{label}</span></Link>;
           })}
         </nav>
-        <div className="admin-nav admin-nav--secondary"><Link href="/"><CircleHelp size={18} /><span>View storefront</span></Link></div>
+        <div className="admin-nav admin-nav--secondary">
+          <a href="https://app.crisp.chat/" target="_blank" rel="noopener noreferrer"><MessageCircle size={18} /><span>Crisp Inbox ↗</span></a>
+          <Link href="/"><CircleHelp size={18} /><span>View storefront</span></Link>
+        </div>
         <div className="admin-profile">
           <span>{initials}</span>
           <div><strong>{user.firstName} {user.lastName}</strong><small>{user.email}</small></div>

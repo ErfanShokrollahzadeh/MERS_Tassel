@@ -95,6 +95,7 @@ public interface IFileStorageService
     void Validate(Stream content, string originalFileName, long length);
 }
 
+
 public interface IProductService
 {
     Task<PagedResult<ProductDto>> ListAsync(ProductQuery query, CancellationToken ct = default);

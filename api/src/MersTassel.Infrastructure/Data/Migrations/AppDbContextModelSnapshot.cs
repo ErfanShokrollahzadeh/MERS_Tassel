@@ -121,6 +121,138 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("MersTassel.Domain.Entities.BlogComment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AuthorEmail")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AuthorName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CreatedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CustomerId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PostId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("PostId", "Status", "CreatedAt");
+
+                    b.ToTable("BlogComments", (string)null);
+                });
+
+            modelBuilder.Entity("MersTassel.Domain.Entities.BlogPost", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AuthorAvatarPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AuthorName")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ContentTr")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CoverImagePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CreatedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("DeletedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Excerpt")
+                        .IsRequired()
+                        .HasMaxLength(1200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ExcerptTr")
+                        .HasMaxLength(1200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("isDelete");
+
+                    b.Property<bool>("IsPublished")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("PublishedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ReadingTimeMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(240)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Tags")
+                        .HasMaxLength(600)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(240)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TitleTr")
+                        .HasMaxLength(240)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("UpdatedAt")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.HasIndex("IsPublished", "PublishedAt");
+
+                    b.ToTable("BlogPosts", (string)null);
+                });
+
             modelBuilder.Entity("MersTassel.Domain.Entities.Cart", b =>
                 {
                     b.Property<int>("Id")
@@ -1551,6 +1683,13 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.Property<long>("CreatedAt")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("CrispEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CrispWebsiteId")
+                        .HasMaxLength(36)
+                        .HasColumnType("TEXT");
+
                     b.Property<long?>("DeletedAt")
                         .HasColumnType("INTEGER");
 
@@ -2091,6 +2230,24 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("MersTassel.Domain.Entities.BlogComment", b =>
+                {
+                    b.HasOne("MersTassel.Domain.Entities.AppUser", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("MersTassel.Domain.Entities.BlogPost", "Post")
+                        .WithMany("Comments")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Post");
+                });
+
             modelBuilder.Entity("MersTassel.Domain.Entities.Cart", b =>
                 {
                     b.HasOne("MersTassel.Domain.Entities.Coupon", "Coupon")
@@ -2471,6 +2628,11 @@ namespace MersTassel.Infrastructure.Data.Migrations
             modelBuilder.Entity("MersTassel.Domain.Entities.AppUser", b =>
                 {
                     b.Navigation("RefreshTokens");
+                });
+
+            modelBuilder.Entity("MersTassel.Domain.Entities.BlogPost", b =>
+                {
+                    b.Navigation("Comments");
                 });
 
             modelBuilder.Entity("MersTassel.Domain.Entities.Cart", b =>

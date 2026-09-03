@@ -376,6 +376,7 @@ export function updateSettings(draft: SiteSettings, logo?: File | null, hero?: F
     ['TiktokUrl', draft.tiktokUrl],
     ['WhatsappPhone', draft.whatsappPhone],
     ['PinterestUrl', draft.pinterestUrl],
+    ['CrispWebsiteId', draft.crispWebsiteId],
     ['AboutHeadline', draft.aboutHeadline],
     ['AboutHeadlineTr', draft.aboutHeadlineTr],
     ['AboutBody', draft.aboutBody],
@@ -383,6 +384,7 @@ export function updateSettings(draft: SiteSettings, logo?: File | null, hero?: F
   ];
 
   for (const [key, value] of fields) form.append(key, value ?? '');
+  form.append('CrispEnabled', String(draft.crispEnabled));
 
   if (logo) form.append('logo', logo);
   if (hero) form.append('hero', hero);
@@ -460,4 +462,3 @@ export const adminKeys = {
   promotions: () => ['admin', 'promotions'] as const,
   popups: () => ['admin', 'popups'] as const,
 };
-

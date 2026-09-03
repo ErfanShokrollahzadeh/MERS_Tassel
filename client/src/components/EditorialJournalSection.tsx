@@ -1,3 +1,61 @@
 'use client';
-import Link from 'next/link';import {ArrowUpRight,Clock} from 'lucide-react';import {useQuery} from '@tanstack/react-query';import {blogKeys,fetchFeaturedPosts} from '@/lib/blog';import {mediaUrl} from '@/lib/apiClient';import {useI18n} from '@/i18n/I18nProvider';
-export function EditorialJournalSection(){const {locale}=useI18n();const q=useQuery({queryKey:blogKeys.featured(),queryFn:fetchFeaturedPosts});return <section className="section editorial-journal"><div className="container-wide"><div className="section-heading"><div><span className="eyebrow">{locale==='tr'?'Hikâyeler ve Zanaat':'Stories & Craftsmanship'}</span><h2>{locale==='tr'?'Atölye günlüğü.':'The editorial journal.'}</h2></div><Link href="/blog">{locale==='tr'?'Günlüğü keşfet':'Explore Journal'} <ArrowUpRight size={17}/></Link></div>{q.isPending&&<div className="blog-loading">Stories are being gathered…</div>}{q.isError&&<p>Our journal is resting. Please try again soon.</p>}<div className="blog-grid">{q.data?.map(p=><Link className="blog-card" href={`/blog/${p.slug}`} key={p.id}><div className="blog-card__image">{p.coverImagePath?<img src={mediaUrl(p.coverImagePath)} alt=""/>:<div className="blog-card__placeholder">MERS</div>}</div><div className="blog-card__meta"><span>{p.category}</span><time>{new Date(p.publishedAt).toLocaleDateString(locale)}</time></div><h3>{locale==='tr'&&p.titleTr?p.titleTr:p.title}</h3><p>{locale==='tr'&&p.excerptTr?p.excerptTr:p.excerpt}</p><small><Clock size={14}/>{p.readingTimeMinutes} min read</small></Link>)}</div></div></section>}
+
+import Link from 'next/link';
+import { ArrowUpRight, Clock } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { blogKeys, fetchFeaturedPosts } from '@/lib/blog';
+import { mediaUrl } from '@/lib/apiClient';
+import { useI18n } from '@/i18n/I18nProvider';
+
+export function EditorialJournalSection() {
+  const { locale } = useI18n();
+  const q = useQuery({ queryKey: blogKeys.featured(), queryFn: fetchFeaturedPosts });
+
+  return (
+    <section className="section editorial-journal" aria-labelledby="journal-heading">
+      <div className="container-wide">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">
+              {locale === 'tr' ? 'Hikâyeler ve Zanaat' : 'Stories & Craftsmanship'}
+            </span>
+            <h2 id="journal-heading">
+              {locale === 'tr' ? 'Atölye günlüğü.' : 'The editorial journal.'}
+            </h2>
+          </div>
+          <Link href="/blog">
+            {locale === 'tr' ? 'Günlüğü keşfet' : 'Explore Journal'}{' '}
+            <ArrowUpRight size={17} />
+          </Link>
+        </div>
+
+        {q.isPending && <div className="blog-loading">Stories are being gathered…</div>}
+        {q.isError && <p>Our journal is resting. Please try again soon.</p>}
+
+        <div className="blog-grid">
+          {q.data?.map((p) => (
+            <Link className="blog-card" href={`/blog/${p.slug}`} key={p.id}>
+              <div className="blog-card__image">
+                {p.coverImagePath ? (
+                  <img src={mediaUrl(p.coverImagePath)} alt="" />
+                ) : (
+                  <div className="blog-card__placeholder">MERS</div>
+                )}
+              </div>
+              <div className="blog-card__meta">
+                <span>{p.category}</span>
+                <time>{new Date(p.publishedAt).toLocaleDateString(locale)}</time>
+              </div>
+              <h3>{locale === 'tr' && p.titleTr ? p.titleTr : p.title}</h3>
+              <p>{locale === 'tr' && p.excerptTr ? p.excerptTr : p.excerpt}</p>
+              <small>
+                <Clock size={14} />
+                {p.readingTimeMinutes} min read
+              </small>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

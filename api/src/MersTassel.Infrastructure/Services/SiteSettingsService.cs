@@ -32,6 +32,8 @@ public class SiteSettingsService(AppDbContext db, IFileStorageService storage) :
         settings.TiktokUrl = Trim(request.TiktokUrl);
         settings.WhatsappPhone = Trim(request.WhatsappPhone);
         settings.PinterestUrl = Trim(request.PinterestUrl);
+        settings.CrispWebsiteId = Trim(request.CrispWebsiteId);
+        settings.CrispEnabled = request.CrispEnabled;
         settings.AboutHeadline = request.AboutHeadline ?? string.Empty;
         settings.AboutHeadlineTr = Trim(request.AboutHeadlineTr);
         settings.AboutBody = request.AboutBody ?? string.Empty;
@@ -90,6 +92,8 @@ public class SiteSettingsService(AppDbContext db, IFileStorageService storage) :
         TiktokUrl = s.TiktokUrl,
         WhatsappPhone = s.WhatsappPhone,
         PinterestUrl = s.PinterestUrl,
+        CrispWebsiteId = s.CrispWebsiteId,
+        CrispEnabled = s.CrispEnabled,
         AboutHeadline = s.AboutHeadline,
         AboutHeadlineTr = s.AboutHeadlineTr,
         AboutBody = s.AboutBody,

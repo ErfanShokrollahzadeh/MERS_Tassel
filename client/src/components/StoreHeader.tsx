@@ -100,7 +100,14 @@ export function StoreHeader() {
 
         <nav className={menuOpen ? 'store-nav store-nav--open' : 'store-nav'} aria-label={t('header.navigation')}>
           {links.map((link) => (
-            <Link key={link.href} href={link.href} className={pathname === link.href ? 'active' : ''} onClick={() => setMenuOpen(false)}>{t(link.key as TranslationKey)}</Link>
+            <Link
+              key={link.href}
+              href={link.href}
+              className={pathname === link.href || (link.href !== '/' && pathname.startsWith(`${link.href}/`)) ? 'active' : ''}
+              onClick={() => setMenuOpen(false)}
+            >
+              {t(link.key as TranslationKey)}
+            </Link>
           ))}
           <Link className="admin-mobile-link" href="/products?focus=search" onClick={() => setMenuOpen(false)}>{t('header.search')}</Link>
           <Link className="admin-mobile-link" href={user ? '/account' : '/login'} onClick={() => setMenuOpen(false)}>{t('header.account')}</Link>
