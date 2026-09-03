@@ -349,6 +349,13 @@ public class SiteSettingsDtoValidator : AbstractValidator<SiteSettingsDto>
         RuleFor(x => x.WhatsappPhone).MaximumLength(60);
         RuleFor(x => x.PinterestUrl).Must(BeAUrl).When(x => !string.IsNullOrWhiteSpace(x.PinterestUrl))
             .WithMessage("Pinterest URL must be a valid absolute URL.");
+        RuleFor(x => x.CrispWebsiteId)
+            .NotEmpty().When(x => x.CrispEnabled)
+            .WithMessage("A Crisp Website ID is required when live chat is enabled.");
+        RuleFor(x => x.CrispWebsiteId)
+            .Must(value => Guid.TryParse(value, out _))
+            .When(x => !string.IsNullOrWhiteSpace(x.CrispWebsiteId))
+            .WithMessage("Crisp Website ID must be a valid UUID.");
     }
 
     private static bool BeAUrl(string? value) =>
@@ -481,4 +488,3 @@ public class TrackPopupEventRequestValidator : AbstractValidator<TrackPopupEvent
             .WithMessage($"EventType must be one of: {string.Join(", ", AllowedEvents)}.");
     }
 }
-

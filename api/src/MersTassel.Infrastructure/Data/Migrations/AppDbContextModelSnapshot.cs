@@ -1551,6 +1551,13 @@ namespace MersTassel.Infrastructure.Data.Migrations
                     b.Property<long>("CreatedAt")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("CrispEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CrispWebsiteId")
+                        .HasMaxLength(36)
+                        .HasColumnType("TEXT");
+
                     b.Property<long?>("DeletedAt")
                         .HasColumnType("INTEGER");
 

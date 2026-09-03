@@ -488,6 +488,7 @@ public class SiteSettingsConfiguration : IEntityTypeConfiguration<SiteSettings>
         b.Property(x => x.TiktokUrl).HasMaxLength(300);
         b.Property(x => x.WhatsappPhone).HasMaxLength(60);
         b.Property(x => x.PinterestUrl).HasMaxLength(300);
+        b.Property(x => x.CrispWebsiteId).HasMaxLength(36);
         b.Property(x => x.AboutHeadline).HasMaxLength(200);
         b.Property(x => x.AboutBody).HasMaxLength(4000);
     }

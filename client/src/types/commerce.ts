@@ -284,6 +284,8 @@ export type SiteSettings = {
   tiktokUrl?: string | null;
   whatsappPhone?: string | null;
   pinterestUrl?: string | null;
+  crispWebsiteId?: string | null;
+  crispEnabled: boolean;
   aboutHeadline: string;
   aboutHeadlineTr?: string | null;
   aboutBody: string;
@@ -416,6 +418,10 @@ export type PopupDraft = {
   couponCode?: string | null;
 };
 
+<<<<<<< ours
+=======
+
+>>>>>>> theirs
 export type ChannelAttribution = { channel: string; orders: number; revenue: number; sharePct: number };
 export type FunnelStep = { step: string; count: number };
 export type CohortRow = { cohortWeek: string; cohortSize: number; retentionPcts: number[] };

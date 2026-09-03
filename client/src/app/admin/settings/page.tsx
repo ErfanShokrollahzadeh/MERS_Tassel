@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ImagePlus, Loader2 } from 'lucide-react';
+import { ExternalLink, ImagePlus, Loader2, MessageCircle } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminKeys, fetchAdminSettings, updateSettings } from '@/lib/admin';
 import { ApiError, mediaUrl } from '@/lib/apiClient';
@@ -108,6 +108,31 @@ export default function SettingsPage() {
       </div>
 
       <section className="settings-grid">
+        <article className="admin-card crisp-settings">
+          <header className="card-heading">
+            <div><span>Customer care</span><h2>Live Chat (Crisp)</h2></div>
+            <span className={`status ${draft.crispEnabled && draft.crispWebsiteId ? 'status--paid' : 'status--cancelled'}`}>
+              {draft.crispEnabled && draft.crispWebsiteId ? 'Active' : 'Inactive'}
+            </span>
+          </header>
+          <div className="crisp-settings__toggle">
+            <div><MessageCircle size={18} /><span><strong>Storefront chat</strong><small>Show the Crisp messenger to shoppers.</small></span></div>
+            <label className="settings-switch">
+              <input type="checkbox" checked={draft.crispEnabled} onChange={(e) => set({ crispEnabled: e.target.checked })} />
+              <span aria-hidden="true" />
+              <b>{draft.crispEnabled ? 'Enabled' : 'Disabled'}</b>
+            </label>
+          </div>
+          <label>
+            Website ID
+            <input value={draft.crispWebsiteId ?? ''} onChange={(e) => set({ crispWebsiteId: e.target.value })} placeholder="00000000-0000-0000-0000-000000000000" />
+            {field('crispWebsiteId') ? <small role="alert">{field('crispWebsiteId')}</small> : <small>Find this UUID under Crisp → Website Settings → Setup instructions.</small>}
+          </label>
+          <a className="admin-button admin-button--secondary crisp-settings__inbox" href="https://app.crisp.chat/" target="_blank" rel="noopener noreferrer">
+            Open Crisp Inbox <ExternalLink size={14} />
+          </a>
+        </article>
+
         <article className="admin-card">
           <header className="card-heading"><div><span>Identity</span><h2>Brand</h2></div></header>
           <label>Site name<input value={draft.siteName} onChange={(e) => set({ siteName: e.target.value })} />{field('siteName') && <small role="alert">{field('siteName')}</small>}</label>
