@@ -63,7 +63,8 @@ public static class DependencyInjection
 
                 options.UseNpgsql(connectionString, postgres => postgres
                     .MigrationsAssembly("MersTassel.PostgresMigrations")
-                    .EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null));
+                    .EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)
+                    .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
                 return;
             }
 
@@ -71,8 +72,9 @@ public static class DependencyInjection
                 throw new InvalidOperationException(
                     $"Unsupported Database:Provider '{databaseProvider}'. Use 'Sqlite' or 'PostgreSQL'.");
 
-            options.UseSqlite(currentConfiguration.GetConnectionString("Default")
-                ?? "Data Source=merstassel.db");
+            options.UseSqlite(
+                currentConfiguration.GetConnectionString("Default") ?? "Data Source=merstassel.db",
+                sqlite => sqlite.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
         });
 
         services.AddIdentityCore<AppUser>(options =>

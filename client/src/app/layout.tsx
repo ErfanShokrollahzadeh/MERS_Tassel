@@ -52,7 +52,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const saved = cookieStore.get('mers-locale')?.value;
   const locale: Locale = saved === 'tr' ? 'tr' : 'en';
   return (
-    <html lang={locale} className={`${inter.variable} ${lora.variable}`} suppressHydrationWarning>
+    <html lang={locale} className={`${inter.variable} ${lora.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
       <body suppressHydrationWarning><Providers initialLocale={locale}>{children}</Providers></body>
     </html>
   );

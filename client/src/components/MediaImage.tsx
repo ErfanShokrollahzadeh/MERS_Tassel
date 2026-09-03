@@ -45,7 +45,7 @@ export function MediaImage({
   return (
     <span className={`media-image${loaded ? ' media-image--loaded' : ''}${className ? ` ${className}` : ''}`}>
       <span className="media-image__skeleton" aria-hidden="true" />
-      <Image src={resolved} alt={alt} fill sizes={sizes} priority={priority} className="media-image__asset" onLoad={() => setLoaded(true)} />
+      <Image src={resolved} alt={alt} fill sizes={sizes} priority={priority} loading={priority ? 'eager' : undefined} className="media-image__asset" onLoad={() => setLoaded(true)} />
     </span>
   );
 }
