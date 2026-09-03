@@ -2,6 +2,7 @@ using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace MersTassel.Infrastructure.Data.Migrations;
+
 [Migration("20260903120000_AddEditorialJournal")]
 public partial class AddEditorialJournal : Migration
 {

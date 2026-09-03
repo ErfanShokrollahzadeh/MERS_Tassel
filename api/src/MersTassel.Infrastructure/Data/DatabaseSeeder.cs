@@ -76,6 +76,9 @@ public class DatabaseSeeder(
             }, "atelier"),
         };
 
+        var existing = await db.BlogPosts.IgnoreQueryFilters()
+            .ToDictionaryAsync(post => post.Slug, StringComparer.OrdinalIgnoreCase, ct);
+
         foreach (var (post, assetName) in seeds)
         {
             var coverPath = CopyNamedSeedImage(assetName, "blog", webRootPath, seedAssetsPath);
@@ -98,9 +101,7 @@ public class DatabaseSeeder(
         }
 
         await db.SaveChangesAsync(ct);
-=======
-        await SeedBlogAsync(ct);
->>>>>>> origin/master
+    }
     }
 
     private async Task SeedRolesAsync()

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace MersTassel.PostgresMigrations.Migrations;
+
 [Migration("20260903120000_AddEditorialJournal")]
 public partial class AddEditorialJournal : Migration
 {

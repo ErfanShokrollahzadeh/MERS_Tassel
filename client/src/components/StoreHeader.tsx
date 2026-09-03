@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { ArrowRight, Heart, Menu, Moon, Recycle, Search, ShoppingBag, Sun, UserRound, X } from 'lucide-react';
+import { ArrowRight, BookOpen, Heart, Menu, Moon, Recycle, Search, ShoppingBag, Sun, UserRound, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cartCount, useCartStore } from '@/stores/cart';
 import { useI18n, type TranslationKey } from '@/i18n/I18nProvider';
@@ -18,7 +18,7 @@ const links = [
   { href: '/kavanoz', key: 'nav.kavanoz' },
   { href: '/surprise-box', key: 'nav.surprise' },
   { href: '/about', key: 'nav.story' },
-  { href: '/blog', key: 'nav.journal' },
+  { href: '/blog', key: 'nav.journal', featured: true },
 ];
 
 export function StoreHeader() {
@@ -100,14 +100,7 @@ export function StoreHeader() {
 
         <nav className={menuOpen ? 'store-nav store-nav--open' : 'store-nav'} aria-label={t('header.navigation')}>
           {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={pathname === link.href || (link.href !== '/' && pathname.startsWith(`${link.href}/`)) ? 'active' : ''}
-              onClick={() => setMenuOpen(false)}
-            >
-              {t(link.key as TranslationKey)}
-            </Link>
+            <Link key={link.href} href={link.href} className={`${pathname === link.href || (link.href !== '/' && pathname.startsWith(`${link.href}/`)) ? 'active' : ''}${link.featured ? ' store-nav__journal' : ''}`} aria-current={pathname === link.href || (link.href !== '/' && pathname.startsWith(`${link.href}/`)) ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{link.featured && <BookOpen size={14} aria-hidden="true" />}{t(link.key as TranslationKey)}</Link>
           ))}
           <Link className="admin-mobile-link" href="/products?focus=search" onClick={() => setMenuOpen(false)}>{t('header.search')}</Link>
           <Link className="admin-mobile-link" href={user ? '/account' : '/login'} onClick={() => setMenuOpen(false)}>{t('header.account')}</Link>
